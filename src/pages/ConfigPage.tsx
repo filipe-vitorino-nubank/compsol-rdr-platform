@@ -1,0 +1,156 @@
+import { useEffect, useState } from "react";
+import { Button } from "../components/ui/Button";
+import { Field } from "../components/ui/Field";
+import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
+import { useLanguage } from "../context/LanguageContext";
+import { getSpreadsheetId, setSpreadsheetId } from "../lib/spreadsheetConfig";
+import { fetchLastSync, syncTeamNow } from "../services/slackService";
+
+export function ConfigPage() {
+  const [id, setId] = useState("");
+  const [syncing, setSyncing] = useState(false);
+  const [lastSync, setLastSync] = useState("");
+  const { token, googleUser, scriptReady, signInWithGoogle, signOut, getAccessTokenForSheets } = useAuth();
+  const { showToast } = useToast();
+  const { t } = useLanguage();
+
+  useEffect(() => {
+    setId(getSpreadsheetId());
+  }, []);
+
+  useEffect(() => {
+    if (!token) return;
+    getAccessTokenForSheets({ interactive: false })
+      .then((tk) => fetchLastSync(tk))
+      .then(setLastSync)
+      .catch(() => {});
+  }, [token, getAccessTokenForSheets]);
+
+  const handleTeamSync = async () => {
+    setSyncing(true);
+    try {
+      await syncTeamNow();
+      const tk = await getAccessTokenForSheets({ interactive: false });
+      const updated = await fetchLastSync(tk);
+      setLastSync(updated);
+      showToast(t("profile.syncSuccess"), "success");
+    } catch {
+      showToast(t("profile.syncError"), "error");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const save = () => {
+    setSpreadsheetId(id);
+    showToast(t("configPage.savedToast"), "success");
+  };
+
+  const clientConfigured = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="font-display text-xl font-semibold text-ink sm:text-2xl">
+          {t("configPage.title")}
+        </h1>
+        <p className="mt-1 text-sm text-ink-muted">
+          {t("configPage.subtitle")}
+        </p>
+      </div>
+      <div className="surface-card p-6">
+        <h2 className="mb-4 text-sm font-semibold text-ink">{t("configPage.sheetsTitle")}</h2>
+        <Field label={t("configPage.sheetIdLabel")}>
+          <input
+            className="input-field font-mono text-sm"
+            value={id}
+            onChange={(e) => setId(e.target.value)}
+            placeholder="Ex.: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
+            spellCheck={false}
+          />
+        </Field>
+        <p className="mt-2 text-xs text-ink-subtle">
+          {t("configPage.sheetIdHint")}{" "}
+          https://docs.google.com/spreadsheets/d/<strong>SPREADSHEET_ID</strong>/edit
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button type="button" onClick={save}>
+            {t("configPage.saveId")}
+          </Button>
+        </div>
+      </div>
+      <div className="surface-card p-6">
+        <h2 className="mb-4 text-sm font-semibold text-ink">{t("configPage.googleTitle")}</h2>
+        {!clientConfigured ? (
+          <p className="text-sm text-amber-400">
+            {t("configPage.missingClientId")}
+          </p>
+        ) : (
+          <p className="text-sm text-ink-muted">
+            {t("configPage.scopeInfo")}
+          </p>
+        )}
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={!scriptReady || !clientConfigured}
+            onClick={() => signInWithGoogle({ promptConsent: false })}
+          >
+            {t("auth.signInRenew")}
+          </Button>
+          <Button type="button" variant="ghost" onClick={signOut} disabled={!token}>
+            {t("auth.signOutAccount")}
+          </Button>
+        </div>
+        {token && googleUser ? (
+          <p className="mt-3 text-xs text-emerald-400/90">
+            {t("auth.connectedAs")} <strong className="text-ink">{googleUser.email}</strong>
+            {googleUser.name ? ` (${googleUser.name})` : ""}.
+          </p>
+        ) : token ? (
+          <p className="mt-3 text-xs text-emerald-400/90">{t("auth.activeSession")}</p>
+        ) : (
+          <p className="mt-3 text-xs text-ink-subtle">{t("auth.noSession")}</p>
+        )}
+      </div>
+
+      <div className="surface-card p-6">
+        <h2 className="mb-4 text-sm font-semibold text-ink">{t("configPage.teamSyncTitle")}</h2>
+        <p className="mb-4 text-sm text-ink-muted">
+          {t("configPage.teamSyncDesc")}
+        </p>
+        <div className="flex flex-wrap items-center gap-4">
+          <Button
+            type="button"
+            onClick={handleTeamSync}
+            disabled={syncing || !token}
+          >
+            <span className="inline-flex items-center gap-2">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+                className={syncing ? "spin" : ""}
+              >
+                <polyline points="23 4 23 10 17 10" />
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+              </svg>
+              {syncing ? t("profile.syncing") : t("configPage.teamSyncBtn")}
+            </span>
+          </Button>
+          {lastSync && (
+            <span className="text-[13px] text-ink-subtle">{lastSync}</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
