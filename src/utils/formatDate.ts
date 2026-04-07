@@ -26,8 +26,14 @@ export const formatDateBR = (value: string | Date | null | undefined): string =>
 export const formatDateInputBR = (value: string | null | undefined): string => {
   if (!value) return '';
 
-  const [yyyy, mm, dd] = value.split('-');
+  const [datePart, timePart] = value.split('T');
+  const [yyyy, mm, dd] = datePart.split('-');
   if (!yyyy || !mm || !dd) return value;
+
+  if (timePart) {
+    const [hh, min] = timePart.split(':');
+    return `${dd}/${mm}/${yyyy} ${hh || '00'}:${min || '00'}:00`;
+  }
 
   const now = new Date();
   const hh  = String(now.getHours()).padStart(2, '0');
@@ -35,4 +41,26 @@ export const formatDateInputBR = (value: string | null | undefined): string => {
   const sec = String(now.getSeconds()).padStart(2, '0');
 
   return `${dd}/${mm}/${yyyy} ${hh}:${min}:${sec}`;
+};
+
+export const formatDateDisplay = (value: string | null | undefined): string => {
+  if (!value) return '';
+  const [datePart] = value.split('T');
+  if (!datePart) return value;
+  const [yyyy, mm, dd] = datePart.split('-');
+  if (!yyyy || !mm || !dd) return value;
+  return `${dd}/${mm}/${yyyy}`;
+};
+
+export const formatDateTimeSheet = (value: string | null | undefined): string => {
+  if (!value) return '';
+  const [yyyy, mm, dd] = value.split('-');
+  if (!yyyy || !mm || !dd) return value;
+
+  const now = new Date();
+  const hh  = String(now.getHours()).padStart(2, '0');
+  const min = String(now.getMinutes()).padStart(2, '0');
+  const ss  = String(now.getSeconds()).padStart(2, '0');
+
+  return `${dd}/${mm}/${yyyy} ${hh}:${min}:${ss}`;
 };

@@ -70,6 +70,7 @@ const ptBR: Record<string, string> = {
   "step1.cpfFraudador": "CPF do cliente Fraudador (sem pontos e traços)",
   "step1.ticketZendesk": "Ticket Zendesk",
   "step1.protocoloRdr": "Protocolo RDR",
+  "step1.savingsAccountId": "Savings Account ID",
   "step1.instituicao": "Instituição",
   "step1.squad": "Squad",
   "step1.dataPrimeiroContato": "Data do primeiro contato",
@@ -106,6 +107,18 @@ const ptBR: Record<string, string> = {
   "step2.devolucaoOrigem": "Teve devolução de valores à origem?",
   "step2.transacaoCodigo": "Código da Transação",
   "step2.transacaoValor": "Valor da Transação",
+  "step2.infoComplementares": "Informações Complementares",
+  "step2.dtNotifEnviadaCliente": "Data Notificação Enviada para Cliente",
+  "step2.dtContestZdInicio": "Data de Envio Contestação Zendesk — Início",
+  "step2.dtContestZdFim": "Data de Envio Contestação Zendesk — Fim",
+  "step2.ticketZdContestacao": "Ticket Zendesk da Contestação",
+  "step2.dtPixEnviadoInicio": "Data Inicial Transação PIX — Enviado",
+  "step2.dtPixEnviadoFim": "Data Final Transação PIX — Enviado",
+  "step2.listaPixEnviado": "Lista das Transações PIX — Enviado",
+  "step2.dtPixRecebidoInicio": "Data Inicial Transação PIX — Recebido",
+  "step2.dtPixRecebidoFim": "Data Final Transação PIX — Recebido",
+  "step2.listaPixRecebido": "Lista das Transações PIX — Recebido",
+  "step2.listaPixHint": "Separe os IDs das transações com | (pipe)",
 
   /* ── Step 3 (review) ── */
   "step3.priorityLabel": "Prioridade:",
@@ -202,7 +215,6 @@ const ptBR: Record<string, string> = {
   "drawer.trilhaInvOps": "Trilha — Inv Ops",
   "drawer.regrasPreventivas": "Regras Preventivas",
   "drawer.bloqueioCautelar": "Bloqueio Cautelar",
-  "drawer.dadosTransacao": "Dados da Transação",
   "drawer.timestamp": "Timestamp",
   "drawer.emailSolicitante": "Email Solicitante",
   "drawer.cpfDemandante": "CPF Demandante",
@@ -239,9 +251,6 @@ const ptBR: Record<string, string> = {
   "drawer.fraudadorBc": "Fraudador PF/PJ (BC)",
   "drawer.parcialBc": "TFO Parcial Cliente (BC)",
   "drawer.devolucaoOrigemBc": "Devolução à Origem (BC)",
-  "drawer.transacaoContestacao": "Transação e Data Contestação",
-  "drawer.transacaoCodigo": "Código da Transação",
-  "drawer.transacaoValor": "Valor da Transação",
 
   /* ── Toast ── */
   "toast.close": "Fechar notificação",
@@ -252,13 +261,12 @@ const ptBR: Record<string, string> = {
   "doc.openInDrive": "Abrir no Drive",
   "doc.availableLabel": "Documento disponível",
   "doc.defaultName": "Dossiê RDR",
+  "doc.defaultNameCliente": "Documento Cliente",
+  "doc.defaultNameBacen": "Documento BACEN",
   "doc.newToast": "Documento disponível para",
   "doc.open": "Abrir",
   "doc.column": "Documento",
 
-  /* ── Drawer doc ── */
-  "drawer.linkGdrive": "Link GDrive",
-  "drawer.nomeArquivo": "Nome Arquivo",
 
   /* ── Language selector ── */
   "lang.label": "Idioma",
@@ -351,6 +359,7 @@ const en: Record<string, string> = {
   "step1.cpfFraudador": "Fraudster CPF (digits only)",
   "step1.ticketZendesk": "Zendesk Ticket",
   "step1.protocoloRdr": "RDR Protocol",
+  "step1.savingsAccountId": "Savings Account ID",
   "step1.instituicao": "Institution",
   "step1.squad": "Squad",
   "step1.dataPrimeiroContato": "First contact date",
@@ -387,6 +396,18 @@ const en: Record<string, string> = {
   "step2.devolucaoOrigem": "Was there a refund to origin?",
   "step2.transacaoCodigo": "Transaction Code",
   "step2.transacaoValor": "Transaction Amount",
+  "step2.infoComplementares": "Additional Information",
+  "step2.dtNotifEnviadaCliente": "Notification Sent to Client Date",
+  "step2.dtContestZdInicio": "Zendesk Dispute Submission Date — Start",
+  "step2.dtContestZdFim": "Zendesk Dispute Submission Date — End",
+  "step2.ticketZdContestacao": "Dispute Zendesk Ticket",
+  "step2.dtPixEnviadoInicio": "PIX Transaction Start Date — Sent",
+  "step2.dtPixEnviadoFim": "PIX Transaction End Date — Sent",
+  "step2.listaPixEnviado": "PIX Transaction List — Sent",
+  "step2.dtPixRecebidoInicio": "PIX Transaction Start Date — Received",
+  "step2.dtPixRecebidoFim": "PIX Transaction End Date — Received",
+  "step2.listaPixRecebido": "PIX Transaction List — Received",
+  "step2.listaPixHint": "Separate transaction IDs with | (pipe)",
 
   /* ── Step 3 (review) ── */
   "step3.priorityLabel": "Priority:",
@@ -483,7 +504,6 @@ const en: Record<string, string> = {
   "drawer.trilhaInvOps": "Track — Inv Ops",
   "drawer.regrasPreventivas": "Preventive Rules",
   "drawer.bloqueioCautelar": "Precautionary Block",
-  "drawer.dadosTransacao": "Transaction Data",
   "drawer.timestamp": "Timestamp",
   "drawer.emailSolicitante": "Requester Email",
   "drawer.cpfDemandante": "Claimant CPF",
@@ -520,9 +540,6 @@ const en: Record<string, string> = {
   "drawer.fraudadorBc": "Fraudster PF/PJ (BC)",
   "drawer.parcialBc": "Partial TFO Client (BC)",
   "drawer.devolucaoOrigemBc": "Refund to Origin (BC)",
-  "drawer.transacaoContestacao": "Transaction and Dispute Date",
-  "drawer.transacaoCodigo": "Transaction Code",
-  "drawer.transacaoValor": "Transaction Amount",
 
   /* ── Toast ── */
   "toast.close": "Close notification",
@@ -533,13 +550,12 @@ const en: Record<string, string> = {
   "doc.openInDrive": "Open in Drive",
   "doc.availableLabel": "Document available",
   "doc.defaultName": "RDR Dossier",
+  "doc.defaultNameCliente": "Client Document",
+  "doc.defaultNameBacen": "BACEN Document",
   "doc.newToast": "Document available for",
   "doc.open": "Open",
   "doc.column": "Document",
 
-  /* ── Drawer doc ── */
-  "drawer.linkGdrive": "GDrive Link",
-  "drawer.nomeArquivo": "File Name",
 
   /* ── Language selector ── */
   "lang.label": "Language",
@@ -632,6 +648,7 @@ const es: Record<string, string> = {
   "step1.cpfFraudador": "CPF del cliente Fraudador (sin puntos ni guiones)",
   "step1.ticketZendesk": "Ticket Zendesk",
   "step1.protocoloRdr": "Protocolo RDR",
+  "step1.savingsAccountId": "Savings Account ID",
   "step1.instituicao": "Institución",
   "step1.squad": "Squad",
   "step1.dataPrimeiroContato": "Fecha del primer contacto",
@@ -668,6 +685,18 @@ const es: Record<string, string> = {
   "step2.devolucaoOrigem": "¿Hubo devolución de valores al origen?",
   "step2.transacaoCodigo": "Código de Transacción",
   "step2.transacaoValor": "Monto de la Transacción",
+  "step2.infoComplementares": "Informaciones Complementarias",
+  "step2.dtNotifEnviadaCliente": "Fecha de Notificación Enviada al Cliente",
+  "step2.dtContestZdInicio": "Fecha de Envío Contestación Zendesk — Inicio",
+  "step2.dtContestZdFim": "Fecha de Envío Contestación Zendesk — Fin",
+  "step2.ticketZdContestacao": "Ticket Zendesk de la Contestación",
+  "step2.dtPixEnviadoInicio": "Fecha Inicial Transacción PIX — Enviado",
+  "step2.dtPixEnviadoFim": "Fecha Final Transacción PIX — Enviado",
+  "step2.listaPixEnviado": "Lista de Transacciones PIX — Enviado",
+  "step2.dtPixRecebidoInicio": "Fecha Inicial Transacción PIX — Recibido",
+  "step2.dtPixRecebidoFim": "Fecha Final Transacción PIX — Recibido",
+  "step2.listaPixRecebido": "Lista de Transacciones PIX — Recibido",
+  "step2.listaPixHint": "Separe los IDs de transacciones con | (pipe)",
 
   /* ── Step 3 (review) ── */
   "step3.priorityLabel": "Prioridad:",
@@ -764,7 +793,6 @@ const es: Record<string, string> = {
   "drawer.trilhaInvOps": "Flujo — Inv Ops",
   "drawer.regrasPreventivas": "Reglas Preventivas",
   "drawer.bloqueioCautelar": "Bloqueo Cautelar",
-  "drawer.dadosTransacao": "Datos de Transacción",
   "drawer.timestamp": "Timestamp",
   "drawer.emailSolicitante": "Email Solicitante",
   "drawer.cpfDemandante": "CPF Demandante",
@@ -801,9 +829,6 @@ const es: Record<string, string> = {
   "drawer.fraudadorBc": "Fraudador PF/PJ (BC)",
   "drawer.parcialBc": "TFO Parcial Cliente (BC)",
   "drawer.devolucaoOrigemBc": "Devolución al Origen (BC)",
-  "drawer.transacaoContestacao": "Transacción y Fecha Contestación",
-  "drawer.transacaoCodigo": "Código de Transacción",
-  "drawer.transacaoValor": "Monto de la Transacción",
 
   /* ── Toast ── */
   "toast.close": "Cerrar notificación",
@@ -814,13 +839,12 @@ const es: Record<string, string> = {
   "doc.openInDrive": "Abrir en Drive",
   "doc.availableLabel": "Documento disponible",
   "doc.defaultName": "Dosier RDR",
+  "doc.defaultNameCliente": "Documento Cliente",
+  "doc.defaultNameBacen": "Documento BACEN",
   "doc.newToast": "Documento disponible para",
   "doc.open": "Abrir",
   "doc.column": "Documento",
 
-  /* ── Drawer doc ── */
-  "drawer.linkGdrive": "Link GDrive",
-  "drawer.nomeArquivo": "Nombre Archivo",
 
   /* ── Language selector ── */
   "lang.label": "Idioma",

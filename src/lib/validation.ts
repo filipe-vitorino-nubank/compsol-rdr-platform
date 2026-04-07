@@ -20,6 +20,7 @@ export function validateStep1(s: RdrFormState, t?: TFn): Record<string, string> 
     e.cpfFraudador = badCpf;
 
   if (!s.protocoloRdr) e.protocoloRdr = req;
+  if (!s.savingsAccountId.trim()) e.savingsAccountId = req;
   if (!s.instituicao) e.instituicao = req;
   if (!s.squad) e.squad = req;
   if (!s.prioridade) e.prioridade = req;
@@ -59,8 +60,6 @@ export function validateStep2(s: RdrFormState, t?: TFn): Record<string, string> 
       rp.forEach((f) => {
         if (!s[f]) e[f] = req;
       });
-      if (!s.transacaoCodigo.trim()) e.transacaoCodigo = req;
-      if (!s.transacaoValor.trim()) e.transacaoValor = badValor;
     }
 
     if (s.subreasonFraudster === "Bloqueio Cautelar") {

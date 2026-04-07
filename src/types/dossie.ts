@@ -38,7 +38,18 @@ export interface Solicitacao {
   bcFraudadorTipo:           string;
   bcTfoParcialCliente:       string;
   bcDevolucaoOrigem:         string;
-  transacaoEDataContestacao: string;
-  linkGdrive:                string;
-  nomeArquivo:               string;
+  linkGdriveCliente:         string;
+  linkGdriveBacen:           string;
+  nomesArquivos:             string;
+  savingsAccountId?:         string;
+  dtNotificacaoEnviadaCliente?: string;
+  dtContestacaoZendeskInicio?: string;
+  dtContestacaoZendeskFim?:  string;
+  ticketZendeskContestacao?: string;
+  dtPixEnviadoInicio?:       string;
+  dtPixEnviadoFim?:          string;
+  listaPixEnviado?:          string;
+  dtPixRecebidoInicio?:      string;
+  dtPixRecebidoFim?:         string;
+  listaPixRecebido?:         string;
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useModal } from "../../context/ModalContext";
+import { formatDateDisplay } from "../../utils/formatDate";
 import { Field } from "../ui/Field";
 import { Button } from "../ui/Button";
 import { useFormContext } from "../../context/FormContext";
@@ -62,7 +63,7 @@ function BlockHeader({
   variant,
 }: {
   title: string;
-  variant: "cs" | "invops" | "victim" | "fraudster" | "sub";
+  variant: "cs" | "invops" | "victim" | "fraudster" | "sub" | "info";
 }) {
   return (
     <div className={`form-block-header form-block-${variant} form-block-enter`}>
@@ -218,6 +219,17 @@ function Step1DadosGerais() {
         </Field>
       </div>
 
+      <div data-field="savingsAccountId">
+        <Field label={t("step1.savingsAccountId")} error={e.savingsAccountId} required>
+          <input
+            className={`input-field font-mono ${e.savingsAccountId ? "input-field--error" : ""}`}
+            value={state.savingsAccountId}
+            onChange={(ev) => setField("savingsAccountId", ev.target.value)}
+            placeholder="Ex: 12345678"
+          />
+        </Field>
+      </div>
+
       <div className="sm:col-span-2" data-field="instituicao">
         <Field label={t("step1.instituicao")} error={e.instituicao} required>
           <select
@@ -341,8 +353,7 @@ function Step2Trilha() {
     );
   };
 
-  if (showCs) {
-    return (
+  const csContent = () => (
       <>
         <BlockHeader title="Customer Security" variant="cs" />
         <div className="grid gap-6 sm:grid-cols-2">
@@ -389,11 +400,9 @@ function Step2Trilha() {
           </ConditionalBlock>
         </div>
       </>
-    );
-  }
+  );
 
-  if (showInvOps) {
-    return (
+  const invOpsContent = () => (
       <>
         <BlockHeader title="Inv Ops" variant="invops" />
         <div className="grid gap-6 sm:grid-cols-2">
@@ -482,7 +491,7 @@ function Step2Trilha() {
           <BlockHeader title="Trilha Fraudster" variant="fraudster" />
           <div className="grid gap-6 sm:grid-cols-2">
             <div data-field="possuiDict">
-              <Field label={t("step2.possuiDict")}>
+              <Field label={t("step2.possuiDict")} hint="Databricks">
                 <RadioGroup name="possuiDict" options={["Sim", "Não"] as const} value={state.possuiDict} onChange={(v) => handlePossuiDictChange(v as SimNao)} labels={simNaoLabels} />
               </Field>
             </div>
@@ -538,29 +547,8 @@ function Step2Trilha() {
                 </Field>
               </div>
               <div data-field="tfoParcialRp">
-                <Field label={t("step2.tfoParcial")} error={e.tfoParcialRp} required>
+                <Field label={t("step2.tfoParcial")} hint={t("step2.tfoParcialHint")} error={e.tfoParcialRp} required>
                   <RadioGroup name="tfoParcialRp" options={["Sim", "Não"] as const} value={state.tfoParcialRp} onChange={(v) => setField("tfoParcialRp", v as SimNao)} labels={simNaoLabels} />
-                </Field>
-              </div>
-              <div data-field="transacaoCodigo">
-                <Field label={t("step2.transacaoCodigo")} error={e.transacaoCodigo} required>
-                  <input
-                    className={`input-field font-mono ${e.transacaoCodigo ? "input-field--error" : ""}`}
-                    value={state.transacaoCodigo}
-                    onChange={(ev) => setField("transacaoCodigo", ev.target.value)}
-                    placeholder="Ex: 6986710a"
-                  />
-                </Field>
-              </div>
-              <div data-field="transacaoValor">
-                <Field label={t("step2.transacaoValor")} error={e.transacaoValor} required>
-                  <input
-                    className={`input-field font-mono ${e.transacaoValor ? "input-field--error" : ""}`}
-                    value={state.transacaoValor}
-                    onChange={maskCurrency}
-                    inputMode="numeric"
-                    placeholder="Ex: 1.250,00"
-                  />
                 </Field>
               </div>
             </div>
@@ -627,10 +615,70 @@ function Step2Trilha() {
           </ConditionalBlock>
         </ConditionalBlock>
       </>
-    );
-  }
+  );
 
-  return null;
+  const squadContent = showCs ? csContent() : showInvOps ? invOpsContent() : null;
+
+  return (
+    <>
+      {squadContent}
+
+      {/* Informações Complementares — always visible */}
+      <BlockHeader title={t("step2.infoComplementares")} variant="info" />
+      <div className="grid gap-6 sm:grid-cols-2">
+        <div data-field="dtNotificacaoEnviadaCliente">
+          <Field label={t("step2.dtNotifEnviadaCliente")}>
+            <input type="date" className="input-field" value={state.dtNotificacaoEnviadaCliente} onChange={(ev) => setField("dtNotificacaoEnviadaCliente", ev.target.value)} />
+          </Field>
+        </div>
+        <div data-field="dtContestacaoZendeskInicio">
+          <Field label={t("step2.dtContestZdInicio")}>
+            <input type="date" className="input-field" value={state.dtContestacaoZendeskInicio} onChange={(ev) => setField("dtContestacaoZendeskInicio", ev.target.value)} />
+          </Field>
+        </div>
+        <div data-field="dtContestacaoZendeskFim">
+          <Field label={t("step2.dtContestZdFim")}>
+            <input type="date" className="input-field" value={state.dtContestacaoZendeskFim} onChange={(ev) => setField("dtContestacaoZendeskFim", ev.target.value)} />
+          </Field>
+        </div>
+        <div data-field="ticketZendeskContestacao">
+          <Field label={t("step2.ticketZdContestacao")}>
+            <input className="input-field font-mono" value={state.ticketZendeskContestacao} onChange={(ev) => setField("ticketZendeskContestacao", ev.target.value)} placeholder="Ex: 117867560" />
+          </Field>
+        </div>
+        <div data-field="dtPixEnviadoInicio">
+          <Field label={t("step2.dtPixEnviadoInicio")}>
+            <input type="date" className="input-field" value={state.dtPixEnviadoInicio} onChange={(ev) => setField("dtPixEnviadoInicio", ev.target.value)} />
+          </Field>
+        </div>
+        <div data-field="dtPixEnviadoFim">
+          <Field label={t("step2.dtPixEnviadoFim")}>
+            <input type="date" className="input-field" value={state.dtPixEnviadoFim} onChange={(ev) => setField("dtPixEnviadoFim", ev.target.value)} />
+          </Field>
+        </div>
+        <div className="sm:col-span-2" data-field="listaPixEnviado">
+          <Field label={t("step2.listaPixEnviado")} hint={t("step2.listaPixHint")}>
+            <textarea className="input-field" rows={2} value={state.listaPixEnviado} onChange={(ev) => setField("listaPixEnviado", ev.target.value)} placeholder="Ex: id1 | id2 | id3" />
+          </Field>
+        </div>
+        <div data-field="dtPixRecebidoInicio">
+          <Field label={t("step2.dtPixRecebidoInicio")}>
+            <input type="date" className="input-field" value={state.dtPixRecebidoInicio} onChange={(ev) => setField("dtPixRecebidoInicio", ev.target.value)} />
+          </Field>
+        </div>
+        <div data-field="dtPixRecebidoFim">
+          <Field label={t("step2.dtPixRecebidoFim")}>
+            <input type="date" className="input-field" value={state.dtPixRecebidoFim} onChange={(ev) => setField("dtPixRecebidoFim", ev.target.value)} />
+          </Field>
+        </div>
+        <div className="sm:col-span-2" data-field="listaPixRecebido">
+          <Field label={t("step2.listaPixRecebido")} hint={t("step2.listaPixHint")}>
+            <textarea className="input-field" rows={2} value={state.listaPixRecebido} onChange={(ev) => setField("listaPixRecebido", ev.target.value)} placeholder="Ex: id1 | id2 | id3" />
+          </Field>
+        </div>
+      </div>
+    </>
+  );
 }
 
 /* ════════════════════════════════════════════
@@ -657,6 +705,7 @@ function buildDadosGeraisItems(s: RdrFormState, t: (k: string) => string): Revie
     { label: t("drawer.cpfFraudador"), value: s.cpfFraudador, mono: true },
     { label: t("step1.ticketZendesk"), value: s.ticketZendesk, mono: true },
     { label: t("step1.protocoloRdr"), value: s.protocoloRdr, mono: true },
+    { label: t("step1.savingsAccountId"), value: s.savingsAccountId, mono: true },
     { label: t("step1.instituicao"), value: s.instituicao },
     { label: "Squad", value: s.squad },
     { label: t("step3.reviewDatePrimeiroContato"), value: s.dataPrimeiroContato },
@@ -710,16 +759,32 @@ function buildTrilhaItems(s: RdrFormState, t: (k: string) => string): ReviewEntr
         }
         if (s.tfoParcialBc) items.push({ label: t("step3.reviewParcialBc"), value: s.tfoParcialBc });
         if (s.devolucaoOrigemBc) items.push({ label: t("step3.reviewDevolucaoBc"), value: s.devolucaoOrigemBc });
-      }
-
-      if (s.transacaoCodigo) {
-        items.push({ label: t("step3.reviewTransacaoCodigo"), value: s.transacaoCodigo.trim() });
-      }
-      if (s.transacaoValor) {
-        items.push({ label: t("step3.reviewTransacaoValor"), value: `R$ ${s.transacaoValor.trim()}` });
+        if (s.transacaoCodigo) {
+          items.push({ label: t("step3.reviewTransacaoCodigo"), value: s.transacaoCodigo.trim() });
+        }
+        if (s.transacaoValor) {
+          items.push({ label: t("step3.reviewTransacaoValor"), value: `R$ ${s.transacaoValor.trim()}` });
+        }
       }
     }
   }
+
+  return items;
+}
+
+function buildInfoComplementaresItems(s: RdrFormState, t: (k: string) => string): ReviewEntry[] {
+  const items: ReviewEntry[] = [];
+
+  if (s.dtNotificacaoEnviadaCliente) items.push({ label: t("step2.dtNotifEnviadaCliente"), value: formatDateDisplay(s.dtNotificacaoEnviadaCliente) });
+  if (s.dtContestacaoZendeskInicio) items.push({ label: t("step2.dtContestZdInicio"), value: formatDateDisplay(s.dtContestacaoZendeskInicio) });
+  if (s.dtContestacaoZendeskFim) items.push({ label: t("step2.dtContestZdFim"), value: formatDateDisplay(s.dtContestacaoZendeskFim) });
+  if (s.ticketZendeskContestacao) items.push({ label: t("step2.ticketZdContestacao"), value: s.ticketZendeskContestacao, mono: true });
+  if (s.dtPixEnviadoInicio) items.push({ label: t("step2.dtPixEnviadoInicio"), value: formatDateDisplay(s.dtPixEnviadoInicio) });
+  if (s.dtPixEnviadoFim) items.push({ label: t("step2.dtPixEnviadoFim"), value: formatDateDisplay(s.dtPixEnviadoFim) });
+  if (s.listaPixEnviado.trim()) items.push({ label: t("step2.listaPixEnviado"), value: s.listaPixEnviado.trim() });
+  if (s.dtPixRecebidoInicio) items.push({ label: t("step2.dtPixRecebidoInicio"), value: formatDateDisplay(s.dtPixRecebidoInicio) });
+  if (s.dtPixRecebidoFim) items.push({ label: t("step2.dtPixRecebidoFim"), value: formatDateDisplay(s.dtPixRecebidoFim) });
+  if (s.listaPixRecebido.trim()) items.push({ label: t("step2.listaPixRecebido"), value: s.listaPixRecebido.trim() });
 
   return items;
 }
@@ -735,6 +800,7 @@ function Step3Confirmacao({
   const { t } = useLanguage();
   const dadosGerais = buildDadosGeraisItems(state, t);
   const trilha = buildTrilhaItems(state, t);
+  const infoComp = buildInfoComplementaresItems(state, t);
 
   const priorityMeta = [
     { value: "baixa", label: t("priority.low"), color: "var(--success)", bg: "var(--success-dim)" },
@@ -785,6 +851,17 @@ function Step3Confirmacao({
           )}
         </div>
       </div>
+
+      {infoComp.length > 0 && (
+        <div className="review-card">
+          <div className="review-card-header">{t("step2.infoComplementares")}</div>
+          <div className="review-grid">
+            {infoComp.map((item) => (
+              <ReviewItem key={item.label} {...item} />
+            ))}
+          </div>
+        </div>
+      )}
 
       <label className="flex cursor-pointer items-start gap-3 rounded-[var(--radius-input)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-4 transition-colors hover:bg-[var(--color-surface-hover)]">
         <input

@@ -139,6 +139,18 @@ export interface RdrFormState {
   transacaoCodigo: string;
   transacaoValor: string;
 
+  savingsAccountId: string;
+  dtNotificacaoEnviadaCliente: string;
+  dtContestacaoZendeskInicio: string;
+  dtContestacaoZendeskFim: string;
+  ticketZendeskContestacao: string;
+  dtPixEnviadoInicio: string;
+  dtPixEnviadoFim: string;
+  listaPixEnviado: string;
+  dtPixRecebidoInicio: string;
+  dtPixRecebidoFim: string;
+  listaPixRecebido: string;
+
   fieldErrors: Partial<Record<string, string>>;
 }
 
@@ -182,6 +194,17 @@ export const initialFormState: RdrFormState = {
   devolucaoOrigemBc: "",
   transacaoCodigo: "",
   transacaoValor: "",
+  savingsAccountId: "",
+  dtNotificacaoEnviadaCliente: "",
+  dtContestacaoZendeskInicio: "",
+  dtContestacaoZendeskFim: "",
+  ticketZendeskContestacao: "",
+  dtPixEnviadoInicio: "",
+  dtPixEnviadoFim: "",
+  listaPixEnviado: "",
+  dtPixRecebidoInicio: "",
+  dtPixRecebidoFim: "",
+  listaPixRecebido: "",
   fieldErrors: {},
 };
 
@@ -227,12 +250,23 @@ export const SHEET_HEADERS = [
   "BC - TFO Parcial Cliente",
   "Devolução à Origem (BC)",
   "BC - Fraudador Tipo",
-  "Transação e Data Contestação",
-  "Link GDrive",
-  "Nome Arquivo",
+  "Link GDrive Cliente",
+  "Link GDrive BACEN",
+  "Nomes Arquivos",
+  "Savings Account ID",
+  "Dt Notificação Enviada Cliente",
+  "Dt Contestação Zendesk Início",
+  "Dt Contestação Zendesk Fim",
+  "Ticket Zendesk Contestação",
+  "Dt PIX Enviado Início",
+  "Dt PIX Enviado Fim",
+  "Lista PIX Enviado",
+  "Dt PIX Recebido Início",
+  "Dt PIX Recebido Fim",
+  "Lista PIX Recebido",
 ] as const;
 
-export const COLUMN_COUNT = SHEET_HEADERS.length; // 42
+export const COLUMN_COUNT = SHEET_HEADERS.length; // 53
 
 /** Index of the "Status" column (0-based). */
 export const STATUS_COL_INDEX = SHEET_HEADERS.indexOf("Status"); // 2
@@ -278,9 +312,20 @@ export const COL = {
   TFO_PARCIAL_BC: 36,
   DEVOLUCAO_ORIGEM_BC: 37,
   FRAUDADOR_TIPO_BC: 38,
-  TRANSACAO_CONTESTACAO: 39,
-  LINK_GDRIVE: 40,
-  NOME_ARQUIVO: 41,
+  LINK_GDRIVE_CLIENTE: 39,
+  LINK_GDRIVE_BACEN: 40,
+  NOMES_ARQUIVOS: 41,
+  SAVINGS_ACCOUNT_ID: 42,
+  DT_NOTIF_ENVIADA: 43,
+  DT_CONTEST_ZD_INICIO: 44,
+  DT_CONTEST_ZD_FIM: 45,
+  TICKET_ZD_CONTEST: 46,
+  DT_PIX_ENV_INICIO: 47,
+  DT_PIX_ENV_FIM: 48,
+  LISTA_PIX_ENV: 49,
+  DT_PIX_REC_INICIO: 50,
+  DT_PIX_REC_FIM: 51,
+  LISTA_PIX_REC: 52,
 } as const;
 
 /* ── Legacy types kept so DashboardPage.tsx compiles without changes ── */

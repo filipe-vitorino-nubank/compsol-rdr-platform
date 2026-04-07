@@ -5,12 +5,12 @@ import {
   type RdrFormState,
 } from "../types/form";
 import type { Solicitacao } from "../types/dossie";
-import { formatDateBR, formatDateInputBR } from "../utils/formatDate";
+import { formatDateBR, formatDateInputBR, formatDateTimeSheet } from "../utils/formatDate";
 
 const SHEET_TAB = "Sheet1";
 
-/** 42 columns → A through AP. */
-const LAST_COL = "AP";
+/** 53 columns → A through BA. */
+const LAST_COL = "BA";
 
 async function sheetsFetch<T>(
   accessToken: string,
@@ -141,11 +141,20 @@ export function formStateToRow(
     s.bcFraudadorPfpj === "Não"
       ? "Não"
       : s.bcFraudadorTipo || "",                   // AM - BC - Fraudador Tipo
-    [s.transacaoCodigo.trim(), s.transacaoValor.trim()].every(Boolean)
-      ? `${s.transacaoCodigo.trim()} | R$ ${s.transacaoValor.trim()}`
-      : "",                                        // AN - Transação e Data Contestação
-    "",                                            // AO - Link GDrive (preenchido pelo UiPath)
-    "",                                            // AP - Nome Arquivo (preenchido pelo UiPath)
+    "",                                            // AN - Link GDrive Cliente (preenchido pelo UiPath)
+    "",                                            // AO - Link GDrive BACEN   (preenchido pelo UiPath)
+    "",                                            // AP - Nomes Arquivos      (preenchido pelo UiPath)
+    s.savingsAccountId.trim(),                     // AQ - Savings Account ID
+    formatDateTimeSheet(s.dtNotificacaoEnviadaCliente), // AR - Dt Notificação Enviada Cliente
+    formatDateTimeSheet(s.dtContestacaoZendeskInicio),  // AS - Dt Contestação Zendesk Início
+    formatDateTimeSheet(s.dtContestacaoZendeskFim),     // AT - Dt Contestação Zendesk Fim
+    s.ticketZendeskContestacao.trim(),             // AU - Ticket Zendesk Contestação
+    formatDateTimeSheet(s.dtPixEnviadoInicio),      // AV - Dt PIX Enviado Início
+    formatDateTimeSheet(s.dtPixEnviadoFim),         // AW - Dt PIX Enviado Fim
+    s.listaPixEnviado.trim(),                      // AX - Lista PIX Enviado
+    formatDateTimeSheet(s.dtPixRecebidoInicio),     // AY - Dt PIX Recebido Início
+    formatDateTimeSheet(s.dtPixRecebidoFim),        // AZ - Dt PIX Recebido Fim
+    s.listaPixRecebido.trim(),                     // BA - Lista PIX Recebido
   ];
 }
 
@@ -192,9 +201,20 @@ export function mapRowToSolicitacao(row: string[]): Solicitacao {
     bcFraudadorTipo:           row[38] || '',
     bcTfoParcialCliente:       row[36] || '',
     bcDevolucaoOrigem:         row[37] || '',
-    transacaoEDataContestacao: row[39] || '',
-    linkGdrive:                row[40] || '',
-    nomeArquivo:               row[41] || '',
+    linkGdriveCliente:         row[39] || '',
+    linkGdriveBacen:           row[40] || '',
+    nomesArquivos:             row[41] || '',
+    savingsAccountId:          row[42] || '',
+    dtNotificacaoEnviadaCliente: row[43] || '',
+    dtContestacaoZendeskInicio: row[44] || '',
+    dtContestacaoZendeskFim:   row[45] || '',
+    ticketZendeskContestacao:  row[46] || '',
+    dtPixEnviadoInicio:        row[47] || '',
+    dtPixEnviadoFim:           row[48] || '',
+    listaPixEnviado:           row[49] || '',
+    dtPixRecebidoInicio:       row[50] || '',
+    dtPixRecebidoFim:          row[51] || '',
+    listaPixRecebido:          row[52] || '',
   };
 }
 

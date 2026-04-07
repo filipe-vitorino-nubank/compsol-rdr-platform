@@ -276,6 +276,11 @@ code, kbd, pre, .mono { font-family: var(--font-mono); }
     color: var(--warning);
     border-left: 3px solid var(--warning);
   }
+  .form-block-info {
+    background: var(--purple-dim);
+    color: var(--purple-700);
+    border-left: 3px solid var(--purple-700);
+  }
 
   /* Entry animation for conditional blocks */
   .form-block-enter {

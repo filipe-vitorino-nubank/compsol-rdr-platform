@@ -190,17 +190,6 @@ function buildDrawerSections(c: string[], t: TFn): { title: string; fields: Draw
     ].filter((f) => f.value);
     if (bcFields.length) sections.push({ title: t("drawer.bloqueioCautelar"), fields: bcFields });
 
-    if (c[COL.TRANSACAO_CONTESTACAO]) {
-      const raw = c[COL.TRANSACAO_CONTESTACAO];
-      const pipeIdx = raw.indexOf(" | ");
-      const txFields: DrawerField[] = pipeIdx !== -1
-        ? [
-            { label: t("drawer.transacaoCodigo"), value: raw.slice(0, pipeIdx), mono: true },
-            { label: t("drawer.transacaoValor"), value: raw.slice(pipeIdx + 3) },
-          ]
-        : [{ label: t("drawer.transacaoContestacao"), value: raw }];
-      sections.push({ title: t("drawer.dadosTransacao"), fields: txFields });
-    }
   }
 
   return sections;
@@ -307,10 +296,10 @@ export function DashboardPage() {
     }
 
     rows.forEach((row) => {
-      const link = row.cells[COL.LINK_GDRIVE];
+      const link = row.cells[COL.LINK_GDRIVE_CLIENTE];
       if (!link) return;
       const prevRow = prev.find((p) => p.cells[COL.ID] === row.cells[COL.ID]);
-      if (prevRow && !prevRow.cells[COL.LINK_GDRIVE]) {
+      if (prevRow && !prevRow.cells[COL.LINK_GDRIVE_CLIENTE]) {
         showToast(`${t("doc.newToast")} ${row.cells[COL.ID]}`, "success");
       }
     });
@@ -488,13 +477,13 @@ export function DashboardPage() {
                           </span>
                         </td>
                         <td className="px-3 py-2.5" onClick={(ev) => ev.stopPropagation()}>
-                          {c[COL.LINK_GDRIVE] ? (
+                          {c[COL.LINK_GDRIVE_CLIENTE] ? (
                             <a
-                              href={buildDriveLink(c[COL.LINK_GDRIVE])}
+                              href={buildDriveLink(c[COL.LINK_GDRIVE_CLIENTE])}
                               target="_blank"
                               rel="noreferrer"
                               className="doc-link"
-                              title={c[COL.NOME_ARQUIVO] || t("doc.defaultName")}
+                              title={(c[COL.NOMES_ARQUIVOS] || "").split(" | ")[0] || t("doc.defaultName")}
                             >
                               <FileTextIcon />
                               <span>{t("doc.available")}</span>
@@ -583,30 +572,61 @@ export function DashboardPage() {
               </button>
             </div>
 
-            {/* Document banner */}
-            {detail.cells[COL.LINK_GDRIVE] && (
-              <div className="drawer-doc-banner">
-                <div className="drawer-doc-icon">
-                  <FileTextIcon size={24} />
+            {/* Document banners */}
+            {(() => {
+              const nomes = (detail.cells[COL.NOMES_ARQUIVOS] || "").split(" | ");
+              const nomeCliente = nomes[0] || t("doc.defaultNameCliente");
+              const nomeBacen = nomes[1] || t("doc.defaultNameBacen");
+              const linkCliente = detail.cells[COL.LINK_GDRIVE_CLIENTE];
+              const linkBacen = detail.cells[COL.LINK_GDRIVE_BACEN];
+              if (!linkCliente && !linkBacen) return null;
+              return (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {linkCliente && (
+                    <div className="drawer-doc-banner">
+                      <div className="drawer-doc-icon">
+                        <FileTextIcon size={24} />
+                      </div>
+                      <div>
+                        <span className="drawer-doc-label">{t("doc.availableLabel")}</span>
+                        <span className="drawer-doc-name">{nomeCliente}</span>
+                      </div>
+                      <a
+                        href={buildDriveLink(linkCliente)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn-primary"
+                        style={{ display: "inline-flex", alignItems: "center", gap: 8, marginLeft: "auto", flexShrink: 0 }}
+                      >
+                        <ExternalLinkIcon />
+                        {t("doc.openInDrive")}
+                      </a>
+                    </div>
+                  )}
+                  {linkBacen && (
+                    <div className="drawer-doc-banner">
+                      <div className="drawer-doc-icon">
+                        <FileTextIcon size={24} />
+                      </div>
+                      <div>
+                        <span className="drawer-doc-label">{t("doc.availableLabel")}</span>
+                        <span className="drawer-doc-name">{nomeBacen}</span>
+                      </div>
+                      <a
+                        href={buildDriveLink(linkBacen)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn-primary"
+                        style={{ display: "inline-flex", alignItems: "center", gap: 8, marginLeft: "auto", flexShrink: 0 }}
+                      >
+                        <ExternalLinkIcon />
+                        {t("doc.openInDrive")}
+                      </a>
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <span className="drawer-doc-label">{t("doc.availableLabel")}</span>
-                  <span className="drawer-doc-name">
-                    {detail.cells[COL.NOME_ARQUIVO] || t("doc.defaultName")}
-                  </span>
-                </div>
-                <a
-                  href={buildDriveLink(detail.cells[COL.LINK_GDRIVE])}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="btn-primary"
-                  style={{ display: "inline-flex", alignItems: "center", gap: 8, marginLeft: "auto", flexShrink: 0 }}
-                >
-                  <ExternalLinkIcon />
-                  {t("doc.openInDrive")}
-                </a>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Drawer body — field sections */}
             {buildDrawerSections(detail.cells, t).map((section) => (
