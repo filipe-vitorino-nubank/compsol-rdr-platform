@@ -1,0 +1,7 @@
+[
+    {
+        "path": "src/pages/DashboardPage.tsx",
+        "policy": "BrazilPIIPolicy",
+        "justification": "Tooltip examples in search component — not real PII data, used only as UI placeholder text"
+    }
+]

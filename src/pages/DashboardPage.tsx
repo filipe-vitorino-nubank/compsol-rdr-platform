@@ -4,16 +4,92 @@ import { Field } from "../components/ui/Field";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { useLanguage } from "../context/LanguageContext";
-import { fetchAllRows, rowStatusA1, updateCell } from "../lib/sheetsApi";
+import { fetchAllRows, mapRowToSolicitacao, rowStatusA1, updateCell } from "../lib/sheetsApi";
 import { getSpreadsheetId } from "../lib/spreadsheetConfig";
 import { COL, type RequestStatus } from "../types/form";
+import type { Solicitacao } from "../types/dossie";
 import { buildDriveLink } from "../utils/buildDriveLink";
 
 const STATUSES: RequestStatus[] = ["Pendente", "Em Análise", "Concluído", "Cancelado"];
-const SQUAD_OPTIONS = ["Customer Security", "Inv Ops"];
 const POLL_INTERVAL_MS = 30_000;
 
+const FILTERS = [
+  "Todos",
+  "Pendente",
+  "Em Análise",
+  "Concluído",
+  "Cancelado",
+  "Alta prioridade",
+  "Customer Security",
+  "Inv Ops",
+];
+
+const PRIO_ORDER: Record<string, number> = { alta: 0, media: 1, baixa: 2 };
+
 type RowView = { rowIndex: number; cells: string[] };
+
+/* ── Helpers ── */
+
+function maskCPF(cpf: string): string {
+  if (!cpf || cpf.length < 11) return cpf;
+  return `${cpf.slice(0, 3)}${"•".repeat(5)}${cpf.slice(8)}`;
+}
+
+function timeAgo(timestamp: string): string {
+  if (!timestamp) return "—";
+  try {
+    let date: Date;
+    if (/^\d{2}\/\d{2}\/\d{4}/.test(timestamp)) {
+      const [datePart, timePart] = timestamp.split(" ");
+      const [dd, mm, yyyy] = datePart.split("/");
+      date = new Date(`${yyyy}-${mm}-${dd}T${timePart || "00:00:00"}`);
+    } else {
+      date = new Date(timestamp);
+    }
+    if (isNaN(date.getTime())) return "—";
+    const diffMs = Date.now() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return "agora";
+    if (diffMins < 60) return `há ${diffMins}min`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `há ${diffHours}h`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `há ${diffDays}d`;
+    return `há ${Math.floor(diffDays / 7)}sem`;
+  } catch {
+    return "—";
+  }
+}
+
+function detectSearchType(value: string): string {
+  const v = value.trim();
+  if (/^RDR-/i.test(v)) return "Buscando por ID da solicitação";
+  const digits = v.replace(/\D/g, "");
+  if (digits.length === 11)
+    return "CPF detectado (11 dígitos) — buscando demandante e fraudador";
+  if (digits.length === 14)
+    return "CNPJ detectado (14 dígitos) — buscando nos registros";
+  if (digits.length >= 4 && digits.length <= 10)
+    return "Buscando por Protocolo RDR";
+  if (v.length > 0) return "Buscando em todos os campos...";
+  return "";
+}
+
+function filterSolicitacoes(
+  list: Solicitacao[],
+  term: string,
+): Solicitacao[] {
+  if (!term.trim()) return list;
+  const v = term.trim().toLowerCase();
+  const digits = v.replace(/\D/g, "");
+  return list.filter(
+    (s) =>
+      s.id.toLowerCase().includes(v) ||
+      s.protocoloRdr.includes(v) ||
+      s.cpfDemandante.includes(digits) ||
+      s.cpfFraudador.includes(digits),
+  );
+}
 
 function formatTimestamp(iso: string): string {
   if (!iso) return "—";
@@ -21,7 +97,11 @@ function formatTimestamp(iso: string): string {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return iso;
     return (
-      d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) +
+      d.toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }) +
       " " +
       d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
     );
@@ -58,27 +138,7 @@ function statusBadgeClass(status: string): string {
   }
 }
 
-function trilhaValue(c: string[]): string {
-  if (c[COL.SQUAD] === "Customer Security") return "CS";
-  return c[COL.REASON_INVOPS] || "—";
-}
-
-function subreasonValue(c: string[]): string {
-  return c[COL.SUBREASON_VICTIM] || c[COL.SUBREASON_FRAUDSTER] || "—";
-}
-
 /* ── Icons ── */
-
-function RefreshIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-      <path d="M3 3v5h5" />
-      <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
-      <path d="M16 16h5v5" />
-    </svg>
-  );
-}
 
 function FileTextIcon({ size = 16 }: { size?: number }) {
   return (
@@ -102,30 +162,15 @@ function ExternalLinkIcon({ size = 14 }: { size?: number }) {
   );
 }
 
-function LoaderIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="spin">
-      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-    </svg>
-  );
-}
-
-function TableSkeleton() {
-  return (
-    <div className="space-y-2 p-4 animate-pulse">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className="h-10 rounded-lg bg-[var(--color-surface-raised)]" />
-      ))}
-    </div>
-  );
-}
-
 /* ── Drawer detail sections ── */
 
 type DrawerField = { label: string; value: string; mono?: boolean };
 type TFn = (key: string) => string;
 
-function buildDrawerSections(c: string[], t: TFn): { title: string; fields: DrawerField[] }[] {
+function buildDrawerSections(
+  c: string[],
+  t: TFn,
+): { title: string; fields: DrawerField[] }[] {
   const sections: { title: string; fields: DrawerField[] }[] = [];
 
   sections.push({
@@ -150,7 +195,8 @@ function buildDrawerSections(c: string[], t: TFn): { title: string; fields: Draw
       { label: t("drawer.cenarioDevice"), value: c[COL.CENARIO_DEVICE] },
       { label: t("drawer.subreasonCs"), value: c[COL.SUBREASON_CS] },
     ].filter((f) => f.value);
-    if (csFields.length) sections.push({ title: t("drawer.trilhaCs"), fields: csFields });
+    if (csFields.length)
+      sections.push({ title: t("drawer.trilhaCs"), fields: csFields });
   }
 
   if (c[COL.SQUAD] === "Inv Ops") {
@@ -169,7 +215,8 @@ function buildDrawerSections(c: string[], t: TFn): { title: string; fields: Draw
       { label: t("drawer.dataNotif"), value: c[COL.DATA_NOTIF] },
       { label: t("drawer.subreasonFraudster"), value: c[COL.SUBREASON_FRAUDSTER] },
     ].filter((f) => f.value);
-    if (invFields.length) sections.push({ title: t("drawer.trilhaInvOps"), fields: invFields });
+    if (invFields.length)
+      sections.push({ title: t("drawer.trilhaInvOps"), fields: invFields });
 
     const rpFields: DrawerField[] = [
       { label: t("drawer.mudbray"), value: c[COL.MUDBRAY] },
@@ -179,7 +226,8 @@ function buildDrawerSections(c: string[], t: TFn): { title: string; fields: Draw
       { label: t("drawer.saldoRp"), value: c[COL.SALDO_RP] },
       { label: t("drawer.parcialRp"), value: c[COL.TFO_PARCIAL_RP] },
     ].filter((f) => f.value);
-    if (rpFields.length) sections.push({ title: t("drawer.regrasPreventivas"), fields: rpFields });
+    if (rpFields.length)
+      sections.push({ title: t("drawer.regrasPreventivas"), fields: rpFields });
 
     const bcFields: DrawerField[] = [
       { label: t("drawer.tfoBc"), value: c[COL.TFO_BC] },
@@ -188,11 +236,68 @@ function buildDrawerSections(c: string[], t: TFn): { title: string; fields: Draw
       { label: t("drawer.parcialBc"), value: c[COL.TFO_PARCIAL_BC] },
       { label: t("drawer.devolucaoOrigemBc"), value: c[COL.DEVOLUCAO_ORIGEM_BC] },
     ].filter((f) => f.value);
-    if (bcFields.length) sections.push({ title: t("drawer.bloqueioCautelar"), fields: bcFields });
-
+    if (bcFields.length)
+      sections.push({ title: t("drawer.bloqueioCautelar"), fields: bcFields });
   }
 
   return sections;
+}
+
+/* ── Donut SVG chart ── */
+
+function DonutChart({ data }: { data: Record<string, number> }) {
+  const total = Object.values(data).reduce((a, b) => a + b, 0);
+  if (total === 0) {
+    return (
+      <svg width="120" height="120" viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="42" fill="none" stroke="var(--color-border)" strokeWidth="14" />
+        <text x="60" y="64" textAnchor="middle" fontSize="14" fill="var(--color-ink-muted)">0</text>
+      </svg>
+    );
+  }
+
+  const colors: Record<string, string> = {
+    Pendente: "#d97706",
+    "Em Análise": "#820AD1",
+    Concluído: "#00A868",
+    Cancelado: "#9090a0",
+  };
+
+  const radius = 42;
+  const circumference = 2 * Math.PI * radius;
+  let cumulativePercent = 0;
+  const segments = Object.entries(data).filter(([, count]) => count > 0);
+
+  return (
+    <svg width="120" height="120" viewBox="0 0 120 120">
+      {segments.map(([status, count]) => {
+        const percent = count / total;
+        const strokeDasharray = `${percent * circumference} ${circumference}`;
+        const rotation = cumulativePercent * 360 - 90;
+        cumulativePercent += percent;
+        return (
+          <circle
+            key={status}
+            cx="60"
+            cy="60"
+            r={radius}
+            fill="none"
+            stroke={colors[status] || "#ccc"}
+            strokeWidth="14"
+            strokeDasharray={strokeDasharray}
+            transform={`rotate(${rotation} 60 60)`}
+            style={{ transition: "stroke-dasharray 0.5s ease" }}
+          />
+        );
+      })}
+      <text x="60" y="56" textAnchor="middle" fontSize="20" fontWeight="700" fill="var(--color-ink)">
+        {total}
+      </text>
+      <text x="60" y="72" textAnchor="middle" fontSize="10" fill="var(--color-ink-muted)">
+        total
+      </text>
+    </svg>
+  );
 }
 
 /* ── Main dashboard ── */
@@ -203,12 +308,10 @@ export function DashboardPage() {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<RowView[]>([]);
-  const [page, setPage] = useState(1);
-  const pageSize = 10;
-
-  const [fStatus, setFStatus] = useState("");
-  const [fPrio, setFPrio] = useState("");
-  const [fSquad, setFSquad] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [activeFilter, setActiveFilter] = useState("Todos");
+  const [showAll, setShowAll] = useState(false);
 
   const [detail, setDetail] = useState<RowView | null>(null);
   const [newStatus, setNewStatus] = useState<RequestStatus>("Pendente");
@@ -216,24 +319,30 @@ export function DashboardPage() {
   const warnedNoSheet = useRef(false);
   const prevRowsRef = useRef<RowView[]>([]);
 
-  const statusLabel = useCallback((raw: string): string => {
-    const map: Record<string, string> = {
-      Pendente: t("status.pending"),
-      "Em Análise": t("status.inReview"),
-      Concluído: t("status.completed"),
-      Cancelado: t("status.cancelled"),
-    };
-    return map[raw] ?? raw ?? "—";
-  }, [t]);
+  const statusLabel = useCallback(
+    (raw: string): string => {
+      const map: Record<string, string> = {
+        Pendente: t("status.pending"),
+        "Em Análise": t("status.inReview"),
+        Concluído: t("status.completed"),
+        Cancelado: t("status.cancelled"),
+      };
+      return map[raw] ?? raw ?? "—";
+    },
+    [t],
+  );
 
-  const prioLabel = useCallback((raw: string): string => {
-    const map: Record<string, string> = {
-      baixa: t("priority.low"),
-      media: t("priority.medium"),
-      alta: t("priority.high"),
-    };
-    return map[raw] ?? raw ?? "—";
-  }, [t]);
+  const prioLabel = useCallback(
+    (raw: string): string => {
+      const map: Record<string, string> = {
+        baixa: t("priority.low"),
+        media: t("priority.medium"),
+        alta: t("priority.high"),
+      };
+      return map[raw] ?? raw ?? "—";
+    },
+    [t],
+  );
 
   const fetchRows = useCallback(async (): Promise<RowView[] | null> => {
     const sid = getSpreadsheetId();
@@ -245,8 +354,8 @@ export function DashboardPage() {
       return null;
     }
     if (!scriptReady) return null;
-    const token = await getAccessTokenForSheets({ interactive: false }).catch(() =>
-      getAccessTokenForSheets({ interactive: true }),
+    const token = await getAccessTokenForSheets({ interactive: false }).catch(
+      () => getAccessTokenForSheets({ interactive: true }),
     );
     return fetchAllRows(token, sid);
   }, [getAccessTokenForSheets, scriptReady, showToast, t]);
@@ -257,7 +366,6 @@ export function DashboardPage() {
       const data = await fetchRows();
       if (data) {
         setRows(data);
-        setPage(1);
       } else {
         setRows([]);
       }
@@ -274,27 +382,24 @@ export function DashboardPage() {
     void load();
   }, [load]);
 
-  /* ── Polling every 30s ── */
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
         const data = await fetchRows();
         if (data) setRows(data);
       } catch {
-        /* silent — don't toast on poll failures */
+        /* silent */
       }
     }, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [fetchRows]);
 
-  /* ── Detect new GDrive links from polling ── */
   useEffect(() => {
     const prev = prevRowsRef.current;
     if (prev.length === 0) {
       prevRowsRef.current = rows;
       return;
     }
-
     rows.forEach((row) => {
       const link = row.cells[COL.LINK_GDRIVE_CLIENTE];
       if (!link) return;
@@ -303,32 +408,124 @@ export function DashboardPage() {
         showToast(`${t("doc.newToast")} ${row.cells[COL.ID]}`, "success");
       }
     });
-
     prevRowsRef.current = rows;
   }, [rows, showToast, t]);
 
-  const filtered = useMemo(() => {
-    const base = rows.filter((r) => {
-      const c = r.cells;
-      if (fStatus && c[COL.STATUS] !== fStatus) return false;
-      if (fPrio && c[COL.PRIORIDADE] !== fPrio) return false;
-      if (fSquad && c[COL.SQUAD] !== fSquad) return false;
-      return true;
-    });
-    return base.sort((a, b) => {
-      const ta = a.cells[COL.TIMESTAMP] || "";
-      const tb = b.cells[COL.TIMESTAMP] || "";
-      return tb.localeCompare(ta);
-    });
-  }, [rows, fStatus, fPrio, fSquad]);
+  /* ── Derived data ── */
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const pageSafe = Math.min(page, totalPages);
-  const slice = filtered.slice((pageSafe - 1) * pageSize, pageSafe * pageSize);
+  const solicitacoes: Solicitacao[] = useMemo(
+    () => rows.map((r) => mapRowToSolicitacao(r.cells)),
+    [rows],
+  );
 
-  const openDetail = (r: RowView) => {
-    setDetail(r);
-    const st = (r.cells[COL.STATUS] as RequestStatus) || "Pendente";
+  const searchFiltered = useMemo(
+    () => filterSolicitacoes(solicitacoes, searchTerm),
+    [solicitacoes, searchTerm],
+  );
+
+  const chipFiltered = useMemo(() => {
+    if (activeFilter === "Todos") return searchFiltered;
+    if (activeFilter === "Alta prioridade")
+      return searchFiltered.filter((s) => s.prioridade === "alta");
+    if (activeFilter === "Customer Security" || activeFilter === "Inv Ops")
+      return searchFiltered.filter((s) => s.squad === activeFilter);
+    return searchFiltered.filter((s) => s.status === activeFilter);
+  }, [searchFiltered, activeFilter]);
+
+  const kpis = useMemo(
+    () => ({
+      pendentes: chipFiltered.filter((s) => s.status === "Pendente").length,
+      emAnalise: chipFiltered.filter((s) => s.status === "Em Análise").length,
+      concluidos: chipFiltered.filter((s) => s.status === "Concluído").length,
+      altaPrioridade: chipFiltered.filter(
+        (s) =>
+          s.prioridade === "alta" &&
+          ["Pendente", "Em Análise"].includes(s.status),
+      ).length,
+      total: chipFiltered.length,
+    }),
+    [chipFiltered],
+  );
+
+  const pendentes = useMemo(() => {
+    return chipFiltered
+      .filter((s) => s.status === "Pendente" || s.status === "Em Análise")
+      .sort((a, b) => {
+        const pa = PRIO_ORDER[a.prioridade] ?? 9;
+        const pb = PRIO_ORDER[b.prioridade] ?? 9;
+        if (pa !== pb) return pa - pb;
+        return (b.timestamp || "").localeCompare(a.timestamp || "");
+      });
+  }, [chipFiltered]);
+
+  const displayList = useMemo(() => {
+    if (showAll) {
+      return chipFiltered.sort((a, b) => {
+        const pa = PRIO_ORDER[a.prioridade] ?? 9;
+        const pb = PRIO_ORDER[b.prioridade] ?? 9;
+        if (pa !== pb) return pa - pb;
+        return (b.timestamp || "").localeCompare(a.timestamp || "");
+      });
+    }
+    return pendentes.slice(0, 8);
+  }, [showAll, pendentes, chipFiltered]);
+
+  const chartData = useMemo(() => {
+    const bySquad = chipFiltered.reduce(
+      (acc, s) => {
+        if (s.squad) acc[s.squad] = (acc[s.squad] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
+    const byStatus = {
+      Pendente: chipFiltered.filter((s) => s.status === "Pendente").length,
+      "Em Análise": chipFiltered.filter((s) => s.status === "Em Análise").length,
+      Concluído: chipFiltered.filter((s) => s.status === "Concluído").length,
+      Cancelado: chipFiltered.filter((s) => s.status === "Cancelado").length,
+    };
+
+    const last7days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      const dateStr = d.toLocaleDateString("pt-BR", { weekday: "short" });
+      const dayStr = d.toDateString();
+      const count = chipFiltered.filter((s) => {
+        if (!s.timestamp) return false;
+        let created: Date;
+        if (/^\d{2}\/\d{2}\/\d{4}/.test(s.timestamp)) {
+          const [datePart, timePart] = s.timestamp.split(" ");
+          const [dd, mm, yyyy] = datePart.split("/");
+          created = new Date(`${yyyy}-${mm}-${dd}T${timePart || "00:00:00"}`);
+        } else {
+          created = new Date(s.timestamp);
+        }
+        return !isNaN(created.getTime()) && created.toDateString() === dayStr;
+      }).length;
+      return { label: dateStr, count, isToday: i === 6 };
+    });
+
+    const bySubreason = chipFiltered.reduce(
+      (acc, s) => {
+        const sub =
+          s.subreasonFraudster || s.subreasonVictim || s.subreasonCs;
+        if (sub) acc[sub] = (acc[sub] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
+    return { bySquad, byStatus, last7days, bySubreason };
+  }, [chipFiltered]);
+
+  /* ── Drawer ── */
+
+  const openDetail = (solicitacao: Solicitacao) => {
+    const row = rows.find((r) => r.cells[COL.ID] === solicitacao.id);
+    if (!row) return;
+    setDetail(row);
+    const st = (row.cells[COL.STATUS] as RequestStatus) || "Pendente";
     setNewStatus(STATUSES.includes(st) ? st : "Pendente");
   };
 
@@ -343,196 +540,384 @@ export function DashboardPage() {
       setRows((prev) =>
         prev.map((x) =>
           x.rowIndex === detail.rowIndex
-            ? { ...x, cells: x.cells.map((v, i) => (i === COL.STATUS ? newStatus : v)) }
+            ? {
+                ...x,
+                cells: x.cells.map((v, i) =>
+                  i === COL.STATUS ? newStatus : v,
+                ),
+              }
             : x,
         ),
       );
       showToast(t("dashboard.statusUpdated"), "success");
       setDetail(null);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : t("dashboard.updateFailed");
+      const msg =
+        e instanceof Error ? e.message : t("dashboard.updateFailed");
       showToast(msg, "error");
     } finally {
       setSavingStatus(false);
     }
   };
 
+  const detectedType = detectSearchType(searchTerm);
+
+  /* ── Chart helpers ── */
+
+  const maxSquad = Math.max(...Object.values(chartData.bySquad), 1);
+  const maxWeek = Math.max(...chartData.last7days.map((d) => d.count), 1);
+  const topSubreasons = Object.entries(chartData.bySubreason)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+  const maxSub = topSubreasons.length > 0 ? topSubreasons[0][1] : 1;
+
+  /* ── Skeleton ── */
+
+  if (loading) {
+    return (
+      <div className="space-y-4 p-4 animate-pulse">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div
+            key={i}
+            className="h-14 rounded-lg bg-[var(--color-surface-raised)]"
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="font-display text-xl font-semibold text-ink sm:text-2xl">
-            {t("dashboard.title")}
-          </h1>
-          <p className="mt-1 text-sm text-ink-muted">
-            {t("dashboard.subtitle")}
-          </p>
-        </div>
-        <Button variant="secondary" onClick={() => void load()} disabled={loading} className="gap-2">
-          <RefreshIcon />
-          {t("dashboard.refresh")}
-        </Button>
-      </div>
-
-      {/* Filters */}
-      <div className="surface-card p-4">
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-muted">
-          {t("dashboard.filters")}
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="Status">
-            <select
-              className="input-field py-2 text-sm"
-              value={fStatus}
-              onChange={(e) => { setFStatus(e.target.value); setPage(1); }}
+    <div className="painel-wrap">
+      {/* ── Topbar ── */}
+      <div className="painel-topbar">
+        <h1 className="painel-title">Painel de Acompanhamento</h1>
+        <div className="search-wrap">
+          <div className="search-bar">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="var(--color-ink-subtle)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              <option value="">{t("common.all")}</option>
-              {STATUSES.map((s) => (
-                <option key={s} value={s}>{statusLabel(s)}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label={t("priority.label")}>
-            <select
-              className="input-field py-2 text-sm"
-              value={fPrio}
-              onChange={(e) => { setFPrio(e.target.value); setPage(1); }}
-            >
-              <option value="">{t("common.allFem")}</option>
-              {[
-                { value: "baixa", label: prioLabel("baixa") },
-                { value: "media", label: prioLabel("media") },
-                { value: "alta", label: prioLabel("alta") },
-              ].map((p) => (
-                <option key={p.value} value={p.value}>{p.label}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Squad">
-            <select
-              className="input-field py-2 text-sm"
-              value={fSquad}
-              onChange={(e) => { setFSquad(e.target.value); setPage(1); }}
-            >
-              <option value="">{t("common.all")}</option>
-              {SQUAD_OPTIONS.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </Field>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="surface-card overflow-hidden">
-        {loading ? (
-          <TableSkeleton />
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="sticky top-0 z-[1] border-b border-[var(--color-border)] bg-[var(--color-surface-raised)] text-xs uppercase text-[var(--color-ink-subtle)]">
-                <tr>
-                  <th className="px-3 py-3 font-medium">{t("dashboard.colId")}</th>
-                  <th className="px-3 py-3 font-medium">{t("dashboard.colDate")}</th>
-                  <th className="px-3 py-3 font-medium">{t("dashboard.colRequester")}</th>
-                  <th className="px-3 py-3 font-medium">{t("dashboard.colProtocol")}</th>
-                  <th className="px-3 py-3 font-medium">{t("dashboard.colSquad")}</th>
-                  <th className="px-3 py-3 font-medium">{t("dashboard.colTrack")}</th>
-                  <th className="px-3 py-3 font-medium">{t("priority.label")}</th>
-                  <th className="px-3 py-3 font-medium">Status</th>
-                  <th className="px-3 py-3 font-medium">{t("doc.column")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {slice.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="px-3 py-8 text-center text-ink-muted">
-                      {t("dashboard.noResults")}
-                    </td>
-                  </tr>
-                ) : (
-                  slice.map((r) => {
-                    const c = r.cells;
-                    return (
-                      <tr
-                        key={r.rowIndex}
-                        className="cursor-pointer border-b border-[var(--color-border)]/60 transition-colors hover:bg-[var(--color-surface-raised)]"
-                        onClick={() => openDetail(r)}
-                      >
-                        <td className="px-3 py-2.5 font-mono text-xs text-ink">{c[COL.ID] || "—"}</td>
-                        <td className="whitespace-nowrap px-3 py-2.5 text-ink-muted">{formatTimestamp(c[COL.TIMESTAMP])}</td>
-                        <td className="max-w-[160px] truncate px-3 py-2.5">{c[COL.EMAIL] || "—"}</td>
-                        <td className="px-3 py-2.5 font-mono text-xs">{c[COL.PROTOCOLO] || "—"}</td>
-                        <td className="px-3 py-2.5 text-ink-muted">{c[COL.SQUAD] || "—"}</td>
-                        <td className="px-3 py-2.5 text-ink-muted">{trilhaValue(c)}</td>
-                        <td className="px-3 py-2.5">
-                          <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${prioBadgeClass(c[COL.PRIORIDADE])}`}>
-                            {prioLabel(c[COL.PRIORIDADE])}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2.5">
-                          <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${statusBadgeClass(c[COL.STATUS])}`}>
-                            {statusLabel(c[COL.STATUS])}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2.5" onClick={(ev) => ev.stopPropagation()}>
-                          {c[COL.LINK_GDRIVE_CLIENTE] ? (
-                            <a
-                              href={buildDriveLink(c[COL.LINK_GDRIVE_CLIENTE])}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="doc-link"
-                              title={(c[COL.NOMES_ARQUIVOS] || "").split(" | ")[0] || t("doc.defaultName")}
-                            >
-                              <FileTextIcon />
-                              <span>{t("doc.available")}</span>
-                            </a>
-                          ) : c[COL.STATUS] === "Em Análise" ? (
-                            <span className="doc-processing">
-                              <LoaderIcon />
-                              <span>{t("doc.processing")}</span>
-                            </span>
-                          ) : (
-                            <span className="doc-pending">—</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Buscar por ID, CPF, protocolo..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+            />
           </div>
-        )}
-        {!loading && filtered.length > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--color-border)] px-3 py-2 text-xs text-ink-muted">
-            <span>
-              {t("dashboard.page")} {pageSafe} {t("dashboard.of")} {totalPages} · {filtered.length} {t("dashboard.records")}
+          {searchFocused && (
+            <div className="search-tooltip">
+              <div className="tooltip-title">Como buscar</div>
+              <div className="tooltip-row">
+                <span className="tooltip-tag">ID</span>
+                <span>
+                  Ex: RDR-20260406-0001 — número único da solicitação
+                </span>
+              </div>
+              <div className="tooltip-row">
+                <span className="tooltip-tag">Protocolo</span>
+                <span>
+                  Ex: 987654 — protocolo RDR informado no formulário
+                </span>
+              </div>
+              <div className="tooltip-row">
+                <span className="tooltip-tag">CPF</span>
+                <span>
+                  Ex: 00000000000 — 11 dígitos, sem pontos (demandante ou
+                  fraudador)
+                </span>
+              </div>
+              <div className="tooltip-row">
+                <span className="tooltip-tag">CNPJ</span>
+                <span>
+                  Ex: 00000000000000 — 14 dígitos, sem pontos ou barras
+                </span>
+              </div>
+              {detectedType && (
+                <div className="tooltip-detected">{detectedType}</div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Filtros ── */}
+      <div className="filter-row">
+        {FILTERS.map((f) => (
+          <button
+            key={f}
+            className={`filter-chip ${activeFilter === f ? "active" : ""}`}
+            onClick={() => {
+              setActiveFilter(f);
+              setShowAll(false);
+            }}
+          >
+            {f}
+          </button>
+        ))}
+      </div>
+
+      {/* ── KPIs ── */}
+      <div className="kpi-grid">
+        <div className="kpi-card">
+          <div className="kpi-label">Pendentes</div>
+          <div className="kpi-value" style={{ color: "var(--warning)" }}>
+            {kpis.pendentes}
+          </div>
+          <div className="kpi-sub" style={{ color: "var(--color-ink-muted)" }}>
+            aguardando processamento
+          </div>
+          <div className="kpi-progress">
+            <div
+              className="kpi-progress-fill"
+              style={{
+                width: kpis.total
+                  ? `${(kpis.pendentes / kpis.total) * 100}%`
+                  : "0%",
+                background: "var(--warning)",
+              }}
+            />
+          </div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-label">Em análise</div>
+          <div className="kpi-value" style={{ color: "var(--purple-700)" }}>
+            {kpis.emAnalise}
+          </div>
+          <div className="kpi-sub" style={{ color: "var(--color-ink-muted)" }}>
+            UiPath processando
+          </div>
+          <div className="kpi-progress">
+            <div
+              className="kpi-progress-fill"
+              style={{
+                width: kpis.total
+                  ? `${(kpis.emAnalise / kpis.total) * 100}%`
+                  : "0%",
+                background: "var(--purple-700)",
+              }}
+            />
+          </div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-label">Concluídos</div>
+          <div className="kpi-value" style={{ color: "var(--success)" }}>
+            {kpis.concluidos}
+          </div>
+          <div className="kpi-sub" style={{ color: "var(--color-ink-muted)" }}>
+            dossiês finalizados
+          </div>
+          <div className="kpi-progress">
+            <div
+              className="kpi-progress-fill"
+              style={{
+                width: kpis.total
+                  ? `${(kpis.concluidos / kpis.total) * 100}%`
+                  : "0%",
+                background: "var(--success)",
+              }}
+            />
+          </div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-label">Alta prioridade</div>
+          <div className="kpi-value" style={{ color: "var(--danger)" }}>
+            {kpis.altaPrioridade}
+          </div>
+          <div className="kpi-sub" style={{ color: "var(--color-ink-muted)" }}>
+            pendentes urgentes
+          </div>
+          <div className="kpi-progress">
+            <div
+              className="kpi-progress-fill"
+              style={{
+                width: kpis.total
+                  ? `${(kpis.altaPrioridade / kpis.total) * 100}%`
+                  : "0%",
+                background: "var(--danger)",
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Lista de pendentes ── */}
+      <div className="pendentes-section">
+        <div className="pendentes-header">
+          <span className="pendentes-title">
+            {showAll
+              ? `Todas as solicitações (${chipFiltered.length})`
+              : `Pendentes e em análise (${pendentes.length})`}
+          </span>
+          <span
+            className="pendentes-link"
+            onClick={() => setShowAll((v) => !v)}
+          >
+            {showAll
+              ? "← Mostrar apenas pendentes"
+              : "Ver todas as solicitações →"}
+          </span>
+        </div>
+
+        {displayList.length === 0 ? (
+          <div
+            className="pendente-row"
+            style={{ justifyContent: "center", cursor: "default" }}
+          >
+            <span
+              style={{
+                fontSize: 13,
+                color: "var(--color-ink-muted)",
+                padding: "8px 0",
+              }}
+            >
+              Nenhuma solicitação encontrada
             </span>
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                className="!py-1 !text-xs"
-                disabled={pageSafe <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
+          </div>
+        ) : (
+          displayList.map((s) => (
+            <div
+              key={s.id}
+              className="pendente-row"
+              onClick={() => openDetail(s)}
+            >
+              <span className="pendente-id">{s.id}</span>
+              <div className="pendente-info">
+                <span className="pendente-meta">
+                  {s.squad}
+                  {(s.subreasonFraudster ||
+                    s.subreasonVictim ||
+                    s.subreasonCs) &&
+                    ` · ${s.subreasonFraudster || s.subreasonVictim || s.subreasonCs}`}
+                </span>
+                <span className="pendente-meta-mono">{s.protocoloRdr}</span>
+                <span className="pendente-meta-mono">
+                  {maskCPF(s.cpfDemandante)}
+                </span>
+                <span className="pendente-meta">{timeAgo(s.timestamp)}</span>
+              </div>
+              <span
+                className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${prioBadgeClass(s.prioridade)}`}
               >
-                {t("dashboard.previous")}
-              </Button>
-              <Button
-                variant="secondary"
-                className="!py-1 !text-xs"
-                disabled={pageSafe >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
+                {prioLabel(s.prioridade)}
+              </span>
+              <span
+                className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${statusBadgeClass(s.status)}`}
               >
-                {t("common.next")}
-              </Button>
+                {statusLabel(s.status)}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* ── Gráficos ── */}
+      <div className="charts-grid">
+        {/* Left: by squad + volume semanal */}
+        <div className="chart-card">
+          <div className="chart-title">Solicitações por squad</div>
+          {Object.entries(chartData.bySquad).map(([squad, count]) => (
+            <div key={squad} className="bar-row">
+              <span className="bar-label">{squad}</span>
+              <div className="bar-track">
+                <div
+                  className="bar-fill"
+                  style={{ width: `${(count / maxSquad) * 100}%` }}
+                />
+              </div>
+              <span className="bar-count">{count}</span>
+            </div>
+          ))}
+
+          <div
+            className="chart-title"
+            style={{ marginTop: 20, marginBottom: 8 }}
+          >
+            Volume semanal
+          </div>
+          <div className="time-bars">
+            {chartData.last7days.map((d, i) => (
+              <div
+                key={i}
+                className={`time-bar ${d.isToday ? "today" : ""}`}
+                style={{ height: `${(d.count / maxWeek) * 100}%` }}
+                title={`${d.label}: ${d.count}`}
+              />
+            ))}
+          </div>
+          <div className="time-labels">
+            {chartData.last7days.map((d, i) => (
+              <span key={i} className="time-label">
+                {d.label}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Right: donut + subreason */}
+        <div className="chart-card">
+          <div className="chart-title">Distribuição por status</div>
+          <div className="donut-wrap">
+            <DonutChart data={chartData.byStatus} />
+            <div className="donut-legend">
+              {Object.entries(chartData.byStatus).map(([status, count]) => {
+                const colors: Record<string, string> = {
+                  Pendente: "#d97706",
+                  "Em Análise": "#820AD1",
+                  Concluído: "#00A868",
+                  Cancelado: "#9090a0",
+                };
+                return (
+                  <div key={status} className="donut-legend-item">
+                    <div
+                      className="donut-legend-dot"
+                      style={{ background: colors[status] }}
+                    />
+                    <span>
+                      {status} ({count})
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        )}
+
+          {topSubreasons.length > 0 && (
+            <>
+              <div
+                className="chart-title"
+                style={{ marginTop: 20, marginBottom: 8 }}
+              >
+                Top subreasons
+              </div>
+              {topSubreasons.map(([sub, count]) => (
+                <div key={sub} className="bar-row">
+                  <span className="bar-label">{sub}</span>
+                  <div className="bar-track">
+                    <div
+                      className="bar-fill"
+                      style={{ width: `${(count / maxSub) * 100}%` }}
+                    />
+                  </div>
+                  <span className="bar-count">{count}</span>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Detail drawer */}
+      {/* ── Drawer ── */}
       {detail && (
         <>
           <div
@@ -540,7 +925,6 @@ export function DashboardPage() {
             onClick={() => !savingStatus && setDetail(null)}
           />
           <aside className="drawer" role="dialog" aria-modal="true">
-            {/* Drawer header */}
             <div className="flex items-start justify-between gap-4 border-b border-[var(--color-border)] p-6">
               <div>
                 <h3 className="font-display text-lg font-semibold text-ink">
@@ -550,10 +934,14 @@ export function DashboardPage() {
                   {detail.cells[COL.ID]}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold ${statusBadgeClass(detail.cells[COL.STATUS])}`}>
+                  <span
+                    className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold ${statusBadgeClass(detail.cells[COL.STATUS])}`}
+                  >
                     {statusLabel(detail.cells[COL.STATUS] || "Pendente")}
                   </span>
-                  <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold ${prioBadgeClass(detail.cells[COL.PRIORIDADE])}`}>
+                  <span
+                    className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold ${prioBadgeClass(detail.cells[COL.PRIORIDADE])}`}
+                  >
                     {prioLabel(detail.cells[COL.PRIORIDADE])}
                   </span>
                 </div>
@@ -565,30 +953,48 @@ export function DashboardPage() {
                 disabled={savingStatus}
                 aria-label={t("common.close")}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
             </div>
 
-            {/* Document banners */}
             {(() => {
-              const nomes = (detail.cells[COL.NOMES_ARQUIVOS] || "").split(" | ");
+              const nomes = (detail.cells[COL.NOMES_ARQUIVOS] || "").split(
+                " | ",
+              );
               const nomeCliente = nomes[0] || t("doc.defaultNameCliente");
               const nomeBacen = nomes[1] || t("doc.defaultNameBacen");
               const linkCliente = detail.cells[COL.LINK_GDRIVE_CLIENTE];
               const linkBacen = detail.cells[COL.LINK_GDRIVE_BACEN];
               if (!linkCliente && !linkBacen) return null;
               return (
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                  }}
+                >
                   {linkCliente && (
                     <div className="drawer-doc-banner">
                       <div className="drawer-doc-icon">
                         <FileTextIcon size={24} />
                       </div>
                       <div>
-                        <span className="drawer-doc-label">{t("doc.availableLabel")}</span>
+                        <span className="drawer-doc-label">
+                          {t("doc.availableLabel")}
+                        </span>
                         <span className="drawer-doc-name">{nomeCliente}</span>
                       </div>
                       <a
@@ -596,7 +1002,13 @@ export function DashboardPage() {
                         target="_blank"
                         rel="noreferrer"
                         className="btn-primary"
-                        style={{ display: "inline-flex", alignItems: "center", gap: 8, marginLeft: "auto", flexShrink: 0 }}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 8,
+                          marginLeft: "auto",
+                          flexShrink: 0,
+                        }}
                       >
                         <ExternalLinkIcon />
                         {t("doc.openInDrive")}
@@ -609,7 +1021,9 @@ export function DashboardPage() {
                         <FileTextIcon size={24} />
                       </div>
                       <div>
-                        <span className="drawer-doc-label">{t("doc.availableLabel")}</span>
+                        <span className="drawer-doc-label">
+                          {t("doc.availableLabel")}
+                        </span>
                         <span className="drawer-doc-name">{nomeBacen}</span>
                       </div>
                       <a
@@ -617,7 +1031,13 @@ export function DashboardPage() {
                         target="_blank"
                         rel="noreferrer"
                         className="btn-primary"
-                        style={{ display: "inline-flex", alignItems: "center", gap: 8, marginLeft: "auto", flexShrink: 0 }}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 8,
+                          marginLeft: "auto",
+                          flexShrink: 0,
+                        }}
                       >
                         <ExternalLinkIcon />
                         {t("doc.openInDrive")}
@@ -628,7 +1048,6 @@ export function DashboardPage() {
               );
             })()}
 
-            {/* Drawer body — field sections */}
             {buildDrawerSections(detail.cells, t).map((section) => (
               <div key={section.title} className="drawer-section">
                 <div className="drawer-section-title">{section.title}</div>
@@ -636,7 +1055,9 @@ export function DashboardPage() {
                   {section.fields.map((f) => (
                     <div key={f.label} className="drawer-field">
                       <span className="drawer-field-label">{f.label}</span>
-                      <span className={`drawer-field-value ${f.mono ? "font-mono" : ""}`}>
+                      <span
+                        className={`drawer-field-value ${f.mono ? "font-mono" : ""}`}
+                      >
                         {f.value || "—"}
                       </span>
                     </div>
@@ -645,26 +1066,40 @@ export function DashboardPage() {
               </div>
             ))}
 
-            {/* Status update */}
             <div className="drawer-section">
-              <div className="drawer-section-title">{t("dashboard.changeStatus")}</div>
+              <div className="drawer-section-title">
+                {t("dashboard.changeStatus")}
+              </div>
               <Field label={t("dashboard.newStatus")}>
                 <select
                   className="input-field py-2 text-sm"
                   value={newStatus}
-                  onChange={(e) => setNewStatus(e.target.value as RequestStatus)}
+                  onChange={(e) =>
+                    setNewStatus(e.target.value as RequestStatus)
+                  }
                 >
                   {STATUSES.map((s) => (
-                    <option key={s} value={s}>{statusLabel(s)}</option>
+                    <option key={s} value={s}>
+                      {statusLabel(s)}
+                    </option>
                   ))}
                 </select>
               </Field>
               <div className="mt-4 flex justify-end gap-2">
-                <Button variant="secondary" onClick={() => setDetail(null)} disabled={savingStatus}>
+                <Button
+                  variant="secondary"
+                  onClick={() => setDetail(null)}
+                  disabled={savingStatus}
+                >
                   {t("common.cancel")}
                 </Button>
-                <Button onClick={() => void saveStatus()} disabled={savingStatus}>
-                  {savingStatus ? t("dashboard.saving") : t("dashboard.saveToSheet")}
+                <Button
+                  onClick={() => void saveStatus()}
+                  disabled={savingStatus}
+                >
+                  {savingStatus
+                    ? t("dashboard.saving")
+                    : t("dashboard.saveToSheet")}
                 </Button>
               </div>
             </div>

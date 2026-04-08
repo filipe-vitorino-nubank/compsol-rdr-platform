@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { createPortal } from "react-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
 import type { Locale } from "../../i18n/translations";
 import { ProfileDrawer } from "../Profile/ProfileDrawer";
+import { TeamDrawer } from "../team/TeamDrawer";
 
 const LANG_LABEL: Record<Locale, string> = { "pt-BR": "PT", en: "EN", es: "ES" };
 
@@ -19,11 +21,18 @@ function getInitials(name: string | undefined): string {
     .toUpperCase();
 }
 
+function SidebarTooltip({ label }: { label: string }) {
+  return <div className="sidebar-tooltip">{label}</div>;
+}
+
 export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileDrawerOpen, setProfileDrawerOpen] = useState(false);
+  const [teamDrawerOpen, setTeamDrawerOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
 
   const {
     googleUser,
@@ -36,10 +45,41 @@ export function AppLayout() {
   const { t, locale, setLocale } = useLanguage();
   const clientConfigured = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
 
+  const handleTriggerClick = () => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const dropdownHeight = 220;
+
+      let top: number;
+      let left: number;
+
+      if (!sidebarOpen) {
+        left = rect.right + 8;
+        const spaceBelow = window.innerHeight - rect.top;
+        if (spaceBelow < dropdownHeight && rect.top > dropdownHeight) {
+          top = rect.bottom - dropdownHeight;
+        } else {
+          top = rect.top;
+        }
+      } else {
+        left = rect.left;
+        top = rect.top - dropdownHeight - 8;
+        if (top < 8) top = 8;
+      }
+
+      setDropdownPos({ top, left });
+    }
+    setMenuOpen((v) => !v);
+  };
+
   useEffect(() => {
     if (!menuOpen) return;
     const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      const target = e.target as Element;
+      if (
+        menuRef.current && !menuRef.current.contains(target) &&
+        !target.closest(".profile-dropdown-portal")
+      ) {
         setMenuOpen(false);
       }
     };
@@ -47,13 +87,79 @@ export function AppLayout() {
     return () => document.removeEventListener("mousedown", handler);
   }, [menuOpen]);
 
+  const location = useLocation();
+  const isFullWidth = location.pathname === "/" || location.pathname === "/painel";
+
+  const NAV_ICONS: Record<string, string> = {
+    "/": "🏠",
+    "/solicitacao": "📝",
+    "/painel": "📊",
+    "/config": "⚙️",
+  };
+
   const nav = [
-    { to: "/", label: t("nav.newRequest"), end: true },
-    { to: "/dashboard", label: t("nav.dashboard") },
+    { to: "/", label: t("nav.home") || "Início", end: true },
+    { to: "/solicitacao", label: t("nav.newRequest"), end: true },
+    { to: "/painel", label: t("nav.dashboard") },
     { to: "/config", label: t("nav.settings") },
   ];
 
   const displayName = googleUser?.name ?? googleUser?.email ?? "—";
+
+  const dropdownContent = (
+    <>
+      <button
+        type="button"
+        className="profile-dropdown-action"
+        onClick={() => { setProfileDrawerOpen(true); setMenuOpen(false); }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+        {t("nav.profile")}
+      </button>
+
+      <div className="profile-dropdown-divider" />
+
+      <div className="profile-dropdown-lang-row">
+        <span className="profile-dropdown-label">{t("lang.label")}</span>
+        <div className="profile-dropdown-lang-btns">
+          {(["pt-BR", "en", "es"] as Locale[]).map((l) => (
+            <button
+              key={l}
+              type="button"
+              className={`profile-lang-btn ${locale === l ? "active" : ""}`}
+              onClick={() => { setLocale(l); setMenuOpen(false); }}
+            >
+              {LANG_LABEL[l]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="profile-dropdown-divider" />
+
+      <button type="button" className="profile-dropdown-action" onClick={() => { refreshLogin(); setMenuOpen(false); }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <polyline points="23 4 23 10 17 10" />
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+        </svg>
+        {t("auth.refreshLogin")}
+      </button>
+
+      <button type="button" className="profile-dropdown-action" onClick={() => { signOut(); setMenuOpen(false); }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <polyline points="16 17 21 12 16 7" />
+          <line x1="21" y1="12" x2="9" y2="12" />
+        </svg>
+        {t("auth.signOut")}
+      </button>
+    </>
+  );
 
   return (
     <div className="flex min-h-screen">
@@ -78,18 +184,45 @@ export function AppLayout() {
         className="sidebar-scope relative z-20 flex shrink-0 flex-col border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] shadow-[4px_0_24px_-8px_rgba(0,0,0,0.3)]"
         aria-label={t("nav.mainNav")}
       >
+        {/* Header */}
         <div className="flex h-16 items-center gap-2 border-b border-[var(--sidebar-border)] px-4">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--purple-700)] text-xs font-bold text-white">
             C
           </div>
           {sidebarOpen ? (
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-[var(--sidebar-text)]">COMPSOL</p>
-              <p className="truncate text-[11px] text-[var(--sidebar-text-muted)]">NuStage Hub</p>
-            </div>
-          ) : null}
+            <>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-[var(--sidebar-text)]">COMPSOL</p>
+                <p className="truncate text-[11px] text-[var(--sidebar-text-muted)]">NuStage Hub</p>
+              </div>
+              <button
+                type="button"
+                className="sidebar-toggle-btn"
+                onClick={() => setSidebarOpen(false)}
+                title="Recolher sidebar"
+                style={{ marginTop: 2 }}
+              >
+                <svg viewBox="64 64 896 896" width="13" height="13" fill="currentColor">
+                  <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 000 13.8z" />
+                </svg>
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="sidebar-toggle-btn"
+              onClick={() => setSidebarOpen(true)}
+              title="Expandir sidebar"
+              style={{ margin: "0 auto" }}
+            >
+              <svg viewBox="64 64 896 896" width="13" height="13" fill="currentColor" style={{ transform: "scaleX(-1)" }}>
+                <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 000 13.8z" />
+              </svg>
+            </button>
+          )}
         </div>
 
+        {/* Navigation */}
         <nav className="flex flex-1 flex-col gap-1 p-2">
           {nav.map((item) => (
             <NavLink
@@ -97,113 +230,115 @@ export function AppLayout() {
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `rounded-[var(--radius-input)] px-3 py-2.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--purple-700)] ${
+                `relative rounded-[var(--radius-input)] px-3 py-2.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--purple-700)] ${
                   isActive
                     ? "bg-[var(--sidebar-hover)] text-[var(--sidebar-text)] shadow-[inset_3px_0_0_var(--purple-700)]"
                     : "text-[var(--sidebar-text-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text)]"
-                } ${sidebarOpen ? "" : "flex justify-center px-2"}`
+                } ${sidebarOpen ? "" : "nav-item-collapsed flex justify-center px-2"}`
               }
-              title={!sidebarOpen ? item.label : undefined}
             >
-              {sidebarOpen ? item.label : item.label.charAt(0)}
+              {sidebarOpen ? item.label : (NAV_ICONS[item.to] || item.label.charAt(0))}
+              {!sidebarOpen && <SidebarTooltip label={item.label} />}
             </NavLink>
           ))}
+
+          {/* Equipe */}
+          {sidebarOpen ? (
+            <button
+              type="button"
+              className="sidebar-nav-btn relative rounded-[var(--radius-input)] px-3 py-2.5 text-sm font-medium text-[var(--sidebar-text-muted)] transition-all hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text)]"
+              onClick={() => setTeamDrawerOpen(true)}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+              <span>Equipe</span>
+              <svg style={{ marginLeft: "auto", opacity: 0.4 }} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="nav-item-collapsed relative rounded-[var(--radius-input)] px-2 py-2.5 text-sm font-medium text-[var(--sidebar-text-muted)] transition-all hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text)] flex justify-center"
+              onClick={() => setTeamDrawerOpen(true)}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+              <SidebarTooltip label="Equipe" />
+            </button>
+          )}
         </nav>
 
         {/* Bottom area */}
         <div className="border-t border-[var(--sidebar-border)] p-2">
           {token && googleUser ? (
             <div className="profile-menu-wrapper" ref={menuRef}>
-              {/* Dropdown — above trigger */}
-              {menuOpen && sidebarOpen && (
-                <div className="profile-dropdown">
-                  <button
-                    type="button"
-                    className="profile-dropdown-action"
-                    onClick={() => { setProfileDrawerOpen(true); setMenuOpen(false); }}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                      <circle cx="9" cy="7" r="4" />
-                      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                    </svg>
-                    {t("nav.profile")}
-                  </button>
-
-                  <div className="profile-dropdown-divider" />
-
-                  <div className="profile-dropdown-lang-row">
-                    <span className="profile-dropdown-label">{t("lang.label")}</span>
-                    <div className="profile-dropdown-lang-btns">
-                      {(["pt-BR", "en", "es"] as Locale[]).map((l) => (
-                        <button
-                          key={l}
-                          type="button"
-                          className={`profile-lang-btn ${locale === l ? "active" : ""}`}
-                          onClick={() => { setLocale(l); setMenuOpen(false); }}
-                        >
-                          {LANG_LABEL[l]}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="profile-dropdown-divider" />
-
-                  <button type="button" className="profile-dropdown-action" onClick={() => { refreshLogin(); setMenuOpen(false); }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                      <polyline points="23 4 23 10 17 10" />
-                      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-                    </svg>
-                    {t("auth.refreshLogin")}
-                  </button>
-
-                  <button type="button" className="profile-dropdown-action" onClick={() => { signOut(); setMenuOpen(false); }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                      <polyline points="16 17 21 12 16 7" />
-                      <line x1="21" y1="12" x2="9" y2="12" />
-                    </svg>
-                    {t("auth.signOut")}
-                  </button>
-                </div>
+              {/* Dropdown — always via portal for reliable positioning */}
+              {menuOpen && createPortal(
+                <div
+                  className="profile-dropdown profile-dropdown-portal"
+                  style={{
+                    position: "fixed",
+                    top: dropdownPos.top,
+                    left: dropdownPos.left,
+                    bottom: "auto",
+                    right: "auto",
+                    minWidth: 200,
+                    width: sidebarOpen ? 244 : 220,
+                    zIndex: 9999,
+                  }}
+                >
+                  {dropdownContent}
+                </div>,
+                document.body,
               )}
 
-              {/* Trigger */}
-              <button
-                type="button"
-                className="profile-trigger"
-                onClick={() => setMenuOpen((v) => !v)}
-              >
-                <div className="profile-trigger-avatar">
-                  {googleUser.picture ? (
-                    <img src={googleUser.picture} alt="" referrerPolicy="no-referrer" />
-                  ) : (
-                    <span>{getInitials(googleUser.name)}</span>
+              {/* Profile trigger */}
+              <div className={sidebarOpen ? "" : "nav-item-collapsed relative"}>
+                <button
+                  ref={triggerRef}
+                  type="button"
+                  className="profile-trigger"
+                  onClick={handleTriggerClick}
+                >
+                  <div className="profile-trigger-avatar">
+                    {googleUser.picture ? (
+                      <img src={googleUser.picture} alt="" referrerPolicy="no-referrer" />
+                    ) : (
+                      <span>{getInitials(googleUser.name)}</span>
+                    )}
+                  </div>
+                  {sidebarOpen && (
+                    <>
+                      <span className="profile-trigger-name">{displayName}</span>
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden
+                        className="profile-trigger-chevron"
+                        style={{ transform: menuOpen ? "rotate(180deg)" : "none" }}
+                      >
+                        <polyline points="18 15 12 9 6 15" />
+                      </svg>
+                    </>
                   )}
-                </div>
-                {sidebarOpen && (
-                  <>
-                    <span className="profile-trigger-name">{displayName}</span>
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden
-                      className="profile-trigger-chevron"
-                      style={{ transform: menuOpen ? "rotate(180deg)" : "none" }}
-                    >
-                      <polyline points="18 15 12 9 6 15" />
-                    </svg>
-                  </>
-                )}
-              </button>
+                </button>
+                {!sidebarOpen && !menuOpen && <SidebarTooltip label={displayName} />}
+              </div>
             </div>
           ) : token && !googleUser ? (
             <div className="mb-2 rounded-lg border border-[var(--sidebar-border)] bg-[rgba(255,255,255,0.04)] px-2 py-3 text-center">
@@ -242,14 +377,6 @@ export function AppLayout() {
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={() => setSidebarOpen((v) => !v)}
-          className="m-2 rounded-lg border border-[var(--sidebar-border)] bg-[rgba(255,255,255,0.04)] py-2 text-xs text-[var(--sidebar-text-muted)] hover:text-[var(--sidebar-text)]"
-          aria-expanded={sidebarOpen}
-        >
-          {sidebarOpen ? t("nav.collapse") : "»"}
-        </button>
       </motion.aside>
 
       <main
@@ -257,12 +384,17 @@ export function AppLayout() {
         tabIndex={-1}
         className="min-w-0 flex-1 overflow-auto bg-[var(--color-bg)] outline-none"
       >
-        <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
+        {isFullWidth ? (
           <Outlet />
-        </div>
+        ) : (
+          <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
+            <Outlet />
+          </div>
+        )}
       </main>
 
       <ProfileDrawer open={profileDrawerOpen} onClose={() => setProfileDrawerOpen(false)} />
+      <TeamDrawer open={teamDrawerOpen} onClose={() => setTeamDrawerOpen(false)} />
     </div>
   );
 }

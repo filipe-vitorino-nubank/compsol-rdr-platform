@@ -1012,7 +1012,7 @@ export function RdrRequestForm() {
   const handleGoToDashboard = () => {
     reset();
     setOverlay("hidden");
-    navigate("/dashboard");
+    navigate("/painel");
   };
 
   return (

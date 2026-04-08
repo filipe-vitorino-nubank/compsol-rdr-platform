@@ -15,9 +15,10 @@ const ptBR: Record<string, string> = {
   "common.allFem": "Todas",
 
   /* ── Nav ── */
-  "nav.newRequest": "Nova solicitação",
+  "nav.home": "Início",
+  "nav.newRequest": "Nova Solicitação",
   "nav.dashboard": "Painel",
-  "nav.settings": "Configuração",
+  "nav.settings": "Configurações",
   "nav.skipToContent": "Ir para o conteúdo",
   "nav.mainNav": "Navegação principal",
   "nav.collapse": "Recolher",
@@ -304,7 +305,8 @@ const en: Record<string, string> = {
   "common.allFem": "All",
 
   /* ── Nav ── */
-  "nav.newRequest": "New request",
+  "nav.home": "Home",
+  "nav.newRequest": "New Request",
   "nav.dashboard": "Dashboard",
   "nav.settings": "Settings",
   "nav.skipToContent": "Skip to content",
@@ -593,7 +595,8 @@ const es: Record<string, string> = {
   "common.allFem": "Todas",
 
   /* ── Nav ── */
-  "nav.newRequest": "Nueva solicitud",
+  "nav.home": "Inicio",
+  "nav.newRequest": "Nueva Solicitud",
   "nav.dashboard": "Panel",
   "nav.settings": "Configuración",
   "nav.skipToContent": "Ir al contenido",
