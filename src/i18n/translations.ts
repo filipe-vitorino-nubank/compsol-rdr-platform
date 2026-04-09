@@ -273,7 +273,7 @@ const ptBR: Record<string, string> = {
   "lang.label": "Idioma",
 
   /* ── Profile & Team ── */
-  "nav.profile": "Perfil & Equipe",
+  "nav.profile": "Perfil",
   "auth.refreshLogin": "Atualizar login",
   "profile.teamLabel": "Equipe — COE de Ops",
   "profile.searchPlaceholder": "Buscar por nome...",
@@ -563,7 +563,7 @@ const en: Record<string, string> = {
   "lang.label": "Language",
 
   /* ── Profile & Team ── */
-  "nav.profile": "Profile & Team",
+  "nav.profile": "Profile",
   "auth.refreshLogin": "Refresh login",
   "profile.teamLabel": "Team — COE Ops",
   "profile.searchPlaceholder": "Search by name...",
@@ -853,7 +853,7 @@ const es: Record<string, string> = {
   "lang.label": "Idioma",
 
   /* ── Profile & Team ── */
-  "nav.profile": "Perfil & Equipo",
+  "nav.profile": "Perfil",
   "auth.refreshLogin": "Actualizar login",
   "profile.teamLabel": "Equipo — COE Ops",
   "profile.searchPlaceholder": "Buscar por nombre...",

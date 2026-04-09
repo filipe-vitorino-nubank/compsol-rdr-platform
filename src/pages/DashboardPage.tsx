@@ -162,6 +162,118 @@ function ExternalLinkIcon({ size = 14 }: { size?: number }) {
   );
 }
 
+function ClockIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  );
+}
+
+function AlertTriangleIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  );
+}
+
+function InfoCircleIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="16" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12.01" y2="8" />
+    </svg>
+  );
+}
+
+/* ── Document state logic ── */
+
+type DocState = "available" | "processing" | "error" | "warn";
+
+function getDocState(status: string, link: string): DocState {
+  if (link) return "available";
+  if (status === "Concluído") return "error";
+  if (status === "Pendente" || status === "Em Análise") return "processing";
+  return "error";
+}
+
+function getCombinedDocState(
+  status: string,
+  linkCliente: string,
+  linkBacen: string,
+): "all-error" | "partial-warn" | "ok" {
+  if (status === "Concluído" && !linkCliente && !linkBacen) return "all-error";
+  if (status === "Concluído" && (!linkCliente || !linkBacen)) return "partial-warn";
+  return "ok";
+}
+
+function DocBadge({
+  type,
+  state,
+  link,
+  label,
+}: {
+  type: "cliente" | "bacen";
+  state: DocState;
+  link: string;
+  label: string;
+}) {
+  if (state === "available") {
+    return (
+      <a
+        href={buildDriveLink(link)}
+        target="_blank"
+        rel="noreferrer"
+        className={`doc-btn doc-btn-${type}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <FileTextIcon size={12} /> {label} <ExternalLinkIcon size={10} />
+      </a>
+    );
+  }
+  if (state === "processing") {
+    return (
+      <span className="doc-btn doc-btn-processing">
+        <ClockIcon /> {label} — processando
+      </span>
+    );
+  }
+  if (state === "warn") {
+    return (
+      <span className="doc-btn doc-btn-warn">
+        <AlertTriangleIcon /> {label} — não gerado
+      </span>
+    );
+  }
+  return (
+    <span className="doc-btn doc-btn-error">
+      <InfoCircleIcon /> {label} — não gerado
+    </span>
+  );
+}
+
+function DocCell({ s }: { s: Solicitacao }) {
+  const clienteState = getDocState(s.status, s.linkGdriveCliente);
+  const bacenState = getDocState(s.status, s.linkGdriveBacen);
+  const combined = getCombinedDocState(s.status, s.linkGdriveCliente, s.linkGdriveBacen);
+
+  if (combined === "ok" && !s.linkGdriveCliente && !s.linkGdriveBacen) {
+    return <span className="doc-pending">—</span>;
+  }
+
+  return (
+    <div className="doc-cell-badges">
+      <DocBadge type="cliente" state={clienteState} link={s.linkGdriveCliente} label="Cliente" />
+      <DocBadge type="bacen" state={bacenState} link={s.linkGdriveBacen} label="BACEN" />
+    </div>
+  );
+}
+
 /* ── Drawer detail sections ── */
 
 type DrawerField = { label: string; value: string; mono?: boolean };
@@ -667,6 +779,73 @@ export function DashboardPage() {
         ))}
       </div>
 
+      {/* ── Search results ── */}
+      {searchTerm.trim() && (
+        <div className="search-results-section">
+          <div className="search-results-header">
+            {detectedType && (
+              <span className="search-results-hint">{detectedType}</span>
+            )}
+            <span className="search-results-count">
+              {searchFiltered.length} resultado{searchFiltered.length !== 1 ? "s" : ""} para &ldquo;{searchTerm.trim()}&rdquo;
+            </span>
+            <span className="search-results-tip">
+              Clique em Ver detalhes para abrir o drawer completo
+            </span>
+          </div>
+          {searchFiltered.length === 0 ? (
+            <div className="result-card" style={{ justifyContent: "center", cursor: "default" }}>
+              <span style={{ fontSize: 13, color: "var(--color-ink-muted)", padding: "8px 0" }}>
+                Nenhum resultado encontrado
+              </span>
+            </div>
+          ) : (
+            searchFiltered.slice(0, 20).map((s) => {
+              const combined = getCombinedDocState(s.status, s.linkGdriveCliente, s.linkGdriveBacen);
+              const cardBorderClass =
+                combined === "all-error"
+                  ? "result-card-error"
+                  : combined === "partial-warn"
+                    ? "result-card-partial"
+                    : "";
+              return (
+                <div key={s.id} className={`result-card ${cardBorderClass}`}>
+                  <div className="result-card-top">
+                    <span className="pendente-id">{s.id}</span>
+                    <div className="pendente-info">
+                      <span className="pendente-meta">
+                        {s.squad}
+                        {(s.subreasonFraudster || s.subreasonVictim || s.subreasonCs) &&
+                          ` · ${s.subreasonFraudster || s.subreasonVictim || s.subreasonCs}`}
+                      </span>
+                      <span className="pendente-meta-mono">{s.protocoloRdr}</span>
+                      <span className="pendente-meta-mono">{maskCPF(s.cpfDemandante)}</span>
+                      <span className="pendente-meta">{timeAgo(s.timestamp)}</span>
+                    </div>
+                    <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${prioBadgeClass(s.prioridade)}`}>
+                      {prioLabel(s.prioridade)}
+                    </span>
+                    <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${statusBadgeClass(s.status)}`}>
+                      {statusLabel(s.status)}
+                    </span>
+                  </div>
+                  <div className="result-card-actions">
+                    <DocCell s={s} />
+                    <button
+                      type="button"
+                      className="result-detail-btn"
+                      onClick={() => openDetail(s)}
+                    >
+                      Ver detalhes →
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+
       {/* ── KPIs ── */}
       <div className="kpi-grid">
         <div className="kpi-card">
@@ -785,39 +964,49 @@ export function DashboardPage() {
             </span>
           </div>
         ) : (
-          displayList.map((s) => (
-            <div
-              key={s.id}
-              className="pendente-row"
-              onClick={() => openDetail(s)}
-            >
-              <span className="pendente-id">{s.id}</span>
-              <div className="pendente-info">
-                <span className="pendente-meta">
-                  {s.squad}
-                  {(s.subreasonFraudster ||
-                    s.subreasonVictim ||
-                    s.subreasonCs) &&
-                    ` · ${s.subreasonFraudster || s.subreasonVictim || s.subreasonCs}`}
+          displayList.map((s) => {
+            const combined = getCombinedDocState(s.status, s.linkGdriveCliente, s.linkGdriveBacen);
+            const rowBorderClass =
+              combined === "all-error"
+                ? "result-card-error"
+                : combined === "partial-warn"
+                  ? "result-card-partial"
+                  : "";
+            return (
+              <div
+                key={s.id}
+                className={`pendente-row ${rowBorderClass}`}
+                onClick={() => openDetail(s)}
+              >
+                <span className="pendente-id">{s.id}</span>
+                <div className="pendente-info">
+                  <span className="pendente-meta">
+                    {s.squad}
+                    {(s.subreasonFraudster ||
+                      s.subreasonVictim ||
+                      s.subreasonCs) &&
+                      ` · ${s.subreasonFraudster || s.subreasonVictim || s.subreasonCs}`}
+                  </span>
+                  <span className="pendente-meta-mono">{s.protocoloRdr}</span>
+                  <span className="pendente-meta-mono">
+                    {maskCPF(s.cpfDemandante)}
+                  </span>
+                  <span className="pendente-meta">{timeAgo(s.timestamp)}</span>
+                </div>
+                <DocCell s={s} />
+                <span
+                  className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${prioBadgeClass(s.prioridade)}`}
+                >
+                  {prioLabel(s.prioridade)}
                 </span>
-                <span className="pendente-meta-mono">{s.protocoloRdr}</span>
-                <span className="pendente-meta-mono">
-                  {maskCPF(s.cpfDemandante)}
+                <span
+                  className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${statusBadgeClass(s.status)}`}
+                >
+                  {statusLabel(s.status)}
                 </span>
-                <span className="pendente-meta">{timeAgo(s.timestamp)}</span>
               </div>
-              <span
-                className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${prioBadgeClass(s.prioridade)}`}
-              >
-                {prioLabel(s.prioridade)}
-              </span>
-              <span
-                className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold ${statusBadgeClass(s.status)}`}
-              >
-                {statusLabel(s.status)}
-              </span>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 

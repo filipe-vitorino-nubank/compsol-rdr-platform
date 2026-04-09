@@ -20,13 +20,18 @@ export function Home() {
         <h1 className="home-title">
           RDR Dossiê
           <br />
-          <span className="home-title-accent">Automação InvOps</span>
+          <span className="home-title-accent">Automação</span>
         </h1>
 
         <p className="home-subtitle">
-          Plataforma de solicitação e acompanhamento de dossiês RDR para o squad
-          InvOps. Substitui a captura manual de widgets do Shuffle e montagem de
-          evidências para o BACEN.
+          Este projeto de RPA automatiza a geração dos dossiês RDR enviados ao
+          Banco Central, substituindo a captura manual de widgets no Shuffle e a
+          montagem das evidências em .docx. O robô consolida automaticamente os
+          dados dos squads, traduz informações para português, registra data e
+          hora de acesso às evidências e, quando possível, bloqueia as tabelas
+          geradas para evitar alterações manuais. Com isso, reduzimos tempo de
+          resposta e SLA, liberando o time para focar em análises e estratégias
+          que suportem nossos OKRs.
         </p>
 
         <div className="home-btns">
