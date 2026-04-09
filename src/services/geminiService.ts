@@ -1,3 +1,5 @@
+import { fetchWithTimeout } from "../lib/fetchWithTimeout";
+
 const PROJECT_ID = import.meta.env.VITE_GCP_PROJECT_ID || '';
 const LOCATION   = import.meta.env.VITE_GCP_LOCATION   || 'us-central1';
 const MODEL      = import.meta.env.VITE_GEMINI_MODEL    || 'gemini-2.0-flash-001';
@@ -53,7 +55,7 @@ export async function sendGeminiMessage(
     return { role: m.role, parts };
   });
 
-  const res = await fetch(VERTEX_URL, {
+  const res = await fetchWithTimeout(VERTEX_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -69,7 +71,7 @@ export async function sendGeminiMessage(
         max_output_tokens: 1024,
       },
     }),
-  });
+  }, 30_000);
 
   if (!res.ok) {
     const err = await res.json().catch(() => null);

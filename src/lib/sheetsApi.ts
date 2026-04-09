@@ -6,6 +6,7 @@ import {
 } from "../types/form";
 import type { Solicitacao } from "../types/dossie";
 import { formatDateBR, formatDateInputBR, formatDateTimeSheet } from "../utils/formatDate";
+import { fetchWithRetry } from "./fetchWithTimeout";
 
 const SHEET_TAB = "Sheet1";
 
@@ -35,7 +36,7 @@ async function sheetsFetch<T>(
   init?: RequestInit,
   operation = "acessar planilha",
 ): Promise<T> {
-  const res = await fetch(
+  const res = await fetchWithRetry(
     `https://sheets.googleapis.com/v4/spreadsheets${path}`,
     {
       ...init,
@@ -45,6 +46,7 @@ async function sheetsFetch<T>(
         ...(init?.headers ?? {}),
       },
     },
+    { timeoutMs: 15_000, retries: 2 },
   );
   if (!res.ok) {
     const text = await res.text();
@@ -114,22 +116,33 @@ export async function generateId(
   return `${prefix}${seq}`;
 }
 
+/**
+ * Neutraliza formula injection no Google Sheets.
+ * Prefixa com apóstrofo strings que começam com =, +, -, @, tab, CR.
+ */
+function sanitizeSheetValue(value: string): string {
+  if (!value || typeof value !== "string") return value;
+  if (/^[=+\-@\t\r]/.test(value)) return `'${value}`;
+  return value;
+}
+
 /* ── Row mapping (41 columns matching SHEET_HEADERS) ── */
 
 export function formStateToRow(
   s: RdrFormState,
   id: string,
 ): string[] {
+  const sv = sanitizeSheetValue;
   return [
     id,                                            // A  - ID
     formatDateBR(new Date()),                      // B  - Timestamp
     "Pendente",                                    // C  - Status
     s.prioridade,                                  // D  - Prioridade
     s.emailSolicitante,                            // E  - Email Solicitante
-    s.cpfDemandante,                               // F  - CPF Demandante
-    s.cpfFraudador,                                // G  - CPF Fraudador
-    s.ticketZendesk,                               // H  - Ticket Zendesk
-    s.protocoloRdr,                                // I  - Protocolo RDR
+    sv(s.cpfDemandante),                           // F  - CPF Demandante
+    sv(s.cpfFraudador),                            // G  - CPF Fraudador
+    sv(s.ticketZendesk),                           // H  - Ticket Zendesk
+    sv(s.protocoloRdr),                            // I  - Protocolo RDR
     s.instituicao,                                 // J  - Instituição
     s.squad,                                       // K  - Squad
     formatDateInputBR(s.dataPrimeiroContato),      // L  - Data Primeiro Contato
@@ -141,7 +154,7 @@ export function formStateToRow(
     s.tipoCliente,                                 // R  - Tipo Cliente
     s.casoMedPix,                                  // S  - Caso MED/PIX
     s.transacaoBoleto,                             // T  - Transação Boleto
-    s.contaFavorecidaFraudster,                    // U  - Conta Favorecida Fraudster
+    sv(s.contaFavorecidaFraudster),                // U  - Conta Favorecida Fraudster
     s.subreasonVictim,                             // V  - Subreason Victim
     s.statusMed,                                   // W  - Status MED
     s.devolucao,                                   // X  - Devolução
@@ -165,17 +178,17 @@ export function formStateToRow(
     "",                                            // AN - Link GDrive Cliente (preenchido pelo UiPath)
     "",                                            // AO - Link GDrive BACEN   (preenchido pelo UiPath)
     "",                                            // AP - Nomes Arquivos      (preenchido pelo UiPath)
-    s.savingsAccountId.trim(),                     // AQ - Savings Account ID
+    sv(s.savingsAccountId.trim()),                 // AQ - Savings Account ID
     formatDateTimeSheet(s.dtNotificacaoEnviadaCliente), // AR - Dt Notificação Enviada Cliente
     formatDateTimeSheet(s.dtContestacaoZendeskInicio),  // AS - Dt Contestação Zendesk Início
     formatDateTimeSheet(s.dtContestacaoZendeskFim),     // AT - Dt Contestação Zendesk Fim
-    s.ticketZendeskContestacao.trim(),             // AU - Ticket Zendesk Contestação
+    sv(s.ticketZendeskContestacao.trim()),          // AU - Ticket Zendesk Contestação
     formatDateTimeSheet(s.dtPixEnviadoInicio),      // AV - Dt PIX Enviado Início
     formatDateTimeSheet(s.dtPixEnviadoFim),         // AW - Dt PIX Enviado Fim
-    s.listaPixEnviado.trim(),                      // AX - Lista PIX Enviado
+    sv(s.listaPixEnviado.trim()),                  // AX - Lista PIX Enviado
     formatDateTimeSheet(s.dtPixRecebidoInicio),     // AY - Dt PIX Recebido Início
     formatDateTimeSheet(s.dtPixRecebidoFim),        // AZ - Dt PIX Recebido Fim
-    s.listaPixRecebido.trim(),                     // BA - Lista PIX Recebido
+    sv(s.listaPixRecebido.trim()),                 // BA - Lista PIX Recebido
   ];
 }
 
@@ -293,7 +306,7 @@ export async function updateCell(
   const range = encodeURIComponent(`${SHEET_TAB}!${a1}`);
   await sheetsFetch(
     accessToken,
-    `/${spreadsheetId}/values/${range}?valueInputOption=USER_ENTERED`,
+    `/${spreadsheetId}/values/${range}?valueInputOption=RAW`,
     {
       method: "PUT",
       body: JSON.stringify({ values: [[value]] }),

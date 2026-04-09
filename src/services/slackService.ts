@@ -1,4 +1,5 @@
 import { getSpreadsheetId } from "../lib/spreadsheetConfig";
+import { fetchWithTimeout } from "../lib/fetchWithTimeout";
 
 const MEMBERS_RANGE = "Equipe!A2:G100";
 const LAST_SYNC_RANGE = "Equipe!H1";
@@ -26,9 +27,9 @@ async function sheetsGet(
   range: string,
 ): Promise<string[][]> {
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(range)}`;
-  const res = await fetch(url, {
+  const res = await fetchWithTimeout(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
-  });
+  }, 10_000);
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`Sheets API ${res.status}: ${text || res.statusText}`);
@@ -91,9 +92,9 @@ export async function syncTeamNow(): Promise<void> {
   }
 
   const scriptPath = SYNC_URL.replace("https://script.google.com", "");
-  const res = await fetch(`/slack-proxy${scriptPath}?action=sync`, {
+  const res = await fetchWithTimeout(`/slack-proxy${scriptPath}?action=sync`, {
     headers: { "X-Proxy-Token": SYNC_TOKEN || "" },
-  });
+  }, 10_000);
   const data = await res.json();
 
   if (!data.ok) throw new Error(data.error || "Falha na sincronização");

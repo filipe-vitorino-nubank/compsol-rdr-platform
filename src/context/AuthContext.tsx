@@ -7,7 +7,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { STORAGE_GOOGLE_USER } from "../lib/storageKeys";
 import { useModal } from "./ModalContext";
 
 export type GoogleUserProfile = {
@@ -38,23 +37,18 @@ declare global {
 }
 
 type AuthContextValue = {
-  token: string | null;
-  tokenExpiresAt: number | null;
-  /** Perfil da conta Google após login (email / nome / foto). */
+  isAuthenticated: boolean;
   googleUser: GoogleUserProfile | null;
   scriptReady: boolean;
-  /** Abre o fluxo OAuth do Google (mesmo botão para “Entrar” e renovar token). */
   signInWithGoogle: (opts?: { promptConsent?: boolean }) => void;
   requestAccessToken: () => void;
   getAccessTokenForSheets: (opts?: { interactive?: boolean }) => Promise<string>;
-  /** Força popup de seleção de conta (prompt: select_account). */
   refreshLogin: () => void;
   signOut: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-/** Sheets + identidade (para exibir quem está autenticado). */
 const SCOPES = [
   "https://www.googleapis.com/auth/spreadsheets",
   "https://www.googleapis.com/auth/cloud-platform",
@@ -79,11 +73,14 @@ async function fetchGoogleUserProfile(accessToken: string): Promise<GoogleUserPr
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [scriptReady, setScriptReady] = useState(false);
-  const [token, setToken] = useState<string | null>(null);
-  const [tokenExpiresAt, setTokenExpiresAt] = useState<number | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [googleUser, setGoogleUser] = useState<GoogleUserProfile | null>(null);
   const modal = useModal();
+
   const tokenRef = useRef<string | null>(null);
+  const tokenExpiresAtRef = useRef<number | null>(null);
+  const isRefreshingRef = useRef(false);
+  const refreshPromiseRef = useRef<Promise<string> | null>(null);
 
   useEffect(() => {
     if (document.querySelector('script[data-gis="1"]')) {
@@ -100,11 +97,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const clearAuth = useCallback(() => {
-    setToken(null);
     tokenRef.current = null;
-    setTokenExpiresAt(null);
+    tokenExpiresAtRef.current = null;
+    setIsAuthenticated(false);
     setGoogleUser(null);
-    localStorage.removeItem(STORAGE_GOOGLE_USER);
   }, []);
 
   const refreshProfile = useCallback(
@@ -122,7 +118,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      localStorage.setItem(STORAGE_GOOGLE_USER, JSON.stringify(p));
       setGoogleUser(p);
     },
     [clearAuth, modal],
@@ -131,13 +126,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const persistToken = useCallback(
     (accessToken: string, expiresIn: number) => {
       const exp = Date.now() + expiresIn * 1000;
-      setToken(accessToken);
       tokenRef.current = accessToken;
-      setTokenExpiresAt(exp);
+      tokenExpiresAtRef.current = exp;
+      setIsAuthenticated(true);
       void refreshProfile(accessToken);
     },
     [refreshProfile],
   );
+
+  const isTokenExpired = useCallback(() => {
+    if (!tokenExpiresAtRef.current) return true;
+    return Date.now() >= tokenExpiresAtRef.current;
+  }, []);
 
   const signInWithGoogle = useCallback(
     (opts?: { promptConsent?: boolean }) => {
@@ -165,7 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         prompt: opts?.promptConsent ? "consent" : "",
       });
     },
-    [persistToken]
+    [persistToken],
   );
 
   const requestAccessToken = useCallback(() => {
@@ -173,20 +173,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [signInWithGoogle]);
 
   const getAccessTokenForSheets = useCallback(
-    async (opts?: { interactive?: boolean }) => {
+    async (opts?: { interactive?: boolean }): Promise<string> => {
       const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
       if (!clientId) {
         throw new Error(
-          "Configure VITE_GOOGLE_CLIENT_ID no arquivo .env (veja .env.example)."
+          "Configure VITE_GOOGLE_CLIENT_ID no arquivo .env (veja .env.example).",
         );
       }
       if (!window.google?.accounts?.oauth2) {
         throw new Error("Script do Google Identity ainda não carregou. Tente novamente.");
       }
-      if (tokenRef.current && !opts?.interactive) {
+
+      if (tokenRef.current && !isTokenExpired() && !opts?.interactive) {
         return tokenRef.current;
       }
-      return new Promise<string>((resolve, reject) => {
+
+      if (isRefreshingRef.current && refreshPromiseRef.current) {
+        return refreshPromiseRef.current;
+      }
+
+      isRefreshingRef.current = true;
+      refreshPromiseRef.current = new Promise<string>((resolve, reject) => {
         const client = window.google!.accounts.oauth2.initTokenClient({
           client_id: clientId,
           scope: SCOPES,
@@ -206,9 +213,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         client.requestAccessToken({
           prompt: opts?.interactive ? "consent" : "",
         });
+      }).finally(() => {
+        isRefreshingRef.current = false;
+        refreshPromiseRef.current = null;
       });
+
+      return refreshPromiseRef.current;
     },
-    [persistToken]
+    [persistToken, isTokenExpired],
   );
 
   const refreshLogin = useCallback(() => {
@@ -219,7 +231,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       client_id: clientId,
       scope: SCOPES,
       callback: (resp) => {
-        if (resp.error) { console.error("Refresh login failed:", resp.error); return; }
+        if (resp.error) {
+          console.error("Refresh login failed:", resp.error);
+          return;
+        }
         if (resp.access_token && resp.expires_in) persistToken(resp.access_token, resp.expires_in);
       },
     });
@@ -239,8 +254,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo(
     () => ({
-      token,
-      tokenExpiresAt,
+      isAuthenticated,
       googleUser,
       scriptReady,
       signInWithGoogle,
@@ -250,8 +264,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signOut,
     }),
     [
-      token,
-      tokenExpiresAt,
+      isAuthenticated,
       googleUser,
       scriptReady,
       signInWithGoogle,
@@ -259,7 +272,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       getAccessTokenForSheets,
       refreshLogin,
       signOut,
-    ]
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useModal } from "../../context/ModalContext";
 import { formatDateDisplay } from "../../utils/formatDate";
@@ -205,6 +205,7 @@ function Step1DadosGerais() {
             className="input-field font-mono"
             value={state.ticketZendesk}
             onChange={(ev) => setField("ticketZendesk", ev.target.value)}
+            maxLength={50}
           />
         </Field>
       </div>
@@ -215,6 +216,7 @@ function Step1DadosGerais() {
             className={`input-field font-mono ${e.protocoloRdr ? "input-field--error" : ""}`}
             value={state.protocoloRdr}
             onChange={(ev) => setField("protocoloRdr", ev.target.value)}
+            maxLength={50}
           />
         </Field>
       </div>
@@ -226,6 +228,7 @@ function Step1DadosGerais() {
             value={state.savingsAccountId}
             onChange={(ev) => setField("savingsAccountId", ev.target.value)}
             placeholder="Ex: 12345678"
+            maxLength={30}
           />
         </Field>
       </div>
@@ -643,7 +646,7 @@ function Step2Trilha() {
         </div>
         <div data-field="ticketZendeskContestacao">
           <Field label={t("step2.ticketZdContestacao")}>
-            <input className="input-field font-mono" value={state.ticketZendeskContestacao} onChange={(ev) => setField("ticketZendeskContestacao", ev.target.value)} placeholder="Ex: 117867560" />
+            <input className="input-field font-mono" value={state.ticketZendeskContestacao} onChange={(ev) => setField("ticketZendeskContestacao", ev.target.value)} placeholder="Ex: 117867560" maxLength={50} />
           </Field>
         </div>
         <div data-field="dtPixEnviadoInicio">
@@ -658,7 +661,10 @@ function Step2Trilha() {
         </div>
         <div className="sm:col-span-2" data-field="listaPixEnviado">
           <Field label={t("step2.listaPixEnviado")} hint={t("step2.listaPixHint")}>
-            <textarea className="input-field" rows={2} value={state.listaPixEnviado} onChange={(ev) => setField("listaPixEnviado", ev.target.value)} placeholder="Ex: id1 | id2 | id3" />
+            <textarea className="input-field" rows={2} value={state.listaPixEnviado} onChange={(ev) => setField("listaPixEnviado", ev.target.value)} placeholder="Ex: id1 | id2 | id3" maxLength={5000} />
+            <span style={{ fontSize: 11, color: "var(--text-muted)", float: "right", marginTop: 2 }}>
+              {(state.listaPixEnviado || "").length}/5000
+            </span>
           </Field>
         </div>
         <div data-field="dtPixRecebidoInicio">
@@ -673,7 +679,10 @@ function Step2Trilha() {
         </div>
         <div className="sm:col-span-2" data-field="listaPixRecebido">
           <Field label={t("step2.listaPixRecebido")} hint={t("step2.listaPixHint")}>
-            <textarea className="input-field" rows={2} value={state.listaPixRecebido} onChange={(ev) => setField("listaPixRecebido", ev.target.value)} placeholder="Ex: id1 | id2 | id3" />
+            <textarea className="input-field" rows={2} value={state.listaPixRecebido} onChange={(ev) => setField("listaPixRecebido", ev.target.value)} placeholder="Ex: id1 | id2 | id3" maxLength={5000} />
+            <span style={{ fontSize: 11, color: "var(--text-muted)", float: "right", marginTop: 2 }}>
+              {(state.listaPixRecebido || "").length}/5000
+            </span>
           </Field>
         </div>
       </div>
@@ -902,7 +911,7 @@ function CheckCircleIcon() {
 
 export function RdrRequestForm() {
   const { state, setErrors, reset } = useFormContext();
-  const { token, getAccessTokenForSheets, scriptReady, signInWithGoogle } = useAuth();
+  const { isAuthenticated, getAccessTokenForSheets, scriptReady, signInWithGoogle } = useAuth();
   const { showToast } = useToast();
   const { t } = useLanguage();
   const modal = useModal();
@@ -915,15 +924,16 @@ export function RdrRequestForm() {
   const [generatedId, setGeneratedId] = useState("");
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [waitingForAuth, setWaitingForAuth] = useState(false);
+  const isSubmittingRef = useRef(false);
 
   useEffect(() => {
-    if (waitingForAuth && token) {
+    if (waitingForAuth && isAuthenticated) {
       setWaitingForAuth(false);
       setSlideDir("right");
       setStep((s) => Math.min(s + 1, 3) as 1 | 2 | 3);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }, [waitingForAuth, token]);
+  }, [waitingForAuth, isAuthenticated]);
 
   const goNext = () => {
     const validator = step === 1 ? validateStep1 : validateStep2;
@@ -945,7 +955,7 @@ export function RdrRequestForm() {
     }
     setErrors({});
 
-    if (step === 1 && !token) {
+    if (step === 1 && !isAuthenticated) {
       setWaitingForAuth(true);
       modal.showModal({
         type: "info",
@@ -973,7 +983,7 @@ export function RdrRequestForm() {
   };
 
   const handleSubmit = async () => {
-    if (!confirmed) return;
+    if (isSubmittingRef.current || !confirmed || overlay !== "hidden") return;
     if (isMissingCredentials()) {
       setShowConfigModal(true);
       return;
@@ -982,6 +992,7 @@ export function RdrRequestForm() {
       showToast(t("auth.waitScript"), "error");
       return;
     }
+    isSubmittingRef.current = true;
     setOverlay("loading");
     try {
       const accessToken = await getAccessTokenForSheets({ interactive: false }).catch(() =>
@@ -1011,6 +1022,8 @@ export function RdrRequestForm() {
       } else {
         showToast(msg || t("submit.genericError"), "error");
       }
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 

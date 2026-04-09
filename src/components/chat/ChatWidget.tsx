@@ -55,7 +55,7 @@ export default function ChatWidget() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const attachMenuRef = useRef<HTMLDivElement>(null);
-  const { token } = useAuth();
+  const { isAuthenticated, getAccessTokenForSheets } = useAuth();
   const feedbackModal = useModal();
 
   useEffect(() => {
@@ -132,6 +132,8 @@ export default function ChatWidget() {
     setShowAttachMenu(false);
 
     const loadAndPick = async () => {
+      const accessToken = await getAccessTokenForSheets({ interactive: false });
+
       await new Promise<void>((resolve) => {
         if ((window as any).gapi?.client) {
           resolve();
@@ -143,14 +145,14 @@ export default function ChatWidget() {
       const google = (window as any).google;
       const picker = new google.picker.PickerBuilder()
         .addView(google.picker.ViewId.DOCS)
-        .setOAuthToken(token)
+        .setOAuthToken(accessToken)
         .setCallback(async (data: { action: string; docs?: { id: string; name: string; mimeType: string }[] }) => {
           if (data.action === google.picker.Action.PICKED && data.docs?.[0]) {
             const doc = data.docs[0];
             try {
               const res = await fetch(
                 `https://www.googleapis.com/drive/v3/files/${doc.id}?alt=media`,
-                { headers: { Authorization: `Bearer ${token}` } },
+                { headers: { Authorization: `Bearer ${accessToken}` } },
               );
               const blob = await res.blob();
               const reader = new FileReader();
@@ -190,7 +192,8 @@ export default function ChatWidget() {
     setLoading(true);
 
     try {
-      const reply = await sendGeminiMessage(next, usePageContext, token!);
+      const accessToken = await getAccessTokenForSheets({ interactive: false });
+      const reply = await sendGeminiMessage(next, usePageContext, accessToken);
       setMessages((prev) => [...prev, { role: "model", content: reply }]);
     } catch {
       setMessages((prev) => [
@@ -263,7 +266,7 @@ export default function ChatWidget() {
                 type="button"
                 className="chat-selector-btn"
                 onClick={() => setMode("gemini")}
-                disabled={!token}
+                disabled={!isAuthenticated}
               >
                 <div className="chat-selector-icon gemini-icon">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -282,7 +285,7 @@ export default function ChatWidget() {
                 <div className="chat-selector-info">
                   <span className="chat-selector-name">Gemini</span>
                   <span className="chat-selector-desc">
-                    {token ? "Chat com IA — contexto COMPSOL disponível" : "Faça login para usar"}
+                    {isAuthenticated ? "Chat com IA — contexto COMPSOL disponível" : "Faça login para usar"}
                   </span>
                 </div>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -533,7 +536,7 @@ export default function ChatWidget() {
                           type="button"
                           className="chat-attach-option"
                           onClick={handleGoogleDrivePick}
-                          disabled={!token}
+                          disabled={!isAuthenticated}
                         >
                           <div className="attach-option-icon" style={{ background: "rgba(66,133,244,0.1)" }}>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4285F4" strokeWidth="2">

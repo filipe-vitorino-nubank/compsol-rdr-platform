@@ -36,7 +36,7 @@ export function AppLayout() {
 
   const {
     googleUser,
-    token,
+    isAuthenticated,
     scriptReady,
     signInWithGoogle,
     refreshLogin,
@@ -281,7 +281,7 @@ export function AppLayout() {
 
         {/* Bottom area */}
         <div className="border-t border-[var(--sidebar-border)] p-2">
-          {token && googleUser ? (
+          {isAuthenticated && googleUser ? (
             <div className="profile-menu-wrapper" ref={menuRef}>
               {/* Dropdown — always via portal for reliable positioning */}
               {menuOpen && createPortal(
@@ -342,7 +342,7 @@ export function AppLayout() {
                 {!sidebarOpen && !menuOpen && <SidebarTooltip label={displayName} />}
               </div>
             </div>
-          ) : token && !googleUser ? (
+          ) : isAuthenticated && !googleUser ? (
             <div className="mb-2 rounded-lg border border-[var(--sidebar-border)] bg-[rgba(255,255,255,0.04)] px-2 py-3 text-center">
               <p className="text-[11px] text-[var(--sidebar-text-muted)]">{t("auth.loadingAccount")}</p>
               {sidebarOpen ? (

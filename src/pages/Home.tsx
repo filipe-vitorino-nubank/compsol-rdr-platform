@@ -1,7 +1,19 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export function Home() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated, scriptReady, signInWithGoogle } = useAuth();
+
+  const requireLogin = (location.state as { requireLogin?: boolean } | null)?.requireLogin;
+
+  useEffect(() => {
+    if (requireLogin && !isAuthenticated && scriptReady) {
+      signInWithGoogle();
+    }
+  }, [requireLogin, isAuthenticated, scriptReady, signInWithGoogle]);
 
   const openChat = () => {
     const fab = document.querySelector(".chat-fab") as HTMLButtonElement | null;

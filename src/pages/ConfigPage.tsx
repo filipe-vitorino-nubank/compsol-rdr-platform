@@ -11,7 +11,7 @@ export function ConfigPage() {
   const [id, setId] = useState("");
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState("");
-  const { token, googleUser, scriptReady, signInWithGoogle, signOut, getAccessTokenForSheets } = useAuth();
+  const { isAuthenticated, googleUser, scriptReady, signInWithGoogle, signOut, getAccessTokenForSheets } = useAuth();
   const { showToast } = useToast();
   const { t } = useLanguage();
 
@@ -20,12 +20,12 @@ export function ConfigPage() {
   }, []);
 
   useEffect(() => {
-    if (!token) return;
+    if (!isAuthenticated) return;
     getAccessTokenForSheets({ interactive: false })
       .then((tk) => fetchLastSync(tk))
       .then(setLastSync)
       .catch(() => {});
-  }, [token, getAccessTokenForSheets]);
+  }, [isAuthenticated, getAccessTokenForSheets]);
 
   const handleTeamSync = async () => {
     setSyncing(true);
@@ -100,16 +100,16 @@ export function ConfigPage() {
           >
             {t("auth.signInRenew")}
           </Button>
-          <Button type="button" variant="ghost" onClick={signOut} disabled={!token}>
+          <Button type="button" variant="ghost" onClick={signOut} disabled={!isAuthenticated}>
             {t("auth.signOutAccount")}
           </Button>
         </div>
-        {token && googleUser ? (
+        {isAuthenticated && googleUser ? (
           <p className="mt-3 text-xs text-emerald-400/90">
             {t("auth.connectedAs")} <strong className="text-ink">{googleUser.email}</strong>
             {googleUser.name ? ` (${googleUser.name})` : ""}.
           </p>
-        ) : token ? (
+        ) : isAuthenticated ? (
           <p className="mt-3 text-xs text-emerald-400/90">{t("auth.activeSession")}</p>
         ) : (
           <p className="mt-3 text-xs text-ink-subtle">{t("auth.noSession")}</p>
@@ -125,7 +125,7 @@ export function ConfigPage() {
           <Button
             type="button"
             onClick={handleTeamSync}
-            disabled={syncing || !token}
+            disabled={syncing || !isAuthenticated}
           >
             <span className="inline-flex items-center gap-2">
               <svg
