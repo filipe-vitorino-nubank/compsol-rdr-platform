@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mapa Neural — RDR Platform</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a0f;
+      font-family: 'Segoe UI', sans-serif;
+      overflow: hidden;
+      color: #e0e0ff;
+    }
+
+    #canvas { width: 100vw; height: 100vh; }
+
+    .node circle {
+      stroke-width: 2;
+      cursor: pointer;
+      transition: r 0.2s;
+      filter: drop-shadow(0 0 6px currentColor);
+    }
+
+    .node circle:hover { filter: drop-shadow(0 0 16px currentColor); }
+
+    .node text {
+      pointer-events: none;
+      font-size: 11px;
+      fill: #e0e0ff;
+      text-shadow: 0 0 6px #000, 0 0 12px #000;
+      font-weight: 500;
+    }
+
+    .link {
+      stroke-opacity: 0.4;
+      stroke-width: 1.5;
+    }
+
+    .link.highlight { stroke-opacity: 1; stroke-width: 2.5; }
+
+    .node.dimmed circle { opacity: 0.15; }
+    .node.dimmed text { opacity: 0.1; }
+    .link.dimmed { stroke-opacity: 0.04; }
+
+    /* Tooltip */
+    #tooltip {
+      position: fixed;
+      background: rgba(10,10,20,0.92);
+      border: 1px solid #5533ff88;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 13px;
+      pointer-events: none;
+      display: none;
+      max-width: 260px;
+      line-height: 1.6;
+      backdrop-filter: blur(8px);
+      z-index: 100;
+    }
+    #tooltip strong { color: #a78bfa; font-size: 14px; display: block; margin-bottom: 4px; }
+    #tooltip span { color: #94a3b8; }
+
+    /* Legend */
+    #legend {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      background: rgba(10,10,20,0.85);
+      border: 1px solid #ffffff18;
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 12px;
+      backdrop-filter: blur(8px);
+    }
+    #legend h4 { color: #a78bfa; margin-bottom: 10px; font-size: 13px; letter-spacing: 0.5px; }
+    .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+    /* Header */
+    #header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      padding: 16px 24px;
+      background: linear-gradient(to bottom, rgba(10,10,20,0.95), transparent);
+      pointer-events: none;
+    }
+    #header h1 { font-size: 18px; color: #a78bfa; font-weight: 600; letter-spacing: 0.5px; }
+    #header p { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+    /* Controls */
+    #controls {
+      position: fixed;
+      top: 70px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    #controls button {
+      background: rgba(10,10,20,0.85);
+      border: 1px solid #ffffff18;
+      border-radius: 8px;
+      color: #a78bfa;
+      padding: 8px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: border-color 0.2s;
+    }
+    #controls button:hover { border-color: #a78bfa88; }
+
+    /* Pulse animation for central node */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    .pulse { animation: pulse 2.5s ease-in-out infinite; }
+
+    /* Particle/flow animation on edges */
+    .flow-particle {
+      fill: #a78bfa;
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+
+<div id="header">
+  <h1>⬡ Mapa Neural — COMPSOL RDR Platform</h1>
+  <p>Clique em um nó para explorar conexões · Scroll para zoom · Arraste para mover</p>
+</div>
+
+<div id="controls">
+  <button onclick="resetZoom()">⊙ Centralizar</button>
+  <button onclick="toggleLabels()">⊞ Labels</button>
+</div>
+
+<div id="legend">
+  <h4>Categorias</h4>
+  <div class="legend-item"><div class="legend-dot" style="background:#a78bfa"></div> Plataforma RDR</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#38bdf8"></div> UiPath / Bot</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#34d399"></div> Integrações Google</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#fb923c"></div> Usuários / Squads</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f472b6"></div> Dados / Dossiê</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#facc15"></div> Fluxo / Status</div>
+</div>
+
+<div id="tooltip"></div>
+<svg id="canvas"></svg>
+
+<script>
+const COLOR = {
+  platform:    '#a78bfa',
+  uipath:      '#38bdf8',
+  google:      '#34d399',
+  user:        '#fb923c',
+  data:        '#f472b6',
+  flow:        '#facc15',
+};
+
+const nodes = [
+  // === PLATAFORMA ===
+  { id: 'rdr',         label: 'RDR Platform',        group: 'platform', r: 28, desc: 'Plataforma web React + TypeScript. Hub central para solicitações de dossiê RDR ao Banco Central.' },
+  { id: 'form',        label: 'Formulário\n3 Etapas', group: 'platform', r: 18, desc: 'Wizard com 53 colunas. Coleta dados do caso, squad, tipo de investigação e datas.' },
+  { id: 'dashboard',   label: 'Dashboard',            group: 'platform', r: 17, desc: 'Painel de monitoramento em tempo real. Polling a cada 30s. Filtros por status, squad, prioridade.' },
+  { id: 'chat_ai',     label: 'Chat IA\n(Gemini)',    group: 'platform', r: 15, desc: 'Widget de IA contextual com Google Gemini 2.0 Flash. Suporta upload de imagens, PDFs e áudio.' },
+  { id: 'config',      label: 'Configurações',        group: 'platform', r: 13, desc: 'Gerenciamento de Sheets ID, sync do Slack, timestamp de última sincronização.' },
+
+  // === UIPATH ===
+  { id: 'orchestrator',label: 'UiPath\nOrchestrator', group: 'uipath',   r: 22, desc: 'Gerencia e dispara os bots Performer. Monitora filas de trabalho.' },
+  { id: 'performer',   label: 'Performer\nBot',       group: 'uipath',   r: 20, desc: 'Bot principal. Lê Sheets → captura widgets → gera .DOCX → faz upload no Drive → atualiza status.' },
+  { id: 'dispatcher',  label: 'Dispatcher',           group: 'uipath',   r: 14, desc: 'Valida solicitações antes de enfileirar para o Performer.' },
+  { id: 'widget',      label: 'Captura\nWidgets',     group: 'uipath',   r: 14, desc: 'Bot captura evidências visuais dos sistemas internos (ex-Shuffle). Screenshots e dados estruturados.' },
+  { id: 'docx',        label: 'Geração\n.DOCX',       group: 'uipath',   r: 14, desc: 'Monta o dossiê Word com evidências capturadas, datas, IDs e dados do caso.' },
+  { id: 'upload',      label: 'Upload\nDrive',        group: 'uipath',   r: 13, desc: 'Envia o .DOCX gerado para pasta no Google Drive e escreve os links de volta no Sheets (col. AN, AO, AP).' },
+  { id: 'slack_notif', label: 'Notificação\nSlack',   group: 'uipath',   r: 12, desc: 'Bot envia notificação no Slack quando o dossiê está pronto.' },
+
+  // === GOOGLE INTEGRATIONS ===
+  { id: 'sheets',      label: 'Google Sheets',        group: 'google',   r: 20, desc: '53 colunas (A→BA). Backbone de dados. Append-only writes com proteção contra injeção de fórmulas.' },
+  { id: 'drive',       label: 'Google Drive',         group: 'google',   r: 17, desc: 'Armazena dossiês .DOCX. Pasta: "RDR - Ops Defense - Complaint Solutions". Links em colunas AN/AO.' },
+  { id: 'oauth',       label: 'Google OAuth',         group: 'google',   r: 14, desc: 'Autenticação restrita a @nubank.com.br. Token com refresh automático e backoff exponencial.' },
+  { id: 'vertex',      label: 'Vertex AI\n(Gemini)',  group: 'google',   r: 14, desc: 'Endpoint generateContent com sistema de prompts RDR. Modelo: gemini-2.0-flash-001.' },
+  { id: 'apps_script', label: 'Apps Script\n(Proxy)', group: 'google',   r: 12, desc: 'Proxy CORS para Slack API. Roda na infraestrutura do Google. Sincroniza membros do time.' },
+
+  // === USUÁRIOS ===
+  { id: 'analista',    label: 'Analista RDR',         group: 'user',     r: 17, desc: '47 analistas. Antes: 21min por dossiê manual. Agora: submete formulário e acompanha no dashboard.' },
+  { id: 'cs',          label: 'Squad CS',             group: 'user',     r: 14, desc: 'Customer Security. Casos de autorização de dispositivo, fallback email/app, device revogado.' },
+  { id: 'invops',      label: 'Squad Inv Ops',        group: 'user',     r: 14, desc: 'Investigation Operations. 6.278+ reclamações. Casos de vítima e fraudador — PIX, DICT, bloqueio cautelar.' },
+  { id: 'bacen',       label: 'Banco Central\n(BACEN)',group: 'user',    r: 15, desc: 'Destino regulatório. Recebe dossiê gerado como evidência de investigação de fraude.' },
+
+  // === DADOS ===
+  { id: 'dossie',      label: 'Dossiê RDR',           group: 'data',     r: 18, desc: 'Documento .DOCX com evidências, capturas de tela, datas e IDs do caso. Enviado ao BACEN.' },
+  { id: 'pix',         label: 'PIX',                  group: 'data',     r: 14, desc: 'Dados de transferências PIX: listas de IDs enviados/recebidos, datas início/fim (TP_START/END_DATE).' },
+  { id: 'dict',        label: 'DICT',                 group: 'data',     r: 13, desc: 'Marcação DICT: data, notificação cliente, status de contestação (DC_UPDATED_DATE, CM_NOTIFICATION_DATE).' },
+  { id: 'bloqueio',    label: 'Bloqueio\nCautelar',   group: 'data',     r: 12, desc: 'Bloqueio preventivo de conta. Datas: data_bloqueio_produtos, data_desbloqueio_conta, data_cancelamento_conta.' },
+  { id: 'evidencias',  label: 'Evidências',           group: 'data',     r: 14, desc: 'Conjunto de dados capturados: screenshots de widgets, logs de transações, registros DICT.' },
+
+  // === FLUXO / STATUS ===
+  { id: 'pendente',    label: 'Pendente',             group: 'flow',     r: 12, desc: 'Status inicial. Analista submeteu, aguardando dispatcher ou performer.' },
+  { id: 'em_analise',  label: 'Em Análise',           group: 'flow',     r: 12, desc: 'Performer processou e gerou o dossiê. Aguardando revisão do analista.' },
+  { id: 'concluido',   label: 'Concluído',            group: 'flow',     r: 12, desc: 'Analista revisou e aprovou o dossiê.' },
+  { id: 'cancelado',   label: 'Cancelado',            group: 'flow',     r: 11, desc: 'Solicitação cancelada pelo analista ou por erro no processamento.' },
+  { id: 'slack',       label: 'Slack',                group: 'flow',     r: 13, desc: 'Canal de comunicação do time. Notificações automáticas do bot e sync de membros.' },
+  { id: 'zendesk',     label: 'Zendesk',              group: 'flow',     r: 12, desc: 'Sistema de tickets. ID do ticket referenciado no formulário para rastreabilidade.' },
+];
+
+const links = [
+  // Plataforma → core
+  { source: 'rdr',         target: 'form' },
+  { source: 'rdr',         target: 'dashboard' },
+  { source: 'rdr',         target: 'chat_ai' },
+  { source: 'rdr',         target: 'config' },
+  { source: 'rdr',         target: 'oauth' },
+
+  // Formulário → squads
+  { source: 'form',        target: 'cs' },
+  { source: 'form',        target: 'invops' },
+  { source: 'form',        target: 'sheets' },
+  { source: 'form',        target: 'zendesk' },
+
+  // Analista
+  { source: 'analista',    target: 'form' },
+  { source: 'analista',    target: 'dashboard' },
+  { source: 'analista',    target: 'cs' },
+  { source: 'analista',    target: 'invops' },
+
+  // Dashboard → sheets → drive
+  { source: 'dashboard',   target: 'sheets' },
+  { source: 'dashboard',   target: 'drive' },
+
+  // UiPath flow
+  { source: 'orchestrator',target: 'performer' },
+  { source: 'orchestrator',target: 'dispatcher' },
+  { source: 'dispatcher',  target: 'sheets' },
+  { source: 'performer',   target: 'sheets' },
+  { source: 'performer',   target: 'widget' },
+  { source: 'performer',   target: 'docx' },
+  { source: 'performer',   target: 'upload' },
+  { source: 'performer',   target: 'slack_notif' },
+  { source: 'widget',      target: 'evidencias' },
+  { source: 'docx',        target: 'dossie' },
+  { source: 'upload',      target: 'drive' },
+  { source: 'upload',      target: 'sheets' },
+  { source: 'slack_notif', target: 'slack' },
+
+  // Google
+  { source: 'sheets',      target: 'drive' },
+  { source: 'chat_ai',     target: 'vertex' },
+  { source: 'config',      target: 'apps_script' },
+  { source: 'apps_script', target: 'slack' },
+
+  // Dados
+  { source: 'invops',      target: 'pix' },
+  { source: 'invops',      target: 'dict' },
+  { source: 'invops',      target: 'bloqueio' },
+  { source: 'pix',         target: 'evidencias' },
+  { source: 'dict',        target: 'evidencias' },
+  { source: 'bloqueio',    target: 'evidencias' },
+  { source: 'evidencias',  target: 'dossie' },
+  { source: 'dossie',      target: 'bacen' },
+
+  // Status flow
+  { source: 'sheets',      target: 'pendente' },
+  { source: 'pendente',    target: 'em_analise' },
+  { source: 'em_analise',  target: 'concluido' },
+  { source: 'em_analise',  target: 'cancelado' },
+  { source: 'performer',   target: 'em_analise' },
+  { source: 'analista',    target: 'concluido' },
+  { source: 'analista',    target: 'cancelado' },
+  { source: 'rdr',         target: 'orchestrator' },
+];
+
+// ——— D3 setup ———
+const svg = d3.select('#canvas');
+const width  = window.innerWidth;
+const height = window.innerHeight;
+svg.attr('viewBox', `0 0 ${width} ${height}`);
+
+const g = svg.append('g');
+
+// Zoom
+const zoom = d3.zoom()
+  .scaleExtent([0.2, 4])
+  .on('zoom', e => g.attr('transform', e.transform));
+svg.call(zoom);
+
+// Defs: gradients + glow filter
+const defs = svg.append('defs');
+
+// Glow filter
+const filter = defs.append('filter').attr('id', 'glow');
+filter.append('feGaussianBlur').attr('stdDeviation', '3.5').attr('result', 'coloredBlur');
+const feMerge = filter.append('feMerge');
+feMerge.append('feMergeNode').attr('in', 'coloredBlur');
+feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
+
+// Starfield background
+const starCount = 180;
+for (let i = 0; i < starCount; i++) {
+  g.append('circle')
+    .attr('cx', Math.random() * width * 2 - width * 0.5)
+    .attr('cy', Math.random() * height * 2 - height * 0.5)
+    .attr('r', Math.random() * 1.2)
+    .attr('fill', '#ffffff')
+    .attr('opacity', Math.random() * 0.4 + 0.05);
+}
+
+// Simulation
+const simulation = d3.forceSimulation(nodes)
+  .force('link',   d3.forceLink(links).id(d => d.id).distance(d => {
+    const s = d.source.r || 12, t = d.target.r || 12;
+    return (s + t) * 3.2;
+  }).strength(0.6))
+  .force('charge', d3.forceManyBody().strength(d => -d.r * 60))
+  .force('center', d3.forceCenter(width / 2, height / 2))
+  .force('collision', d3.forceCollide().radius(d => d.r + 18));
+
+// Links
+const linkEls = g.append('g').attr('class', 'links')
+  .selectAll('line')
+  .data(links)
+  .join('line')
+  .attr('class', 'link')
+  .attr('stroke', d => {
+    const sg = nodes.find(n => n.id === (d.source.id || d.source))?.group;
+    return COLOR[sg] || '#ffffff';
+  });
+
+// Nodes
+const nodeEls = g.append('g').attr('class', 'nodes')
+  .selectAll('g')
+  .data(nodes)
+  .join('g')
+  .attr('class', 'node')
+  .call(d3.drag()
+    .on('start', (e, d) => { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+    .on('drag',  (e, d) => { d.fx = e.x; d.fy = e.y; })
+    .on('end',   (e, d) => { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; })
+  )
+  .on('click', onNodeClick)
+  .on('mouseover', onMouseOver)
+  .on('mouseout',  onMouseOut);
+
+nodeEls.append('circle')
+  .attr('r', d => d.r)
+  .attr('fill', d => COLOR[d.group] + '22')
+  .attr('stroke', d => COLOR[d.group])
+  .attr('filter', 'url(#glow)')
+  .each(function(d) {
+    if (d.id === 'rdr') d3.select(this).classed('pulse', true);
+  });
+
+// Extra ring for central node
+nodeEls.filter(d => d.id === 'rdr')
+  .append('circle')
+  .attr('r', d => d.r + 8)
+  .attr('fill', 'none')
+  .attr('stroke', COLOR.platform)
+  .attr('stroke-width', 1)
+  .attr('opacity', 0.3)
+  .attr('filter', 'url(#glow)');
+
+nodeEls.append('text')
+  .attr('text-anchor', 'middle')
+  .attr('dy', d => d.r + 14)
+  .each(function(d) {
+    const lines = d.label.split('\n');
+    const el = d3.select(this);
+    lines.forEach((line, i) => {
+      el.append('tspan')
+        .attr('x', 0)
+        .attr('dy', i === 0 ? 0 : '1.1em')
+        .text(line);
+    });
+  });
+
+// Tick
+simulation.on('tick', () => {
+  linkEls
+    .attr('x1', d => d.source.x)
+    .attr('y1', d => d.source.y)
+    .attr('x2', d => d.target.x)
+    .attr('y2', d => d.target.y);
+
+  nodeEls.attr('transform', d => `translate(${d.x},${d.y})`);
+});
+
+// ——— Interactions ———
+const tooltip = document.getElementById('tooltip');
+let selectedNode = null;
+let labelsVisible = true;
+
+function onMouseOver(event, d) {
+  if (selectedNode) return;
+  tooltip.style.display = 'block';
+  tooltip.innerHTML = `<strong>${d.label.replace('\n', ' ')}</strong><span>${d.desc}</span>`;
+  tooltip.style.left = (event.clientX + 14) + 'px';
+  tooltip.style.top  = (event.clientY - 10) + 'px';
+}
+
+function onMouseOut() {
+  if (selectedNode) return;
+  tooltip.style.display = 'none';
+}
+
+function onNodeClick(event, d) {
+  event.stopPropagation();
+
+  if (selectedNode === d.id) {
+    clearHighlight();
+    return;
+  }
+
+  selectedNode = d.id;
+
+  const connectedIds = new Set([d.id]);
+  links.forEach(l => {
+    const sid = l.source.id || l.source;
+    const tid = l.target.id || l.target;
+    if (sid === d.id) connectedIds.add(tid);
+    if (tid === d.id) connectedIds.add(sid);
+  });
+
+  nodeEls.classed('dimmed', n => !connectedIds.has(n.id));
+  linkEls.classed('dimmed',   l => {
+    const sid = l.source.id || l.source;
+    const tid = l.target.id || l.target;
+    return !(sid === d.id || tid === d.id);
+  });
+  linkEls.classed('highlight', l => {
+    const sid = l.source.id || l.source;
+    const tid = l.target.id || l.target;
+    return sid === d.id || tid === d.id;
+  });
+
+  tooltip.style.display = 'block';
+  tooltip.innerHTML = `<strong>${d.label.replace('\n', ' ')}</strong><span>${d.desc}</span>`;
+  tooltip.style.left = (event.clientX + 14) + 'px';
+  tooltip.style.top  = (event.clientY - 10) + 'px';
+}
+
+svg.on('click', clearHighlight);
+
+function clearHighlight() {
+  selectedNode = null;
+  nodeEls.classed('dimmed', false);
+  linkEls.classed('dimmed', false).classed('highlight', false);
+  tooltip.style.display = 'none';
+}
+
+function resetZoom() {
+  svg.transition().duration(600).call(zoom.transform, d3.zoomIdentity);
+}
+
+function toggleLabels() {
+  labelsVisible = !labelsVisible;
+  nodeEls.selectAll('text').style('display', labelsVisible ? null : 'none');
+}
+
+// Resize
+window.addEventListener('resize', () => {
+  const w = window.innerWidth, h = window.innerHeight;
+  svg.attr('viewBox', `0 0 ${w} ${h}`);
+  simulation.force('center', d3.forceCenter(w / 2, h / 2)).alpha(0.3).restart();
+});
+</script>
+</body>
+</html>

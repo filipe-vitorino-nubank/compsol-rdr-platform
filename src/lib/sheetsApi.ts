@@ -137,7 +137,7 @@ export function formStateToRow(
     id,                                            // A  - ID
     formatDateBR(new Date()),                      // B  - Timestamp
     "Pendente",                                    // C  - Status
-    s.prioridade,                                  // D  - Prioridade
+    "",                                            // D  - Prioridade (hidden)
     s.emailSolicitante,                            // E  - Email Solicitante
     sv(s.cpfDemandante),                           // F  - CPF Demandante
     sv(s.cpfFraudador),                            // G  - CPF Fraudador
@@ -178,16 +178,16 @@ export function formStateToRow(
     "",                                            // AN - Link GDrive Cliente (preenchido pelo UiPath)
     "",                                            // AO - Link GDrive BACEN   (preenchido pelo UiPath)
     "",                                            // AP - Nomes Arquivos      (preenchido pelo UiPath)
-    sv(s.savingsAccountId.trim()),                 // AQ - Savings Account ID
-    formatDateTimeSheet(s.dtNotificacaoEnviadaCliente), // AR - Dt Notificação Enviada Cliente
+    "",                                            // AQ - Savings Account ID (hidden)
+    "",                                            // AR - Dt Notificação Enviada Cliente (hidden)
     formatDateTimeSheet(s.dtContestacaoZendeskInicio),  // AS - Dt Contestação Zendesk Início
     formatDateTimeSheet(s.dtContestacaoZendeskFim),     // AT - Dt Contestação Zendesk Fim
     sv(s.ticketZendeskContestacao.trim()),          // AU - Ticket Zendesk Contestação
-    formatDateTimeSheet(s.dtPixEnviadoInicio),      // AV - Dt PIX Enviado Início
-    formatDateTimeSheet(s.dtPixEnviadoFim),         // AW - Dt PIX Enviado Fim
+    "",                                            // AV - Dt PIX Enviado Início (hidden)
+    "",                                            // AW - Dt PIX Enviado Fim (hidden)
     sv(s.listaPixEnviado.trim()),                  // AX - Lista PIX Enviado
-    formatDateTimeSheet(s.dtPixRecebidoInicio),     // AY - Dt PIX Recebido Início
-    formatDateTimeSheet(s.dtPixRecebidoFim),        // AZ - Dt PIX Recebido Fim
+    "",                                            // AY - Dt PIX Recebido Início (hidden)
+    "",                                            // AZ - Dt PIX Recebido Fim (hidden)
     sv(s.listaPixRecebido.trim()),                 // BA - Lista PIX Recebido
   ];
 }

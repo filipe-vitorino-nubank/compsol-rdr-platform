@@ -162,7 +162,7 @@ export function AppLayout() {
   );
 
   return (
-    <div className="flex min-h-screen">
+    <div className="min-h-screen">
       <a
         href="#conteudo-principal"
         className="skip-link"
@@ -181,11 +181,11 @@ export function AppLayout() {
         initial={false}
         animate={{ width: sidebarOpen ? 260 : 72 }}
         transition={{ type: "spring", stiffness: 380, damping: 38 }}
-        className="sidebar-scope relative z-20 flex shrink-0 flex-col border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] shadow-[4px_0_24px_-8px_rgba(0,0,0,0.3)]"
+        className="sidebar-scope z-20 flex flex-col border-r border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] shadow-[4px_0_24px_-8px_rgba(0,0,0,0.3)]"
         aria-label={t("nav.mainNav")}
       >
         {/* Header */}
-        <div className="flex h-16 items-center gap-2 border-b border-[var(--sidebar-border)] px-4">
+        <div className="flex h-16 shrink-0 items-center gap-2 border-b border-[var(--sidebar-border)] px-4">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--purple-700)] text-xs font-bold text-white">
             C
           </div>
@@ -199,7 +199,7 @@ export function AppLayout() {
                 type="button"
                 className="sidebar-toggle-btn"
                 onClick={() => setSidebarOpen(false)}
-                title="Recolher sidebar"
+                title="Recolher menu"
                 style={{ marginTop: 2 }}
               >
                 <svg viewBox="64 64 896 896" width="13" height="13" fill="currentColor">
@@ -212,7 +212,7 @@ export function AppLayout() {
               type="button"
               className="sidebar-toggle-btn"
               onClick={() => setSidebarOpen(true)}
-              title="Expandir sidebar"
+                title="Expandir menu"
               style={{ margin: "0 auto" }}
             >
               <svg viewBox="64 64 896 896" width="13" height="13" fill="currentColor" style={{ transform: "scaleX(-1)" }}>
@@ -223,7 +223,7 @@ export function AppLayout() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex flex-1 flex-col gap-1 p-2">
+        <nav className="sidebar-nav flex flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden p-2">
           {nav.map((item) => (
             <NavLink
               key={item.to}
@@ -280,7 +280,7 @@ export function AppLayout() {
         </nav>
 
         {/* Bottom area */}
-        <div className="border-t border-[var(--sidebar-border)] p-2">
+        <div className="shrink-0 border-t border-[var(--sidebar-border)] p-2">
           {isAuthenticated && googleUser ? (
             <div className="profile-menu-wrapper" ref={menuRef}>
               {/* Dropdown — always via portal for reliable positioning */}
@@ -381,10 +381,13 @@ export function AppLayout() {
 
       </motion.aside>
 
-      <main
+      <motion.main
         id="conteudo-principal"
         tabIndex={-1}
-        className="min-w-0 flex-1 overflow-auto bg-[var(--color-bg)] outline-none"
+        initial={false}
+        animate={{ marginLeft: sidebarOpen ? 260 : 72 }}
+        transition={{ type: "spring", stiffness: 380, damping: 38 }}
+        className="min-h-screen overflow-auto bg-[var(--color-bg)] outline-none"
       >
         {isFullWidth ? (
           <Outlet />
@@ -393,7 +396,7 @@ export function AppLayout() {
             <Outlet />
           </div>
         )}
-      </main>
+      </motion.main>
 
       <ProfileDrawer open={profileDrawerOpen} onClose={() => setProfileDrawerOpen(false)} />
       <TeamDrawer open={teamDrawerOpen} onClose={() => setTeamDrawerOpen(false)} />

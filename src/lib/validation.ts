@@ -20,10 +20,8 @@ export function validateStep1(s: RdrFormState, t?: TFn): Record<string, string> 
     e.cpfFraudador = badCpf;
 
   if (!s.protocoloRdr) e.protocoloRdr = req;
-  if (!s.savingsAccountId.trim()) e.savingsAccountId = req;
   if (!s.instituicao) e.instituicao = req;
   if (!s.squad) e.squad = req;
-  if (!s.prioridade) e.prioridade = req;
   if (!s.dataPrimeiroContato) e.dataPrimeiroContato = req;
 
   return e;

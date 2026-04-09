@@ -8,7 +8,7 @@ export function Field({
   children,
   required,
 }: {
-  label: string;
+  label: ReactNode;
   error?: string;
   hint?: string;
   children: ReactNode;

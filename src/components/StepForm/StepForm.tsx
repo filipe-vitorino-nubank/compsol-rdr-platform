@@ -17,6 +17,7 @@ import {
 } from "../../lib/sheetsApi";
 import { getSpreadsheetId } from "../../lib/spreadsheetConfig";
 import { isMissingCredentials } from "../../config/env";
+import { FieldTooltip } from "./FieldTooltip";
 import {
   INSTITUICAO_OPTIONS,
   REASON_CS_OPTIONS,
@@ -36,7 +37,6 @@ import {
   type Devolucao,
   type SubreasonFraudster,
   type SimNao,
-  type RdrPrioridade,
   type RdrFormState,
 } from "../../types/form";
 
@@ -172,7 +172,7 @@ function Step1DadosGerais() {
       </div>
 
       <div data-field="cpfDemandante">
-        <Field label={t("step1.cpfDemandante")} error={e.cpfDemandante} required>
+        <Field label={<>{t("step1.cpfDemandante")}<FieldTooltip text={t("tooltip.cpfDemandante")} /></>} error={e.cpfDemandante} required>
           <input
             className={`input-field font-mono ${e.cpfDemandante ? "input-field--error" : ""}`}
             value={state.cpfDemandante}
@@ -186,7 +186,7 @@ function Step1DadosGerais() {
       </div>
 
       <div data-field="cpfFraudador">
-        <Field label={t("step1.cpfFraudador")} error={e.cpfFraudador}>
+        <Field label={<>{t("step1.cpfFraudador")}<FieldTooltip text={t("tooltip.cpfFraudador")} /></>} error={e.cpfFraudador}>
           <input
             className={`input-field font-mono ${e.cpfFraudador ? "input-field--error" : ""}`}
             value={state.cpfFraudador}
@@ -200,7 +200,7 @@ function Step1DadosGerais() {
       </div>
 
       <div data-field="ticketZendesk">
-        <Field label={t("step1.ticketZendesk")}>
+        <Field label={<>{t("step1.ticketZendesk")}<FieldTooltip text={t("tooltip.ticketZendesk")} /></>}>
           <input
             className="input-field font-mono"
             value={state.ticketZendesk}
@@ -211,7 +211,7 @@ function Step1DadosGerais() {
       </div>
 
       <div data-field="protocoloRdr">
-        <Field label={t("step1.protocoloRdr")} error={e.protocoloRdr} required>
+        <Field label={<>{t("step1.protocoloRdr")}<FieldTooltip text={t("tooltip.protocoloRdr")} /></>} error={e.protocoloRdr} required>
           <input
             className={`input-field font-mono ${e.protocoloRdr ? "input-field--error" : ""}`}
             value={state.protocoloRdr}
@@ -221,20 +221,8 @@ function Step1DadosGerais() {
         </Field>
       </div>
 
-      <div data-field="savingsAccountId">
-        <Field label={t("step1.savingsAccountId")} error={e.savingsAccountId} required>
-          <input
-            className={`input-field font-mono ${e.savingsAccountId ? "input-field--error" : ""}`}
-            value={state.savingsAccountId}
-            onChange={(ev) => setField("savingsAccountId", ev.target.value)}
-            placeholder="Ex: 12345678"
-            maxLength={30}
-          />
-        </Field>
-      </div>
-
       <div className="sm:col-span-2" data-field="instituicao">
-        <Field label={t("step1.instituicao")} error={e.instituicao} required>
+        <Field label={<>{t("step1.instituicao")}<FieldTooltip text={t("tooltip.instituicao")} /></>} error={e.instituicao} required>
           <select
             className={`input-field ${e.instituicao ? "input-field--error" : ""}`}
             value={state.instituicao}
@@ -249,7 +237,7 @@ function Step1DadosGerais() {
       </div>
 
       <div data-field="squad">
-        <Field label={t("step1.squad")} error={e.squad} required>
+        <Field label={<>{t("step1.squad")}<FieldTooltip text={t("tooltip.squad")} /></>} error={e.squad} required>
           <select
             className={`input-field ${e.squad ? "input-field--error" : ""}`}
             value={state.squad}
@@ -262,17 +250,8 @@ function Step1DadosGerais() {
         </Field>
       </div>
 
-      <div data-field="prioridade">
-        <Field label={t("priority.label")} error={e.prioridade} required>
-          <PrioritySelector
-            value={state.prioridade}
-            onChange={(v) => setField("prioridade", v)}
-          />
-        </Field>
-      </div>
-
       <div data-field="dataPrimeiroContato">
-        <Field label={t("step1.dataPrimeiroContato")} error={e.dataPrimeiroContato} required>
+        <Field label={<>{t("step1.dataPrimeiroContato")}<FieldTooltip text={t("tooltip.dataPrimeiroContato")} /></>} error={e.dataPrimeiroContato} required>
           <input
             type="date"
             className={`input-field ${e.dataPrimeiroContato ? "input-field--error" : ""}`}
@@ -281,37 +260,6 @@ function Step1DadosGerais() {
           />
         </Field>
       </div>
-    </div>
-  );
-}
-
-function PrioritySelector({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: RdrPrioridade) => void;
-}) {
-  const { t } = useLanguage();
-  const meta = [
-    { value: "baixa" as const, label: t("priority.low"), color: "var(--success)", bg: "var(--success-dim)" },
-    { value: "media" as const, label: t("priority.medium"), color: "var(--warning)", bg: "var(--warning-dim)" },
-    { value: "alta" as const, label: t("priority.high"), color: "var(--danger)", bg: "var(--danger-dim)" },
-  ];
-
-  return (
-    <div className="priority-selector" role="radiogroup" aria-label={t("priority.label")}>
-      {meta.map((opt) => (
-        <button
-          key={opt.value}
-          type="button"
-          className={`priority-badge ${value === opt.value ? "active" : ""}`}
-          style={{ "--badge-color": opt.color, "--badge-bg": opt.bg } as React.CSSProperties}
-          onClick={() => onChange(opt.value)}
-        >
-          {opt.label}
-        </button>
-      ))}
     </div>
   );
 }
@@ -361,7 +309,7 @@ function Step2Trilha() {
         <BlockHeader title="Customer Security" variant="cs" />
         <div className="grid gap-6 sm:grid-cols-2">
           <div data-field="reasonCs">
-            <Field label={t("step2.reasonCs")}>
+            <Field label={<>{t("step2.reasonCs")}<FieldTooltip text={t("tooltip.reasonCs")} /></>}>
               <select
                 className="input-field"
                 value={state.reasonCs}
@@ -377,7 +325,7 @@ function Step2Trilha() {
           <ConditionalBlock visible={showDeviceAuthSub}>
             <div className="grid gap-6 sm:grid-cols-2">
               <div data-field="cenarioDeviceAuth">
-                <Field label={t("step2.cenarioDeviceAuth")}>
+                <Field label={<>{t("step2.cenarioDeviceAuth")}<FieldTooltip text={t("tooltip.cenarioDeviceAuth")} /></>}>
                   <input
                     className="input-field"
                     value={state.cenarioDeviceAuth}
@@ -386,7 +334,7 @@ function Step2Trilha() {
                 </Field>
               </div>
               <div data-field="subreasonCs">
-                <Field label={t("step2.subreasonCs")}>
+                <Field label={<>{t("step2.subreasonCs")}<FieldTooltip text={t("tooltip.subreasonCs")} /></>}>
                   <select
                     className="input-field"
                     value={state.subreasonCs}
@@ -410,7 +358,7 @@ function Step2Trilha() {
         <BlockHeader title="Inv Ops" variant="invops" />
         <div className="grid gap-6 sm:grid-cols-2">
           <div data-field="temContaPj">
-            <Field label={t("step2.temContaPj")}>
+            <Field label={<>{t("step2.temContaPj")}<FieldTooltip text={t("tooltip.temContaPj")} /></>}>
               <RadioGroup
                 name="temContaPj"
                 options={["Sim", "Não"] as const}
@@ -421,7 +369,7 @@ function Step2Trilha() {
             </Field>
           </div>
           <div data-field="reasonInvOps">
-            <Field label={t("step2.reasonInvOps")}>
+            <Field label={<>{t("step2.reasonInvOps")}<FieldTooltip text={t("tooltip.reasonInvOps")} /></>}>
               <RadioGroup
                 name="reasonInvOps"
                 options={["Victim", "Fraudster"] as const}
@@ -437,7 +385,7 @@ function Step2Trilha() {
           <BlockHeader title="Trilha Victim" variant="victim" />
           <div className="grid gap-6 sm:grid-cols-2">
             <div data-field="tipoCliente">
-              <Field label={t("step2.tipoCliente")}>
+              <Field label={<>{t("step2.tipoCliente")}<FieldTooltip text={t("tooltip.tipoCliente")} /></>}>
                 <RadioGroup
                   name="tipoCliente"
                   options={["Cliente OK", "Cliente Fraudster"] as const}
@@ -448,22 +396,22 @@ function Step2Trilha() {
               </Field>
             </div>
             <div data-field="casoMedPix">
-              <Field label={t("step2.casoMedPix")}>
+              <Field label={<>{t("step2.casoMedPix")}<FieldTooltip text={t("tooltip.casoMedPix")} /></>}>
                 <RadioGroup name="casoMedPix" options={["Sim", "Não"] as const} value={state.casoMedPix} onChange={(v) => setField("casoMedPix", v as SimNao)} labels={simNaoLabels} />
               </Field>
             </div>
             <div data-field="transacaoBoleto">
-              <Field label={t("step2.transacaoBoleto")}>
+              <Field label={<>{t("step2.transacaoBoleto")}<FieldTooltip text={t("tooltip.transacaoBoleto")} /></>}>
                 <RadioGroup name="transacaoBoleto" options={["Sim", "Não"] as const} value={state.transacaoBoleto} onChange={(v) => setField("transacaoBoleto", v as SimNao)} labels={simNaoLabels} />
               </Field>
             </div>
             <div data-field="contaFavorecidaFraudster">
-              <Field label={t("step2.contaFavorecida")}>
+              <Field label={<>{t("step2.contaFavorecida")}<FieldTooltip text={t("tooltip.contaFavorecida")} /></>}>
                 <RadioGroup name="contaFavorecidaFraudster" options={["Sim", "Não"] as const} value={state.contaFavorecidaFraudster} onChange={(v) => setField("contaFavorecidaFraudster", v as SimNao)} labels={simNaoLabels} />
               </Field>
             </div>
             <div data-field="subreasonVictim">
-              <Field label={t("step2.subreasonVictim")} error={e.subreasonVictim} required>
+              <Field label={<>{t("step2.subreasonVictim")}<FieldTooltip text={t("tooltip.subreasonVictim")} /></>} error={e.subreasonVictim} required>
                 <select className={`input-field ${e.subreasonVictim ? "input-field--error" : ""}`} value={state.subreasonVictim} onChange={(ev) => setField("subreasonVictim", ev.target.value as SubreasonVictim)}>
                   <option value="">{t("common.select")}</option>
                   {SUBREASON_VICTIM_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
@@ -471,7 +419,7 @@ function Step2Trilha() {
               </Field>
             </div>
             <div data-field="statusMed">
-              <Field label={t("step2.statusMed")} error={e.statusMed} required>
+              <Field label={<>{t("step2.statusMed")}<FieldTooltip text={t("tooltip.statusMed")} /></>} error={e.statusMed} required>
                 <select className={`input-field ${e.statusMed ? "input-field--error" : ""}`} value={state.statusMed} onChange={(ev) => setField("statusMed", ev.target.value as StatusMed)}>
                   <option value="">{t("common.select")}</option>
                   {STATUS_MED_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
@@ -479,7 +427,7 @@ function Step2Trilha() {
               </Field>
             </div>
             <div className="sm:col-span-2" data-field="devolucao">
-              <Field label={t("step2.devolucao")} error={e.devolucao} required>
+              <Field label={<>{t("step2.devolucao")}<FieldTooltip text={t("tooltip.devolucao")} /></>} error={e.devolucao} required>
                 <select className={`input-field ${e.devolucao ? "input-field--error" : ""}`} value={state.devolucao} onChange={(ev) => setField("devolucao", ev.target.value as Devolucao)}>
                   <option value="">{t("common.select")}</option>
                   {DEVOLUCAO_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
@@ -494,24 +442,24 @@ function Step2Trilha() {
           <BlockHeader title="Trilha Fraudster" variant="fraudster" />
           <div className="grid gap-6 sm:grid-cols-2">
             <div data-field="possuiDict">
-              <Field label={t("step2.possuiDict")} hint="Databricks">
+              <Field label={<>{t("step2.possuiDict")}<FieldTooltip text={t("tooltip.possuiDict")} /></>} hint="Databricks">
                 <RadioGroup name="possuiDict" options={["Sim", "Não"] as const} value={state.possuiDict} onChange={(v) => handlePossuiDictChange(v as SimNao)} labels={simNaoLabels} />
               </Field>
             </div>
             <ConditionalBlock visible={showDictDate}>
               <div data-field="dataDict">
-                <Field label={t("step2.dataDict")}>
+                <Field label={<>{t("step2.dataDict")}<FieldTooltip text={t("tooltip.dataDict")} /></>}>
                   <input type="date" className="input-field" value={state.dataDict} onChange={(ev) => setField("dataDict", ev.target.value)} />
                 </Field>
               </div>
             </ConditionalBlock>
             <div data-field="dataNotificacaoCliente">
-              <Field label={t("step2.dataNotificacao")} error={e.dataNotificacaoCliente} required>
+              <Field label={<>{t("step2.dataNotificacao")}<FieldTooltip text={t("tooltip.dataNotificacao")} /></>} error={e.dataNotificacaoCliente} required>
                 <input type="date" className={`input-field ${e.dataNotificacaoCliente ? "input-field--error" : ""}`} value={state.dataNotificacaoCliente} onChange={(ev) => setField("dataNotificacaoCliente", ev.target.value)} />
               </Field>
             </div>
             <div data-field="subreasonFraudster">
-              <Field label={t("step2.subreasonFraudster")} error={e.subreasonFraudster} required>
+              <Field label={<>{t("step2.subreasonFraudster")}<FieldTooltip text={t("tooltip.subreasonFraudster")} /></>} error={e.subreasonFraudster} required>
                 <select className={`input-field ${e.subreasonFraudster ? "input-field--error" : ""}`} value={state.subreasonFraudster} onChange={(ev) => handleSubreasonFraudsterChange(ev.target.value as SubreasonFraudster | "")}>
                   <option value="">{t("common.select")}</option>
                   {SUBREASON_FRAUDSTER_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
@@ -525,32 +473,32 @@ function Step2Trilha() {
             <BlockHeader title="Regras Preventivas" variant="sub" />
             <div className="grid gap-6 sm:grid-cols-2">
               <div className="sm:col-span-2" data-field="casosMudbray">
-                <Field label={t("step2.casosMudbray")} error={e.casosMudbray} required>
+                <Field label={<>{t("step2.casosMudbray")}<FieldTooltip text={t("tooltip.casosMudbray")} /></>} error={e.casosMudbray} required>
                   <RadioGroup name="casosMudbray" options={["Sim", "Não"] as const} value={state.casosMudbray} onChange={(v) => setField("casosMudbray", v as SimNao)} labels={simNaoLabels} />
                 </Field>
               </div>
               <div data-field="casosCercadinho">
-                <Field label={t("step2.casosCercadinho")} error={e.casosCercadinho} required>
+                <Field label={<>{t("step2.casosCercadinho")}<FieldTooltip text={t("tooltip.casosCercadinho")} /></>} error={e.casosCercadinho} required>
                   <RadioGroup name="casosCercadinho" options={["Sim", "Não"] as const} value={state.casosCercadinho} onChange={(v) => setField("casosCercadinho", v as SimNao)} labels={simNaoLabels} />
                 </Field>
               </div>
               <div data-field="casosBoleto">
-                <Field label={t("step2.casosBoleto")} error={e.casosBoleto} required>
+                <Field label={<>{t("step2.casosBoleto")}<FieldTooltip text={t("tooltip.casosBoleto")} /></>} error={e.casosBoleto} required>
                   <RadioGroup name="casosBoleto" options={["Sim", "Não"] as const} value={state.casosBoleto} onChange={(v) => setField("casosBoleto", v as SimNao)} labels={simNaoLabels} />
                 </Field>
               </div>
               <div data-field="tfoConcluidoRp">
-                <Field label={t("step2.tfoConcluido")} hint={t("step2.tfoHint")} error={e.tfoConcluidoRp} required>
+                <Field label={<>{t("step2.tfoConcluido")}<FieldTooltip text={t("tooltip.tfoConcluido")} /></>} hint={t("step2.tfoHint")} error={e.tfoConcluidoRp} required>
                   <RadioGroup name="tfoConcluidoRp" options={["Sim", "Não"] as const} value={state.tfoConcluidoRp} onChange={(v) => setField("tfoConcluidoRp", v as SimNao)} labels={simNaoLabels} />
                 </Field>
               </div>
               <div data-field="contaSemSaldoRp">
-                <Field label={t("step2.contaSemSaldo")} error={e.contaSemSaldoRp} required>
+                <Field label={<>{t("step2.contaSemSaldo")}<FieldTooltip text={t("tooltip.contaSemSaldo")} /></>} error={e.contaSemSaldoRp} required>
                   <RadioGroup name="contaSemSaldoRp" options={["Sim", "Não"] as const} value={state.contaSemSaldoRp} onChange={(v) => setField("contaSemSaldoRp", v as SimNao)} labels={simNaoLabels} />
                 </Field>
               </div>
               <div data-field="tfoParcialRp">
-                <Field label={t("step2.tfoParcial")} hint={t("step2.tfoParcialHint")} error={e.tfoParcialRp} required>
+                <Field label={<>{t("step2.tfoParcial")}<FieldTooltip text={t("tooltip.tfoParcial")} /></>} hint={t("step2.tfoParcialHint")} error={e.tfoParcialRp} required>
                   <RadioGroup name="tfoParcialRp" options={["Sim", "Não"] as const} value={state.tfoParcialRp} onChange={(v) => setField("tfoParcialRp", v as SimNao)} labels={simNaoLabels} />
                 </Field>
               </div>
@@ -562,39 +510,39 @@ function Step2Trilha() {
             <BlockHeader title="Bloqueio Cautelar" variant="sub" />
             <div className="grid gap-6 sm:grid-cols-2">
               <div data-field="tfoConcluidoBc">
-                <Field label={t("step2.tfoConcluido")} hint={t("step2.tfoHint")} error={e.tfoConcluidoBc} required>
+                <Field label={<>{t("step2.tfoConcluido")}<FieldTooltip text={t("tooltip.tfoConcluidoBc")} /></>} hint={t("step2.tfoHint")} error={e.tfoConcluidoBc} required>
                   <RadioGroup name="tfoConcluidoBc" options={["Sim", "Não"] as const} value={state.tfoConcluidoBc} onChange={(v) => setField("tfoConcluidoBc", v as SimNao)} labels={simNaoLabels} />
                 </Field>
               </div>
               <div data-field="contaSemSaldoBc">
-                <Field label={t("step2.contaSemSaldo")} error={e.contaSemSaldoBc} required>
+                <Field label={<>{t("step2.contaSemSaldo")}<FieldTooltip text={t("tooltip.contaSemSaldoBc")} /></>} error={e.contaSemSaldoBc} required>
                   <RadioGroup name="contaSemSaldoBc" options={["Sim", "Não"] as const} value={state.contaSemSaldoBc} onChange={(v) => setField("contaSemSaldoBc", v as SimNao)} labels={simNaoLabels} />
                 </Field>
               </div>
               <div data-field="bcFraudadorPfpj">
-                <Field label={t("step2.fraudadorPfpj")} error={e.bcFraudadorPfpj} required>
+                <Field label={<>{t("step2.fraudadorPfpj")}<FieldTooltip text={t("tooltip.fraudadorPfpj")} /></>} error={e.bcFraudadorPfpj} required>
                   <RadioGroup name="bcFraudadorPfpj" options={["Sim", "Não"] as const} value={state.bcFraudadorPfpj} onChange={(v) => { setField("bcFraudadorPfpj", v as SimNao); if (v === "Não") setField("bcFraudadorTipo", ""); }} labels={simNaoLabels} />
                 </Field>
               </div>
               {state.bcFraudadorPfpj === "Sim" && (
                 <div data-field="bcFraudadorTipo">
-                  <Field label={t("step2.fraudadorTipo")} error={e.bcFraudadorTipo} required>
+                  <Field label={<>{t("step2.fraudadorTipo")}<FieldTooltip text={t("tooltip.fraudadorTipo")} /></>} error={e.bcFraudadorTipo} required>
                     <RadioGroup name="bcFraudadorTipo" options={["PF", "PJ"] as const} value={state.bcFraudadorTipo} onChange={(v) => setField("bcFraudadorTipo", v)} />
                   </Field>
                 </div>
               )}
               <div data-field="tfoParcialBc">
-                <Field label={t("step2.tfoParcial")} hint={t("step2.tfoParcialHint")} error={e.tfoParcialBc} required>
+                <Field label={<>{t("step2.tfoParcial")}<FieldTooltip text={t("tooltip.tfoParcialBc")} /></>} hint={t("step2.tfoParcialHint")} error={e.tfoParcialBc} required>
                   <RadioGroup name="tfoParcialBc" options={["Sim", "Não"] as const} value={state.tfoParcialBc} onChange={(v) => setField("tfoParcialBc", v as SimNao)} labels={simNaoLabels} />
                 </Field>
               </div>
               <div data-field="devolucaoOrigemBc">
-                <Field label={t("step2.devolucaoOrigem")} error={e.devolucaoOrigemBc} required>
+                <Field label={<>{t("step2.devolucaoOrigem")}<FieldTooltip text={t("tooltip.devolucaoOrigem")} /></>} error={e.devolucaoOrigemBc} required>
                   <RadioGroup name="devolucaoOrigemBc" options={["Sim", "Não"] as const} value={state.devolucaoOrigemBc} onChange={(v) => setField("devolucaoOrigemBc", v as SimNao)} labels={simNaoLabels} />
                 </Field>
               </div>
               <div data-field="transacaoCodigo">
-                <Field label={t("step2.transacaoCodigo")} error={e.transacaoCodigo} required>
+                <Field label={<>{t("step2.transacaoCodigo")}<FieldTooltip text={t("tooltip.transacaoCodigo")} /></>} error={e.transacaoCodigo} required>
                   <input
                     className={`input-field font-mono ${e.transacaoCodigo ? "input-field--error" : ""}`}
                     value={state.transacaoCodigo}
@@ -604,7 +552,7 @@ function Step2Trilha() {
                 </Field>
               </div>
               <div data-field="transacaoValor">
-                <Field label={t("step2.transacaoValor")} error={e.transacaoValor} required>
+                <Field label={<>{t("step2.transacaoValor")}<FieldTooltip text={t("tooltip.transacaoValor")} /></>} error={e.transacaoValor} required>
                   <input
                     className={`input-field font-mono ${e.transacaoValor ? "input-field--error" : ""}`}
                     value={state.transacaoValor}
@@ -629,57 +577,52 @@ function Step2Trilha() {
       {/* Informações Complementares — always visible */}
       <BlockHeader title={t("step2.infoComplementares")} variant="info" />
       <div className="grid gap-6 sm:grid-cols-2">
-        <div data-field="dtNotificacaoEnviadaCliente">
-          <Field label={t("step2.dtNotifEnviadaCliente")}>
-            <input type="date" className="input-field" value={state.dtNotificacaoEnviadaCliente} onChange={(ev) => setField("dtNotificacaoEnviadaCliente", ev.target.value)} />
-          </Field>
-        </div>
-        <div data-field="dtContestacaoZendeskInicio">
-          <Field label={t("step2.dtContestZdInicio")}>
-            <input type="date" className="input-field" value={state.dtContestacaoZendeskInicio} onChange={(ev) => setField("dtContestacaoZendeskInicio", ev.target.value)} />
-          </Field>
-        </div>
-        <div data-field="dtContestacaoZendeskFim">
-          <Field label={t("step2.dtContestZdFim")}>
-            <input type="date" className="input-field" value={state.dtContestacaoZendeskFim} onChange={(ev) => setField("dtContestacaoZendeskFim", ev.target.value)} />
-          </Field>
-        </div>
         <div data-field="ticketZendeskContestacao">
-          <Field label={t("step2.ticketZdContestacao")}>
-            <input className="input-field font-mono" value={state.ticketZendeskContestacao} onChange={(ev) => setField("ticketZendeskContestacao", ev.target.value)} placeholder="Ex: 117867560" maxLength={50} />
+          <Field label={<>{t("step2.ticketZdContestacao")}<FieldTooltip text={t("tooltip.ticketZdContestacao")} /></>}>
+            <input
+              className="input-field font-mono"
+              value={state.ticketZendeskContestacao}
+              onChange={(ev) => {
+                const v = ev.target.value;
+                setField("ticketZendeskContestacao", v);
+                if (!v.trim()) {
+                  setField("dtContestacaoZendeskInicio", "");
+                  setField("dtContestacaoZendeskFim", "");
+                }
+              }}
+              placeholder="Ex: 117867560"
+              maxLength={50}
+            />
           </Field>
         </div>
-        <div data-field="dtPixEnviadoInicio">
-          <Field label={t("step2.dtPixEnviadoInicio")}>
-            <input type="date" className="input-field" value={state.dtPixEnviadoInicio} onChange={(ev) => setField("dtPixEnviadoInicio", ev.target.value)} />
-          </Field>
-        </div>
-        <div data-field="dtPixEnviadoFim">
-          <Field label={t("step2.dtPixEnviadoFim")}>
-            <input type="date" className="input-field" value={state.dtPixEnviadoFim} onChange={(ev) => setField("dtPixEnviadoFim", ev.target.value)} />
-          </Field>
-        </div>
+
+        {state.ticketZendeskContestacao?.trim() && (
+          <>
+            <div data-field="dtContestacaoZendeskInicio">
+              <Field label={<>{t("step2.dtContestZdInicio")}<FieldTooltip text={t("tooltip.dtContestZdInicio")} /></>}>
+                <input type="date" className="input-field" value={state.dtContestacaoZendeskInicio} onChange={(ev) => setField("dtContestacaoZendeskInicio", ev.target.value)} />
+              </Field>
+            </div>
+            <div data-field="dtContestacaoZendeskFim">
+              <Field label={<>{t("step2.dtContestZdFim")}<FieldTooltip text={t("tooltip.dtContestZdFim")} /></>}>
+                <input type="date" className="input-field" value={state.dtContestacaoZendeskFim} onChange={(ev) => setField("dtContestacaoZendeskFim", ev.target.value)} />
+              </Field>
+            </div>
+          </>
+        )}
+
         <div className="sm:col-span-2" data-field="listaPixEnviado">
-          <Field label={t("step2.listaPixEnviado")} hint={t("step2.listaPixHint")}>
-            <textarea className="input-field" rows={2} value={state.listaPixEnviado} onChange={(ev) => setField("listaPixEnviado", ev.target.value)} placeholder="Ex: id1 | id2 | id3" maxLength={5000} />
+          <Field label={<>{t("step2.listaPixEnviado")}<FieldTooltip text={t("step2.listaPixEnviadoTooltip")} /></>} hint={t("step2.listaPixHint")}>
+            <textarea className="input-field" rows={2} value={state.listaPixEnviado} onChange={(ev) => setField("listaPixEnviado", ev.target.value)} placeholder="Ex: id1, id2, id3" maxLength={5000} />
             <span style={{ fontSize: 11, color: "var(--text-muted)", float: "right", marginTop: 2 }}>
               {(state.listaPixEnviado || "").length}/5000
             </span>
           </Field>
         </div>
-        <div data-field="dtPixRecebidoInicio">
-          <Field label={t("step2.dtPixRecebidoInicio")}>
-            <input type="date" className="input-field" value={state.dtPixRecebidoInicio} onChange={(ev) => setField("dtPixRecebidoInicio", ev.target.value)} />
-          </Field>
-        </div>
-        <div data-field="dtPixRecebidoFim">
-          <Field label={t("step2.dtPixRecebidoFim")}>
-            <input type="date" className="input-field" value={state.dtPixRecebidoFim} onChange={(ev) => setField("dtPixRecebidoFim", ev.target.value)} />
-          </Field>
-        </div>
+
         <div className="sm:col-span-2" data-field="listaPixRecebido">
-          <Field label={t("step2.listaPixRecebido")} hint={t("step2.listaPixHint")}>
-            <textarea className="input-field" rows={2} value={state.listaPixRecebido} onChange={(ev) => setField("listaPixRecebido", ev.target.value)} placeholder="Ex: id1 | id2 | id3" maxLength={5000} />
+          <Field label={<>{t("step2.listaPixRecebido")}<FieldTooltip text={t("step2.listaPixRecebidoTooltip")} /></>} hint={t("step2.listaPixHint")}>
+            <textarea className="input-field" rows={2} value={state.listaPixRecebido} onChange={(ev) => setField("listaPixRecebido", ev.target.value)} placeholder="Ex: id1, id2, id3" maxLength={5000} />
             <span style={{ fontSize: 11, color: "var(--text-muted)", float: "right", marginTop: 2 }}>
               {(state.listaPixRecebido || "").length}/5000
             </span>
@@ -714,7 +657,6 @@ function buildDadosGeraisItems(s: RdrFormState, t: (k: string) => string): Revie
     { label: t("drawer.cpfFraudador"), value: s.cpfFraudador, mono: true },
     { label: t("step1.ticketZendesk"), value: s.ticketZendesk, mono: true },
     { label: t("step1.protocoloRdr"), value: s.protocoloRdr, mono: true },
-    { label: t("step1.savingsAccountId"), value: s.savingsAccountId, mono: true },
     { label: t("step1.instituicao"), value: s.instituicao },
     { label: "Squad", value: s.squad },
     { label: t("step3.reviewDatePrimeiroContato"), value: s.dataPrimeiroContato },
@@ -784,15 +726,12 @@ function buildTrilhaItems(s: RdrFormState, t: (k: string) => string): ReviewEntr
 function buildInfoComplementaresItems(s: RdrFormState, t: (k: string) => string): ReviewEntry[] {
   const items: ReviewEntry[] = [];
 
-  if (s.dtNotificacaoEnviadaCliente) items.push({ label: t("step2.dtNotifEnviadaCliente"), value: formatDateDisplay(s.dtNotificacaoEnviadaCliente) });
-  if (s.dtContestacaoZendeskInicio) items.push({ label: t("step2.dtContestZdInicio"), value: formatDateDisplay(s.dtContestacaoZendeskInicio) });
-  if (s.dtContestacaoZendeskFim) items.push({ label: t("step2.dtContestZdFim"), value: formatDateDisplay(s.dtContestacaoZendeskFim) });
-  if (s.ticketZendeskContestacao) items.push({ label: t("step2.ticketZdContestacao"), value: s.ticketZendeskContestacao, mono: true });
-  if (s.dtPixEnviadoInicio) items.push({ label: t("step2.dtPixEnviadoInicio"), value: formatDateDisplay(s.dtPixEnviadoInicio) });
-  if (s.dtPixEnviadoFim) items.push({ label: t("step2.dtPixEnviadoFim"), value: formatDateDisplay(s.dtPixEnviadoFim) });
+  if (s.ticketZendeskContestacao) {
+    items.push({ label: t("step2.ticketZdContestacao"), value: s.ticketZendeskContestacao, mono: true });
+    if (s.dtContestacaoZendeskInicio) items.push({ label: t("step2.dtContestZdInicio"), value: formatDateDisplay(s.dtContestacaoZendeskInicio) });
+    if (s.dtContestacaoZendeskFim) items.push({ label: t("step2.dtContestZdFim"), value: formatDateDisplay(s.dtContestacaoZendeskFim) });
+  }
   if (s.listaPixEnviado.trim()) items.push({ label: t("step2.listaPixEnviado"), value: s.listaPixEnviado.trim() });
-  if (s.dtPixRecebidoInicio) items.push({ label: t("step2.dtPixRecebidoInicio"), value: formatDateDisplay(s.dtPixRecebidoInicio) });
-  if (s.dtPixRecebidoFim) items.push({ label: t("step2.dtPixRecebidoFim"), value: formatDateDisplay(s.dtPixRecebidoFim) });
   if (s.listaPixRecebido.trim()) items.push({ label: t("step2.listaPixRecebido"), value: s.listaPixRecebido.trim() });
 
   return items;
@@ -811,28 +750,8 @@ function Step3Confirmacao({
   const trilha = buildTrilhaItems(state, t);
   const infoComp = buildInfoComplementaresItems(state, t);
 
-  const priorityMeta = [
-    { value: "baixa", label: t("priority.low"), color: "var(--success)", bg: "var(--success-dim)" },
-    { value: "media", label: t("priority.medium"), color: "var(--warning)", bg: "var(--warning-dim)" },
-    { value: "alta", label: t("priority.high"), color: "var(--danger)", bg: "var(--danger-dim)" },
-  ].find((p) => p.value === state.prioridade);
-
   return (
     <div className="space-y-6">
-      {priorityMeta && (
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
-            {t("step3.priorityLabel")}
-          </span>
-          <span
-            className="priority-badge active pointer-events-none"
-            style={{ "--badge-color": priorityMeta.color, "--badge-bg": priorityMeta.bg } as React.CSSProperties}
-          >
-            {priorityMeta.label}
-          </span>
-        </div>
-      )}
-
       <div className="review-card">
         <div className="review-card-header">{t("step3.dadosGerais")}</div>
         <div className="review-grid">
