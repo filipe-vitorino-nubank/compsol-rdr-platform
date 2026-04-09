@@ -36,6 +36,12 @@ jobs:
           VITE_SLACK_PROXY_URL: ${{ secrets.VITE_SLACK_PROXY_URL }}
           VITE_SLACK_PROXY_TOKEN: ${{ secrets.VITE_SLACK_PROXY_TOKEN }}
           VITE_ANTHROPIC_API_KEY: ${{ secrets.VITE_ANTHROPIC_API_KEY }}
+          VITE_GCP_PROJECT_ID: ${{ secrets.VITE_GCP_PROJECT_ID }}
+          VITE_GCP_LOCATION: ${{ secrets.VITE_GCP_LOCATION }}
+          VITE_GEMINI_MODEL: ${{ secrets.VITE_GEMINI_MODEL }}
+          VITE_SLACK_TEAM_ID: ${{ secrets.VITE_SLACK_TEAM_ID }}
+          VITE_SLACK_DOMAIN: ${{ secrets.VITE_SLACK_DOMAIN }}
+          VITE_GLEAN_URL: ${{ secrets.VITE_GLEAN_URL }}
 
       - name: Copy index.html to 404.html for SPA routing
         run: cp dist/index.html dist/404.html

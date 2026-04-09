@@ -91,8 +91,9 @@ export default function ChatWidget() {
     const h = 680;
     const left = window.screen.width - w - 20;
     const top = window.screen.height - h - 60;
+    const gleanUrl = import.meta.env.VITE_GLEAN_URL || "https://nubank-prod-be.glean.com/chat";
     window.open(
-      "https://nubank-prod-be.glean.com/chat",
+      gleanUrl,
       "GleanChat",
       `width=${w},height=${h},left=${left},top=${top},resizable=yes,toolbar=no,menubar=no,location=no`,
     );

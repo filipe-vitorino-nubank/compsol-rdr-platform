@@ -119,7 +119,7 @@ export function ProfileDrawer({ open, onClose }: { open: boolean; onClose: () =>
           setLastSync(syncTs);
         }
       } catch (err) {
-        console.error(err);
+        console.error("[ProfileDrawer] Erro:", (err as Error).message);
       } finally {
         if (!cancelled) setLoading(false);
       }

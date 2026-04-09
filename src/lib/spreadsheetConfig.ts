@@ -1,8 +1,8 @@
 import { STORAGE_SPREADSHEET_ID } from "./storageKeys";
-import { getEnvConfig } from "../config/env";
+import { env } from "../config/env";
 
 export function getSpreadsheetId(): string {
-  return localStorage.getItem(STORAGE_SPREADSHEET_ID)?.trim() || getEnvConfig().sheetId;
+  return localStorage.getItem(STORAGE_SPREADSHEET_ID)?.trim() || env.sheetId;
 }
 
 export function setSpreadsheetId(id: string): void {

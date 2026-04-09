@@ -7,19 +7,25 @@ import { AuthProvider } from "./context/AuthContext.tsx";
 import { ToastProvider } from "./context/ToastContext.tsx";
 import { FormProvider } from "./context/FormContext.tsx";
 import { ModalProvider } from "./context/ModalContext.tsx";
+import { ErrorBoundary } from "./components/ErrorBoundary.tsx";
+import { validateEnv } from "./config/env.ts";
+
+validateEnv();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ModalProvider>
-      <LanguageProvider>
-        <AuthProvider>
-          <ToastProvider>
-            <FormProvider>
-              <App />
-            </FormProvider>
-          </ToastProvider>
-        </AuthProvider>
-      </LanguageProvider>
-    </ModalProvider>
-  </StrictMode>
+    <ErrorBoundary>
+      <ModalProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <ToastProvider>
+              <FormProvider>
+                <App />
+              </FormProvider>
+            </ToastProvider>
+          </AuthProvider>
+        </LanguageProvider>
+      </ModalProvider>
+    </ErrorBoundary>
+  </StrictMode>,
 );

@@ -4,13 +4,11 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
-import {
-  STORAGE_GOOGLE_TOKEN,
-  STORAGE_GOOGLE_TOKEN_EXP,
-  STORAGE_GOOGLE_USER,
-} from "../lib/storageKeys";
+import { STORAGE_GOOGLE_USER } from "../lib/storageKeys";
+import { useModal } from "./ModalContext";
 
 export type GoogleUserProfile = {
   email: string;
@@ -65,31 +63,6 @@ const SCOPES = [
   "profile",
 ].join(" ");
 
-function loadStoredToken(): { token: string; exp: number } | null {
-  try {
-    const t = localStorage.getItem(STORAGE_GOOGLE_TOKEN);
-    const e = localStorage.getItem(STORAGE_GOOGLE_TOKEN_EXP);
-    if (!t || !e) return null;
-    const exp = parseInt(e, 10);
-    if (Date.now() >= exp - 60_000) return null;
-    return { token: t, exp };
-  } catch {
-    return null;
-  }
-}
-
-function loadStoredProfile(): GoogleUserProfile | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_GOOGLE_USER);
-    if (!raw) return null;
-    const p = JSON.parse(raw) as GoogleUserProfile;
-    if (p && typeof p.email === "string") return p;
-    return null;
-  } catch {
-    return null;
-  }
-}
-
 async function fetchGoogleUserProfile(accessToken: string): Promise<GoogleUserProfile | null> {
   const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
     headers: { Authorization: `Bearer ${accessToken}` },
@@ -106,17 +79,11 @@ async function fetchGoogleUserProfile(accessToken: string): Promise<GoogleUserPr
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [scriptReady, setScriptReady] = useState(false);
-  const [token, setToken] = useState<string | null>(() => loadStoredToken()?.token ?? null);
-  const [tokenExpiresAt, setTokenExpiresAt] = useState<number | null>(
-    () => loadStoredToken()?.exp ?? null
-  );
-  const [googleUser, setGoogleUser] = useState<GoogleUserProfile | null>(() => {
-    if (!loadStoredToken()) {
-      localStorage.removeItem(STORAGE_GOOGLE_USER);
-      return null;
-    }
-    return loadStoredProfile();
-  });
+  const [token, setToken] = useState<string | null>(null);
+  const [tokenExpiresAt, setTokenExpiresAt] = useState<number | null>(null);
+  const [googleUser, setGoogleUser] = useState<GoogleUserProfile | null>(null);
+  const modal = useModal();
+  const tokenRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (document.querySelector('script[data-gis="1"]')) {
@@ -132,42 +99,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     document.body.appendChild(s);
   }, []);
 
-  const persistProfile = useCallback((p: GoogleUserProfile | null) => {
-    if (p) {
-      localStorage.setItem(STORAGE_GOOGLE_USER, JSON.stringify(p));
-      setGoogleUser(p);
-    } else {
-      localStorage.removeItem(STORAGE_GOOGLE_USER);
-      setGoogleUser(null);
-    }
+  const clearAuth = useCallback(() => {
+    setToken(null);
+    tokenRef.current = null;
+    setTokenExpiresAt(null);
+    setGoogleUser(null);
+    localStorage.removeItem(STORAGE_GOOGLE_USER);
   }, []);
 
   const refreshProfile = useCallback(
     async (accessToken: string) => {
       const p = await fetchGoogleUserProfile(accessToken);
-      if (p) persistProfile(p);
-    },
-    [persistProfile]
-  );
+      if (!p) return;
 
-  /** Token válido sem perfil salvo (ex.: primeiro acesso) — busca email no Google uma vez. */
-  useEffect(() => {
-    const t = loadStoredToken()?.token;
-    if (!t) return;
-    if (loadStoredProfile()) return;
-    void refreshProfile(t);
-  }, [refreshProfile]);
+      if (!p.email.endsWith("@nubank.com.br")) {
+        clearAuth();
+        modal.error(
+          "Acesso restrito",
+          "Esta plataforma é de uso exclusivo para colaboradores Nubank. " +
+            "Por favor, faça login com sua conta @nubank.com.br.",
+        );
+        return;
+      }
+
+      localStorage.setItem(STORAGE_GOOGLE_USER, JSON.stringify(p));
+      setGoogleUser(p);
+    },
+    [clearAuth, modal],
+  );
 
   const persistToken = useCallback(
     (accessToken: string, expiresIn: number) => {
       const exp = Date.now() + expiresIn * 1000;
-      localStorage.setItem(STORAGE_GOOGLE_TOKEN, accessToken);
-      localStorage.setItem(STORAGE_GOOGLE_TOKEN_EXP, String(exp));
       setToken(accessToken);
+      tokenRef.current = accessToken;
       setTokenExpiresAt(exp);
       void refreshProfile(accessToken);
     },
-    [refreshProfile]
+    [refreshProfile],
   );
 
   const signInWithGoogle = useCallback(
@@ -184,7 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         scope: SCOPES,
         callback: (resp) => {
           if (resp.error) {
-            console.error(resp);
+            console.error("[Auth] Erro na resposta OAuth:", resp.error);
             return;
           }
           if (resp.access_token && resp.expires_in) {
@@ -214,9 +183,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!window.google?.accounts?.oauth2) {
         throw new Error("Script do Google Identity ainda não carregou. Tente novamente.");
       }
-      const stored = loadStoredToken();
-      if (stored && !opts?.interactive) {
-        return stored.token;
+      if (tokenRef.current && !opts?.interactive) {
+        return tokenRef.current;
       }
       return new Promise<string>((resolve, reject) => {
         const client = window.google!.accounts.oauth2.initTokenClient({
@@ -259,21 +227,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [persistToken]);
 
   const signOut = useCallback(() => {
-    const t = localStorage.getItem(STORAGE_GOOGLE_TOKEN);
-    if (t && window.google?.accounts?.oauth2) {
+    if (tokenRef.current && window.google?.accounts?.oauth2) {
       try {
-        window.google.accounts.oauth2.revoke(t, () => undefined);
+        window.google.accounts.oauth2.revoke(tokenRef.current, () => undefined);
       } catch {
         /* ignore */
       }
     }
-    localStorage.removeItem(STORAGE_GOOGLE_TOKEN);
-    localStorage.removeItem(STORAGE_GOOGLE_TOKEN_EXP);
-    localStorage.removeItem(STORAGE_GOOGLE_USER);
-    setToken(null);
-    setTokenExpiresAt(null);
-    setGoogleUser(null);
-  }, []);
+    clearAuth();
+  }, [clearAuth]);
 
   const value = useMemo(
     () => ({

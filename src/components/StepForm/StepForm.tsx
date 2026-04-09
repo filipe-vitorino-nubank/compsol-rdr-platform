@@ -165,7 +165,7 @@ function Step1DadosGerais() {
             className={`input-field ${e.emailSolicitante ? "input-field--error" : ""}`}
             value={state.emailSolicitante}
             autoComplete="email"
-            placeholder="seu.email@nubank.com.br"
+            placeholder="exemplo de e-mail corporativo"
             onChange={(ev) => setField("emailSolicitante", ev.target.value)}
           />
         </Field>

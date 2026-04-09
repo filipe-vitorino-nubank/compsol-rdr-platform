@@ -1,6 +1,6 @@
-const PROJECT_ID = "iteng-itsystems";
-const LOCATION = "us-central1";
-const MODEL = "gemini-2.0-flash-001";
+const PROJECT_ID = import.meta.env.VITE_GCP_PROJECT_ID || '';
+const LOCATION   = import.meta.env.VITE_GCP_LOCATION   || 'us-central1';
+const MODEL      = import.meta.env.VITE_GEMINI_MODEL    || 'gemini-2.0-flash-001';
 const VERTEX_URL = `https://${LOCATION}-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/${LOCATION}/publishers/google/models/${MODEL}:generateContent`;
 
 export interface ChatAttachment {

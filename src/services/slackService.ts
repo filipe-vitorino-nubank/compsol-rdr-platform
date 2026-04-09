@@ -5,6 +5,8 @@ const LAST_SYNC_RANGE = "Equipe!H1";
 
 const SYNC_URL = import.meta.env.VITE_SLACK_PROXY_URL as string | undefined;
 const SYNC_TOKEN = import.meta.env.VITE_SLACK_PROXY_TOKEN as string | undefined;
+const SLACK_TEAM_ID = import.meta.env.VITE_SLACK_TEAM_ID || '';
+const SLACK_DOMAIN = import.meta.env.VITE_SLACK_DOMAIN || 'nubank.slack.com';
 
 export interface SlackMember {
   id: string;
@@ -63,7 +65,7 @@ export async function fetchChannelMembers(
 
     return _cachedMembers;
   } catch (err) {
-    console.error("Erro ao buscar equipe da planilha:", err);
+    console.error("[SlackService] Erro ao buscar equipe:", (err as Error).message);
     return [];
   }
 }
@@ -88,9 +90,9 @@ export async function syncTeamNow(): Promise<void> {
   }
 
   const scriptPath = SYNC_URL.replace("https://script.google.com", "");
-  const res = await fetch(
-    `/slack-proxy${scriptPath}?token=${SYNC_TOKEN}&action=sync`,
-  );
+  const res = await fetch(`/slack-proxy${scriptPath}?action=sync`, {
+    headers: { "X-Proxy-Token": SYNC_TOKEN || "" },
+  });
   const data = await res.json();
 
   if (!data.ok) throw new Error(data.error || "Falha na sincronização");
@@ -99,7 +101,7 @@ export async function syncTeamNow(): Promise<void> {
 }
 
 export const buildSlackDMLink = (userId: string): string =>
-  `slack://user?team=T024U97V8&id=${userId}`;
+  `slack://user?team=${SLACK_TEAM_ID}&id=${userId}`;
 
 export const buildSlackWebLink = (userId: string): string =>
-  `https://nubank.slack.com/team/${userId}`;
+  `https://${SLACK_DOMAIN}/team/${userId}`;

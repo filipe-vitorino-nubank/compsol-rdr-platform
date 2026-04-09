@@ -107,7 +107,7 @@ export function TeamDrawer({ open, onClose }: { open: boolean; onClose: () => vo
         const membersList = await fetchChannelMembers(token);
         if (!cancelled) setMembers(membersList);
       } catch (err) {
-        console.error(err);
+        console.error("[TeamDrawer] Erro:", (err as Error).message);
       } finally {
         if (!cancelled) setLoading(false);
       }

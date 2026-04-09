@@ -2,6 +2,15 @@
 .env
 .env.local
 .env.*.local
+.env.production
+.env.staging
+.env.test
+
+# Certificados
+*.pem
+*.key
+*.p12
+*.pfx
 
 # Dependências
 node_modules/
