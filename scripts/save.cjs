@@ -32,7 +32,7 @@ try {
   execSync(`git commit -m "${message}"`);
   console.log(`📦 Commit: ${message}`);
 
-  execSync('git push origin main', { stdio: 'inherit' });
+  execSync('git push origin-personal main', { stdio: 'inherit' });
   console.log('✅ Push concluído!');
 
 } catch (err) {
