@@ -128,6 +128,7 @@ export interface RdrFormState {
   tfoConcluidoRp: SimNao | "";
   contaSemSaldoRp: SimNao | "";
   tfoParcialRp: SimNao | "";
+  saldoEmContaRp: SimNao | "";
 
   tfoConcluidoBc: SimNao | "";
   contaSemSaldoBc: SimNao | "";
@@ -135,6 +136,7 @@ export interface RdrFormState {
   bcFraudadorTipo: string;
   tfoParcialBc: SimNao | "";
   devolucaoOrigemBc: SimNao | "";
+  saldoEmContaBc: SimNao | "";
 
   transacaoCodigo: string;
   transacaoValor: string;
@@ -186,12 +188,14 @@ export const initialFormState: RdrFormState = {
   tfoConcluidoRp: "",
   contaSemSaldoRp: "",
   tfoParcialRp: "",
+  saldoEmContaRp: "",
   tfoConcluidoBc: "",
   contaSemSaldoBc: "",
   bcFraudadorPfpj: "",
   bcFraudadorTipo: "",
   tfoParcialBc: "",
   devolucaoOrigemBc: "",
+  saldoEmContaBc: "",
   transacaoCodigo: "",
   transacaoValor: "",
   savingsAccountId: "",
@@ -208,7 +212,7 @@ export const initialFormState: RdrFormState = {
   fieldErrors: {},
 };
 
-/* ── Sheet headers (42 columns: A → AP) ── */
+/* ── Sheet headers (57 columns: A → BE) ── */
 
 export const SHEET_HEADERS = [
   "ID",
@@ -245,11 +249,15 @@ export const SHEET_HEADERS = [
   "RP - TFO Concluído Nubank",
   "RP - Conta Sem Saldo",
   "RP - TFO Parcial Cliente",
+  "Template BACEN (RP)",
+  "Template Cliente (RP)",
   "BC - TFO Concluído Nubank",
   "BC - Conta Sem Saldo",
   "BC - TFO Parcial Cliente",
   "Devolução à Origem (BC)",
   "BC - Fraudador Tipo",
+  "Template BACEN (BC)",
+  "Template Cliente (BC)",
   "Link GDrive Cliente",
   "Link GDrive BACEN",
   "Nomes Arquivos",
@@ -266,7 +274,7 @@ export const SHEET_HEADERS = [
   "Lista PIX Recebido",
 ] as const;
 
-export const COLUMN_COUNT = SHEET_HEADERS.length; // 53
+export const COLUMN_COUNT = SHEET_HEADERS.length; // 57
 
 /** Index of the "Status" column (0-based). */
 export const STATUS_COL_INDEX = SHEET_HEADERS.indexOf("Status"); // 2
@@ -307,25 +315,29 @@ export const COL = {
   TFO_RP: 31,
   SALDO_RP: 32,
   TFO_PARCIAL_RP: 33,
-  TFO_BC: 34,
-  SALDO_BC: 35,
-  TFO_PARCIAL_BC: 36,
-  DEVOLUCAO_ORIGEM_BC: 37,
-  FRAUDADOR_TIPO_BC: 38,
-  LINK_GDRIVE_CLIENTE: 39,
-  LINK_GDRIVE_BACEN: 40,
-  NOMES_ARQUIVOS: 41,
-  SAVINGS_ACCOUNT_ID: 42,
-  DT_NOTIF_ENVIADA: 43,
-  DT_CONTEST_ZD_INICIO: 44,
-  DT_CONTEST_ZD_FIM: 45,
-  TICKET_ZD_CONTEST: 46,
-  DT_PIX_ENV_INICIO: 47,
-  DT_PIX_ENV_FIM: 48,
-  LISTA_PIX_ENV: 49,
-  DT_PIX_REC_INICIO: 50,
-  DT_PIX_REC_FIM: 51,
-  LISTA_PIX_REC: 52,
+  TEMPLATE_BACEN_RP: 34,
+  TEMPLATE_CLIENTE_RP: 35,
+  TFO_BC: 36,
+  SALDO_BC: 37,
+  TFO_PARCIAL_BC: 38,
+  DEVOLUCAO_ORIGEM_BC: 39,
+  FRAUDADOR_TIPO_BC: 40,
+  TEMPLATE_BACEN_BC: 41,
+  TEMPLATE_CLIENTE_BC: 42,
+  LINK_GDRIVE_CLIENTE: 43,
+  LINK_GDRIVE_BACEN: 44,
+  NOMES_ARQUIVOS: 45,
+  SAVINGS_ACCOUNT_ID: 46,
+  DT_NOTIF_ENVIADA: 47,
+  DT_CONTEST_ZD_INICIO: 48,
+  DT_CONTEST_ZD_FIM: 49,
+  TICKET_ZD_CONTEST: 50,
+  DT_PIX_ENV_INICIO: 51,
+  DT_PIX_ENV_FIM: 52,
+  LISTA_PIX_ENV: 53,
+  DT_PIX_REC_INICIO: 54,
+  DT_PIX_REC_FIM: 55,
+  LISTA_PIX_REC: 56,
 } as const;
 
 /* ── Legacy types kept so DashboardPage.tsx compiles without changes ── */

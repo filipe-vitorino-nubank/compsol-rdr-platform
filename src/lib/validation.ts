@@ -51,21 +51,17 @@ export function validateStep2(s: RdrFormState, t?: TFn): Record<string, string> 
         "casosMudbray",
         "casosCercadinho",
         "casosBoleto",
-        "tfoConcluidoRp",
-        "contaSemSaldoRp",
-        "tfoParcialRp",
       ] as const;
       rp.forEach((f) => {
         if (!s[f]) e[f] = req;
       });
+      if (!s.saldoEmContaRp) e.saldoEmContaRp = req;
     }
 
     if (s.subreasonFraudster === "Bloqueio Cautelar") {
+      if (!s.saldoEmContaBc) e.saldoEmContaBc = req;
       const bc = [
-        "tfoConcluidoBc",
-        "contaSemSaldoBc",
         "bcFraudadorPfpj",
-        "tfoParcialBc",
         "devolucaoOrigemBc",
       ] as const;
       bc.forEach((f) => {

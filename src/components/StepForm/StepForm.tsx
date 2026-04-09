@@ -39,6 +39,7 @@ import {
   type SimNao,
   type RdrFormState,
 } from "../../types/form";
+import { deriveTemplates } from "../../utils/deriveRobotTemplates";
 
 /* ════════════════════════════════════════════
    Shared helpers
@@ -487,36 +488,37 @@ function Step2Trilha() {
                   <RadioGroup name="casosBoleto" options={["Sim", "Não"] as const} value={state.casosBoleto} onChange={(v) => setField("casosBoleto", v as SimNao)} labels={simNaoLabels} />
                 </Field>
               </div>
-              <div data-field="tfoConcluidoRp">
-                <Field label={<>{t("step2.tfoConcluido")}<FieldTooltip text={t("tooltip.tfoConcluido")} /></>} hint={t("step2.tfoHint")} error={e.tfoConcluidoRp} required>
-                  <RadioGroup name="tfoConcluidoRp" options={["Sim", "Não"] as const} value={state.tfoConcluidoRp} onChange={(v) => setField("tfoConcluidoRp", v as SimNao)} labels={simNaoLabels} />
-                </Field>
-              </div>
-              <div data-field="contaSemSaldoRp">
-                <Field label={<>{t("step2.contaSemSaldo")}<FieldTooltip text={t("tooltip.contaSemSaldo")} /></>} error={e.contaSemSaldoRp} required>
-                  <RadioGroup name="contaSemSaldoRp" options={["Sim", "Não"] as const} value={state.contaSemSaldoRp} onChange={(v) => setField("contaSemSaldoRp", v as SimNao)} labels={simNaoLabels} />
-                </Field>
-              </div>
-              <div data-field="tfoParcialRp">
-                <Field label={<>{t("step2.tfoParcial")}<FieldTooltip text={t("tooltip.tfoParcial")} /></>} hint={t("step2.tfoParcialHint")} error={e.tfoParcialRp} required>
-                  <RadioGroup name="tfoParcialRp" options={["Sim", "Não"] as const} value={state.tfoParcialRp} onChange={(v) => setField("tfoParcialRp", v as SimNao)} labels={simNaoLabels} />
+              <div className="sm:col-span-2" data-field="saldoEmContaRp">
+                <Field label={<>Saldo em Conta<FieldTooltip text="O cliente ainda possui saldo disponível na conta?" /></>} error={e.saldoEmContaRp} required>
+                  <RadioGroup name="saldoEmContaRp" options={["Sim", "Não"] as const} value={state.saldoEmContaRp} onChange={(v) => setField("saldoEmContaRp", v as SimNao)} labels={simNaoLabels} />
                 </Field>
               </div>
             </div>
+            {state.saldoEmContaRp && (() => {
+              const d = deriveTemplates(state.saldoEmContaRp);
+              return (
+                <div className="template-preview">
+                  <div className="template-preview-label">Robô vai usar:</div>
+                  <div className="template-preview-row">
+                    <span className="template-tag tag-bacen">BACEN</span>
+                    <span className="template-value">{d.template_bacen}</span>
+                  </div>
+                  <div className="template-preview-row">
+                    <span className="template-tag tag-cliente">Cliente</span>
+                    <span className="template-value">{d.template_cliente}</span>
+                  </div>
+                </div>
+              );
+            })()}
           </ConditionalBlock>
 
           {/* Bloqueio Cautelar */}
           <ConditionalBlock visible={showBc}>
             <BlockHeader title="Bloqueio Cautelar" variant="sub" />
             <div className="grid gap-6 sm:grid-cols-2">
-              <div data-field="tfoConcluidoBc">
-                <Field label={<>{t("step2.tfoConcluido")}<FieldTooltip text={t("tooltip.tfoConcluidoBc")} /></>} hint={t("step2.tfoHint")} error={e.tfoConcluidoBc} required>
-                  <RadioGroup name="tfoConcluidoBc" options={["Sim", "Não"] as const} value={state.tfoConcluidoBc} onChange={(v) => setField("tfoConcluidoBc", v as SimNao)} labels={simNaoLabels} />
-                </Field>
-              </div>
-              <div data-field="contaSemSaldoBc">
-                <Field label={<>{t("step2.contaSemSaldo")}<FieldTooltip text={t("tooltip.contaSemSaldoBc")} /></>} error={e.contaSemSaldoBc} required>
-                  <RadioGroup name="contaSemSaldoBc" options={["Sim", "Não"] as const} value={state.contaSemSaldoBc} onChange={(v) => setField("contaSemSaldoBc", v as SimNao)} labels={simNaoLabels} />
+              <div className="sm:col-span-2" data-field="saldoEmContaBc">
+                <Field label={<>Saldo em Conta<FieldTooltip text="O cliente ainda possui saldo disponível na conta?" /></>} error={e.saldoEmContaBc} required>
+                  <RadioGroup name="saldoEmContaBc" options={["Sim", "Não"] as const} value={state.saldoEmContaBc} onChange={(v) => setField("saldoEmContaBc", v as SimNao)} labels={simNaoLabels} />
                 </Field>
               </div>
               <div data-field="bcFraudadorPfpj">
@@ -531,11 +533,6 @@ function Step2Trilha() {
                   </Field>
                 </div>
               )}
-              <div data-field="tfoParcialBc">
-                <Field label={<>{t("step2.tfoParcial")}<FieldTooltip text={t("tooltip.tfoParcialBc")} /></>} hint={t("step2.tfoParcialHint")} error={e.tfoParcialBc} required>
-                  <RadioGroup name="tfoParcialBc" options={["Sim", "Não"] as const} value={state.tfoParcialBc} onChange={(v) => setField("tfoParcialBc", v as SimNao)} labels={simNaoLabels} />
-                </Field>
-              </div>
               <div data-field="devolucaoOrigemBc">
                 <Field label={<>{t("step2.devolucaoOrigem")}<FieldTooltip text={t("tooltip.devolucaoOrigem")} /></>} error={e.devolucaoOrigemBc} required>
                   <RadioGroup name="devolucaoOrigemBc" options={["Sim", "Não"] as const} value={state.devolucaoOrigemBc} onChange={(v) => setField("devolucaoOrigemBc", v as SimNao)} labels={simNaoLabels} />
@@ -563,6 +560,22 @@ function Step2Trilha() {
                 </Field>
               </div>
             </div>
+            {state.saldoEmContaBc && (() => {
+              const d = deriveTemplates(state.saldoEmContaBc);
+              return (
+                <div className="template-preview">
+                  <div className="template-preview-label">Robô vai usar:</div>
+                  <div className="template-preview-row">
+                    <span className="template-tag tag-bacen">BACEN</span>
+                    <span className="template-value">{d.template_bacen}</span>
+                  </div>
+                  <div className="template-preview-row">
+                    <span className="template-tag tag-cliente">Cliente</span>
+                    <span className="template-value">{d.template_cliente}</span>
+                  </div>
+                </div>
+              );
+            })()}
           </ConditionalBlock>
         </ConditionalBlock>
       </>
@@ -696,19 +709,25 @@ function buildTrilhaItems(s: RdrFormState, t: (k: string) => string): ReviewEntr
         if (s.casosMudbray) items.push({ label: t("step3.reviewCasosMudbray"), value: s.casosMudbray });
         if (s.casosCercadinho) items.push({ label: t("step3.reviewCasosCercadinho"), value: s.casosCercadinho });
         if (s.casosBoleto) items.push({ label: t("step3.reviewCasosBoleto"), value: s.casosBoleto });
-        if (s.tfoConcluidoRp) items.push({ label: t("step3.reviewTfoRp"), value: s.tfoConcluidoRp });
-        if (s.contaSemSaldoRp) items.push({ label: t("step3.reviewSaldoRp"), value: s.contaSemSaldoRp });
-        if (s.tfoParcialRp) items.push({ label: t("step3.reviewParcialRp"), value: s.tfoParcialRp });
+        if (s.saldoEmContaRp) {
+          const rpDerived = deriveTemplates(s.saldoEmContaRp);
+          items.push({ label: "Saldo em Conta", value: s.saldoEmContaRp });
+          items.push({ label: "→ BACEN", value: rpDerived.template_bacen });
+          items.push({ label: "→ Cliente", value: rpDerived.template_cliente });
+        }
       }
 
       if (s.subreasonFraudster === "Bloqueio Cautelar") {
-        if (s.tfoConcluidoBc) items.push({ label: t("step3.reviewTfoBc"), value: s.tfoConcluidoBc });
-        if (s.contaSemSaldoBc) items.push({ label: t("step3.reviewSaldoBc"), value: s.contaSemSaldoBc });
+        if (s.saldoEmContaBc) {
+          const bcDerived = deriveTemplates(s.saldoEmContaBc);
+          items.push({ label: "Saldo em Conta", value: s.saldoEmContaBc });
+          items.push({ label: "→ BACEN", value: bcDerived.template_bacen });
+          items.push({ label: "→ Cliente", value: bcDerived.template_cliente });
+        }
         if (s.bcFraudadorPfpj) {
           const fraudadorDisplay = s.bcFraudadorPfpj === "Não" ? "Não" : s.bcFraudadorTipo || "";
           if (fraudadorDisplay) items.push({ label: t("step3.reviewFraudadorBc"), value: fraudadorDisplay });
         }
-        if (s.tfoParcialBc) items.push({ label: t("step3.reviewParcialBc"), value: s.tfoParcialBc });
         if (s.devolucaoOrigemBc) items.push({ label: t("step3.reviewDevolucaoBc"), value: s.devolucaoOrigemBc });
         if (s.transacaoCodigo) {
           items.push({ label: t("step3.reviewTransacaoCodigo"), value: s.transacaoCodigo.trim() });

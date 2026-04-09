@@ -42,6 +42,7 @@ const CLEAR_RP: Partial<RdrFormState> = {
   tfoConcluidoRp: "",
   contaSemSaldoRp: "",
   tfoParcialRp: "",
+  saldoEmContaRp: "",
 };
 
 const CLEAR_BC: Partial<RdrFormState> = {
@@ -51,6 +52,7 @@ const CLEAR_BC: Partial<RdrFormState> = {
   bcFraudadorTipo: "",
   tfoParcialBc: "",
   devolucaoOrigemBc: "",
+  saldoEmContaBc: "",
 };
 
 const CLEAR_FRAUDSTER: Partial<RdrFormState> = {

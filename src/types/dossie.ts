@@ -33,11 +33,15 @@ export interface Solicitacao {
   rpTfoConcluido:            string;
   rpContaSemSaldo:           string;
   rpTfoParcialCliente:       string;
+  templateBacenRp:           string;
+  templateClienteRp:         string;
   bcTfoConcluido:            string;
   bcContaSemSaldo:           string;
-  bcFraudadorTipo:           string;
   bcTfoParcialCliente:       string;
   bcDevolucaoOrigem:         string;
+  bcFraudadorTipo:           string;
+  templateBacenBc:           string;
+  templateClienteBc:         string;
   linkGdriveCliente:         string;
   linkGdriveBacen:           string;
   nomesArquivos:             string;

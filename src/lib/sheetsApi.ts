@@ -7,11 +7,12 @@ import {
 import type { Solicitacao } from "../types/dossie";
 import { formatDateBR, formatDateInputBR, formatDateTimeSheet } from "../utils/formatDate";
 import { fetchWithRetry } from "./fetchWithTimeout";
+import { deriveTemplates } from "../utils/deriveRobotTemplates";
 
 const SHEET_TAB = "Sheet1";
 
-/** 53 columns → A through BA. */
-const LAST_COL = "BA";
+/** 57 columns → A through BE. */
+const LAST_COL = "BE";
 
 function handleSheetsError(status: number, body: string, operation: string): never {
   if (status === 403 || body.includes("PERMISSION_DENIED")) {
@@ -126,13 +127,17 @@ function sanitizeSheetValue(value: string): string {
   return value;
 }
 
-/* ── Row mapping (41 columns matching SHEET_HEADERS) ── */
+/* ── Row mapping (57 columns matching SHEET_HEADERS) ── */
 
 export function formStateToRow(
   s: RdrFormState,
   id: string,
 ): string[] {
   const sv = sanitizeSheetValue;
+
+  const rpDerived = deriveTemplates(s.saldoEmContaRp || 'Sim');
+  const bcDerived = deriveTemplates(s.saldoEmContaBc || 'Sim');
+
   return [
     id,                                            // A  - ID
     formatDateBR(new Date()),                      // B  - Timestamp
@@ -165,30 +170,34 @@ export function formStateToRow(
     s.casosMudbray,                                // AC - RP - Casos Mudbray
     s.casosCercadinho,                             // AD - RP - Casos Cercadinho
     s.casosBoleto,                                 // AE - RP - Casos Boleto Cash In
-    s.tfoConcluidoRp,                              // AF - RP - TFO Concluído Nubank
-    s.contaSemSaldoRp,                             // AG - RP - Conta Sem Saldo
-    s.tfoParcialRp,                                // AH - RP - TFO Parcial Cliente
-    s.tfoConcluidoBc,                              // AI - BC - TFO Concluído Nubank
-    s.contaSemSaldoBc,                             // AJ - BC - Conta Sem Saldo
-    s.tfoParcialBc,                                // AK - BC - TFO Parcial Cliente
-    s.devolucaoOrigemBc,                           // AL - Devolução à Origem (BC)
+    rpDerived.tfo_concluido,                       // AF - RP - TFO Concluído Nubank
+    rpDerived.conta_sem_saldo,                     // AG - RP - Conta Sem Saldo
+    rpDerived.tfo_parcial,                         // AH - RP - TFO Parcial Cliente
+    rpDerived.template_bacen,                      // AI - Template BACEN (RP)
+    rpDerived.template_cliente,                    // AJ - Template Cliente (RP)
+    bcDerived.tfo_concluido,                       // AK - BC - TFO Concluído Nubank
+    bcDerived.conta_sem_saldo,                     // AL - BC - Conta Sem Saldo
+    bcDerived.tfo_parcial,                         // AM - BC - TFO Parcial Cliente
+    s.devolucaoOrigemBc,                           // AN - Devolução à Origem (BC)
     s.bcFraudadorPfpj === "Não"
       ? "Não"
-      : s.bcFraudadorTipo || "",                   // AM - BC - Fraudador Tipo
-    "",                                            // AN - Link GDrive Cliente (preenchido pelo UiPath)
-    "",                                            // AO - Link GDrive BACEN   (preenchido pelo UiPath)
-    "",                                            // AP - Nomes Arquivos      (preenchido pelo UiPath)
-    "",                                            // AQ - Savings Account ID (hidden)
-    "",                                            // AR - Dt Notificação Enviada Cliente (hidden)
-    formatDateTimeSheet(s.dtContestacaoZendeskInicio),  // AS - Dt Contestação Zendesk Início
-    formatDateTimeSheet(s.dtContestacaoZendeskFim),     // AT - Dt Contestação Zendesk Fim
-    sv(s.ticketZendeskContestacao.trim()),          // AU - Ticket Zendesk Contestação
-    "",                                            // AV - Dt PIX Enviado Início (hidden)
-    "",                                            // AW - Dt PIX Enviado Fim (hidden)
-    sv(s.listaPixEnviado.trim()),                  // AX - Lista PIX Enviado
-    "",                                            // AY - Dt PIX Recebido Início (hidden)
-    "",                                            // AZ - Dt PIX Recebido Fim (hidden)
-    sv(s.listaPixRecebido.trim()),                 // BA - Lista PIX Recebido
+      : s.bcFraudadorTipo || "",                   // AO - BC - Fraudador Tipo
+    bcDerived.template_bacen,                      // AP - Template BACEN (BC)
+    bcDerived.template_cliente,                    // AQ - Template Cliente (BC)
+    "",                                            // AR - Link GDrive Cliente (preenchido pelo UiPath)
+    "",                                            // AS - Link GDrive BACEN   (preenchido pelo UiPath)
+    "",                                            // AT - Nomes Arquivos      (preenchido pelo UiPath)
+    "",                                            // AU - Savings Account ID (hidden)
+    "",                                            // AV - Dt Notificação Enviada Cliente (hidden)
+    formatDateTimeSheet(s.dtContestacaoZendeskInicio),  // AW - Dt Contestação Zendesk Início
+    formatDateTimeSheet(s.dtContestacaoZendeskFim),     // AX - Dt Contestação Zendesk Fim
+    sv(s.ticketZendeskContestacao.trim()),          // AY - Ticket Zendesk Contestação
+    "",                                            // AZ - Dt PIX Enviado Início (hidden)
+    "",                                            // BA - Dt PIX Enviado Fim (hidden)
+    sv(s.listaPixEnviado.trim()),                  // BB - Lista PIX Enviado
+    "",                                            // BC - Dt PIX Recebido Início (hidden)
+    "",                                            // BD - Dt PIX Recebido Fim (hidden)
+    sv(s.listaPixRecebido.trim()),                 // BE - Lista PIX Recebido
   ];
 }
 
@@ -230,25 +239,29 @@ export function mapRowToSolicitacao(row: string[]): Solicitacao {
     rpTfoConcluido:            row[31] || '',
     rpContaSemSaldo:           row[32] || '',
     rpTfoParcialCliente:       row[33] || '',
-    bcTfoConcluido:            row[34] || '',
-    bcContaSemSaldo:           row[35] || '',
-    bcFraudadorTipo:           row[38] || '',
-    bcTfoParcialCliente:       row[36] || '',
-    bcDevolucaoOrigem:         row[37] || '',
-    linkGdriveCliente:         row[39] || '',
-    linkGdriveBacen:           row[40] || '',
-    nomesArquivos:             row[41] || '',
-    savingsAccountId:          row[42] || '',
-    dtNotificacaoEnviadaCliente: row[43] || '',
-    dtContestacaoZendeskInicio: row[44] || '',
-    dtContestacaoZendeskFim:   row[45] || '',
-    ticketZendeskContestacao:  row[46] || '',
-    dtPixEnviadoInicio:        row[47] || '',
-    dtPixEnviadoFim:           row[48] || '',
-    listaPixEnviado:           row[49] || '',
-    dtPixRecebidoInicio:       row[50] || '',
-    dtPixRecebidoFim:          row[51] || '',
-    listaPixRecebido:          row[52] || '',
+    templateBacenRp:           row[34] || '',
+    templateClienteRp:         row[35] || '',
+    bcTfoConcluido:            row[36] || '',
+    bcContaSemSaldo:           row[37] || '',
+    bcTfoParcialCliente:       row[38] || '',
+    bcDevolucaoOrigem:         row[39] || '',
+    bcFraudadorTipo:           row[40] || '',
+    templateBacenBc:           row[41] || '',
+    templateClienteBc:         row[42] || '',
+    linkGdriveCliente:         row[43] || '',
+    linkGdriveBacen:           row[44] || '',
+    nomesArquivos:             row[45] || '',
+    savingsAccountId:          row[46] || '',
+    dtNotificacaoEnviadaCliente: row[47] || '',
+    dtContestacaoZendeskInicio: row[48] || '',
+    dtContestacaoZendeskFim:   row[49] || '',
+    ticketZendeskContestacao:  row[50] || '',
+    dtPixEnviadoInicio:        row[51] || '',
+    dtPixEnviadoFim:           row[52] || '',
+    listaPixEnviado:           row[53] || '',
+    dtPixRecebidoInicio:       row[54] || '',
+    dtPixRecebidoFim:          row[55] || '',
+    listaPixRecebido:          row[56] || '',
   };
 }
 
