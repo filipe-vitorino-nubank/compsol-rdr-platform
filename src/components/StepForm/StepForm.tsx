@@ -996,8 +996,21 @@ export function RdrRequestForm() {
       setOverlay("success");
     } catch (err) {
       setOverlay("hidden");
-      const msg = err instanceof Error ? err.message : t("submit.genericError");
-      showToast(msg, "error");
+      const msg = err instanceof Error ? err.message : "";
+      if (msg.includes("SHEETS_PERMISSION_DENIED")) {
+        modal.error(
+          "Sem permissão",
+          "Você não tem acesso à planilha de solicitações. " +
+            "Entre em contato com o administrador para solicitar acesso.",
+        );
+      } else if (msg.includes("SHEETS_UNAUTHENTICATED")) {
+        modal.warning(
+          "Sessão expirada",
+          "Sua sessão expirou. Faça login novamente para continuar.",
+        );
+      } else {
+        showToast(msg || t("submit.genericError"), "error");
+      }
     }
   };
 

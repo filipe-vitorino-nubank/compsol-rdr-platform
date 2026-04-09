@@ -3,6 +3,7 @@ import { Button } from "../components/ui/Button";
 import { Field } from "../components/ui/Field";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
+import { useModal } from "../context/ModalContext";
 import { useLanguage } from "../context/LanguageContext";
 import { fetchAllRows, mapRowToSolicitacao, rowStatusA1, updateCell } from "../lib/sheetsApi";
 import { getSpreadsheetId } from "../lib/spreadsheetConfig";
@@ -417,6 +418,7 @@ function DonutChart({ data }: { data: Record<string, number> }) {
 export function DashboardPage() {
   const { getAccessTokenForSheets, scriptReady } = useAuth();
   const { showToast } = useToast();
+  const modal = useModal();
   const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<RowView[]>([]);
@@ -482,8 +484,21 @@ export function DashboardPage() {
         setRows([]);
       }
     } catch (e) {
-      const msg = e instanceof Error ? e.message : t("dashboard.loadError");
-      showToast(msg, "error");
+      const msg = e instanceof Error ? e.message : "";
+      if (msg.includes("SHEETS_PERMISSION_DENIED")) {
+        modal.error(
+          "Sem permissão",
+          "Você não tem acesso à planilha de solicitações. " +
+            "Entre em contato com o administrador para solicitar acesso.",
+        );
+      } else if (msg.includes("SHEETS_UNAUTHENTICATED")) {
+        modal.warning(
+          "Sessão expirada",
+          "Sua sessão expirou. Faça login novamente para continuar.",
+        );
+      } else {
+        showToast(msg || t("dashboard.loadError"), "error");
+      }
       setRows([]);
     } finally {
       setLoading(false);
@@ -664,9 +679,17 @@ export function DashboardPage() {
       showToast(t("dashboard.statusUpdated"), "success");
       setDetail(null);
     } catch (e) {
-      const msg =
-        e instanceof Error ? e.message : t("dashboard.updateFailed");
-      showToast(msg, "error");
+      const msg = e instanceof Error ? e.message : "";
+      if (msg.includes("SHEETS_PERMISSION_DENIED")) {
+        modal.error(
+          "Sem permissão",
+          "Você não tem permissão para alterar o status nesta planilha.",
+        );
+      } else if (msg.includes("SHEETS_UNAUTHENTICATED")) {
+        modal.warning("Sessão expirada", "Faça login novamente.");
+      } else {
+        showToast(msg || t("dashboard.updateFailed"), "error");
+      }
     } finally {
       setSavingStatus(false);
     }

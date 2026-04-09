@@ -66,6 +66,7 @@ export async function fetchChannelMembers(
     return _cachedMembers;
   } catch (err) {
     console.error("[SlackService] Erro ao buscar equipe:", (err as Error).message);
+    _cachedMembers = null;
     return [];
   }
 }

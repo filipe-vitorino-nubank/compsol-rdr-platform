@@ -12,10 +12,28 @@ const SHEET_TAB = "Sheet1";
 /** 53 columns → A through BA. */
 const LAST_COL = "BA";
 
+function handleSheetsError(status: number, body: string, operation: string): never {
+  if (status === 403 || body.includes("PERMISSION_DENIED")) {
+    throw new Error(
+      "SHEETS_PERMISSION_DENIED: Você não tem permissão para acessar " +
+        "a planilha. Solicite acesso ao administrador da plataforma.",
+    );
+  }
+  if (status === 401 || body.includes("UNAUTHENTICATED")) {
+    throw new Error(
+      "SHEETS_UNAUTHENTICATED: Sessão expirada. Faça login novamente.",
+    );
+  }
+  throw new Error(
+    `SHEETS_ERROR: Erro ao ${operation} (HTTP ${status}). Tente novamente.`,
+  );
+}
+
 async function sheetsFetch<T>(
   accessToken: string,
   path: string,
   init?: RequestInit,
+  operation = "acessar planilha",
 ): Promise<T> {
   const res = await fetch(
     `https://sheets.googleapis.com/v4/spreadsheets${path}`,
@@ -30,7 +48,7 @@ async function sheetsFetch<T>(
   );
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Sheets API ${res.status}: ${text || res.statusText}`);
+    handleSheetsError(res.status, text, operation);
   }
   return res.json() as Promise<T>;
 }
@@ -45,6 +63,8 @@ export async function readHeaderRow(
   const data = await sheetsFetch<{ values?: string[][] }>(
     accessToken,
     `/${spreadsheetId}/values/${range}`,
+    undefined,
+    "ler cabeçalhos",
   );
   return data.values?.[0] ?? null;
 }
@@ -61,6 +81,7 @@ export async function writeHeaderRow(
       method: "PUT",
       body: JSON.stringify({ values: [Array.from(SHEET_HEADERS)] }),
     },
+    "gravar cabeçalhos",
   );
 }
 
@@ -233,6 +254,7 @@ export async function appendRequestRow(
       method: "POST",
       body: JSON.stringify({ values: [row] }),
     },
+    "gravar solicitação",
   );
 }
 
@@ -246,6 +268,8 @@ export async function fetchAllRows(
   const data = await sheetsFetch<{ values?: string[][] }>(
     accessToken,
     `/${spreadsheetId}/values/${range}`,
+    undefined,
+    "carregar solicitações",
   );
   const rows = data.values ?? [];
   return rows.map((cells, i) => ({
@@ -274,6 +298,7 @@ export async function updateCell(
       method: "PUT",
       body: JSON.stringify({ values: [[value]] }),
     },
+    "atualizar status",
   );
 }
 

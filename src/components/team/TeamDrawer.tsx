@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
 import {
@@ -89,32 +89,38 @@ function MemberCard({ member, t }: { member: SlackMember; t: (k: string) => stri
   );
 }
 
+type ErrorState = null | "empty" | "failed";
+
 export function TeamDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { getAccessTokenForSheets } = useAuth();
   const { t } = useLanguage();
   const [members, setMembers] = useState<SlackMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [error, setError] = useState<ErrorState>(null);
+
+  const fetchMembers = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = await getAccessTokenForSheets({ interactive: false });
+      const membersList = await fetchChannelMembers(token);
+      setMembers(membersList);
+      if (!membersList || membersList.length === 0) {
+        setError("empty");
+      }
+    } catch (err) {
+      console.error("[TeamDrawer] Erro:", (err as Error).message);
+      setError("failed");
+    } finally {
+      setLoading(false);
+    }
+  }, [getAccessTokenForSheets]);
 
   useEffect(() => {
     if (!open) return;
-    setLoading(true);
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const token = await getAccessTokenForSheets({ interactive: false });
-        const membersList = await fetchChannelMembers(token);
-        if (!cancelled) setMembers(membersList);
-      } catch (err) {
-        console.error("[TeamDrawer] Erro:", (err as Error).message);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => { cancelled = true; };
-  }, [open, getAccessTokenForSheets]);
+    void fetchMembers();
+  }, [open, fetchMembers]);
 
   const filtered = members.filter((m) =>
     m.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -167,6 +173,32 @@ export function TeamDrawer({ open, onClose }: { open: boolean; onClose: () => vo
                 <path d="M21 12a9 9 0 1 1-6.219-8.56" />
               </svg>
               <span>{t("profile.loadingTeam")}</span>
+            </div>
+          ) : error === "empty" ? (
+            <div className="profile-loading" style={{ flexDirection: "column", gap: 6 }}>
+              <p style={{ fontSize: 13, color: "var(--color-ink-muted)" }}>
+                Nenhum membro encontrado.
+              </p>
+              <p style={{ fontSize: 11, color: "var(--color-ink-subtle)" }}>
+                A sincronização pode estar pendente.
+              </p>
+            </div>
+          ) : error === "failed" ? (
+            <div className="profile-loading" style={{ flexDirection: "column", gap: 8 }}>
+              <p style={{ fontSize: 13, color: "var(--color-ink-muted)" }}>
+                Não foi possível carregar a equipe.
+              </p>
+              <p style={{ fontSize: 11, color: "var(--color-ink-subtle)" }}>
+                Verifique sua conexão e tente novamente.
+              </p>
+              <button
+                type="button"
+                className="btn-sync"
+                onClick={fetchMembers}
+                style={{ marginTop: 4 }}
+              >
+                Tentar novamente
+              </button>
             </div>
           ) : (
             filtered.map((member) => (
