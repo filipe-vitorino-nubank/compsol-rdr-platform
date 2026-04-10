@@ -306,7 +306,7 @@ code, kbd, pre, .mono { font-family: var(--font-mono); }
   top: 0;
   left: 0;
   height: 100vh;
-  overflow: hidden;
+  overflow: visible;
   --color-surface: var(--sidebar-bg);
   --color-surface-raised: var(--sidebar-bg);
   --color-border: var(--sidebar-border);
@@ -1110,6 +1110,34 @@ code, kbd, pre, .mono { font-family: var(--font-mono); }
   }
   .sidebar-scope:hover::after {
     background: rgba(130,10,209,0.3);
+  }
+
+  /* ── Sidebar float toggle ── */
+  .sidebar-float-toggle {
+    position: absolute;
+    top: 50%;
+    right: -13px;
+    transform: translateY(-50%);
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--sidebar-bg);
+    border: 1px solid var(--border-hover);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 200;
+    opacity: 0;
+    transition: opacity 200ms ease, background 150ms ease;
+  }
+  .sidebar-scope:hover .sidebar-float-toggle { opacity: 1; }
+  .sidebar-float-toggle:hover {
+    background: var(--purple-700) !important;
+    border-color: var(--purple-700) !important;
+    color: #fff !important;
+    opacity: 1 !important;
   }
 
   /* ── Sidebar toggle ── */
