@@ -34,9 +34,9 @@ body{background:#06000f;color:#c8b8e8;font-family:'DM Sans',system-ui,sans-serif
 /* ── Graph SVG ── */
 #graph{position:fixed;top:48px;left:0;right:0;bottom:0}
 .node-g{cursor:pointer}
-.node-g text{pointer-events:none;font-size:11px;fill:#c8b8e8;font-weight:600;text-shadow:0 1px 4px #06000f,0 0 8px #06000f,0 0 16px #06000f}
-.link-line{stroke-opacity:.4;stroke-width:1}
-.link-line.highlight{stroke-opacity:.85;stroke-width:2.5}
+.node-g text{pointer-events:none;font-size:10px;fill:#c8b8e8;font-weight:500;text-shadow:0 0 6px #06000f,0 0 12px #06000f}
+.link-line{stroke-opacity:.25;stroke-width:1}
+.link-line.highlight{stroke-opacity:.8;stroke-width:2}
 .link-line.dimmed{stroke-opacity:.04}
 .node-g.dimmed circle,.node-g.dimmed text{opacity:.1}
 
@@ -319,8 +319,8 @@ const nodeById = new Map(nodes.map(n => [n.id, n]));
    SIZING
    ============================================================ */
 function nodeRadius(n) {
-  const base = {pagina:28,componente:22,contexto:20,hook:18,lib:18,util:16,gas:26,google:24,uipath:22,sistema:20,slack:18,ia:20,fluxo:16};
-  return base[n.category] || 18;
+  const base = {pagina:18,componente:14,contexto:13,hook:12,lib:12,util:12,gas:16,google:14,uipath:15,sistema:13,slack:12,ia:14,fluxo:11};
+  return base[n.category] || 12;
 }
 
 /* ============================================================
@@ -415,14 +415,15 @@ for (let i = 0; i < 200; i++) {
    ============================================================ */
 const simulation = d3.forceSimulation(nodes)
   .force('link', d3.forceLink(links).id(d=>d.id).distance(d => {
-    return 100 + (d.strength||1) * 20;
-  }).strength(d => (d.strength||2) * .12))
-  .force('charge', d3.forceManyBody().strength(-400))
-  .force('center', d3.forceCenter(W/2, H/2).strength(.04))
-  .force('collision', d3.forceCollide().radius(d => nodeRadius(d) + 20))
-  .force('x', d3.forceX(d => (CAT_POS[d.category]?.x || .5) * W).strength(.07))
-  .force('y', d3.forceY(d => (CAT_POS[d.category]?.y || .5) * H).strength(.07))
-  .alphaDecay(.012);
+    const base = 80;
+    return base + (4 - (d.strength||2)) * 30;
+  }).strength(d => (d.strength||2) * .15))
+  .force('charge', d3.forceManyBody().strength(d => d.external ? -200 : -350))
+  .force('center', d3.forceCenter(W/2, H/2).strength(.05))
+  .force('collision', d3.forceCollide().radius(d => nodeRadius(d) + 12))
+  .force('x', d3.forceX(d => (CAT_POS[d.category]?.x || .5) * W).strength(.08))
+  .force('y', d3.forceY(d => (CAT_POS[d.category]?.y || .5) * H).strength(.08))
+  .alphaDecay(.015);
 
 // Links
 const linkEls = g.append('g').selectAll('line').data(links).join('line')
@@ -431,7 +432,7 @@ const linkEls = g.append('g').selectAll('line').data(links).join('line')
     const n = nodeById.get(d.source.id || d.source);
     return (CATEGORY_COLORS[n?.category]||{stroke:'#555'}).stroke;
   })
-  .attr('stroke-width', d => Math.max(.8, (d.strength||1) * .8));
+  .attr('stroke-width', d => Math.max(.5, (d.strength||2) * .6));
 
 // Nodes
 const nodeEls = g.append('g').selectAll('g').data(nodes).join('g')
@@ -448,35 +449,34 @@ const nodeEls = g.append('g').selectAll('g').data(nodes).join('g')
 
 // Status ring
 nodeEls.append('circle')
-  .attr('r', d => nodeRadius(d) + 4)
+  .attr('r', d => nodeRadius(d) + 3)
   .attr('fill','none')
   .attr('stroke', d => (STATUS_STYLES[d.status]||STATUS_STYLES.stable).ring)
-  .attr('stroke-width', 1)
-  .attr('stroke-dasharray', d => d.status === 'warning' ? '4 3' : 'none')
+  .attr('stroke-width', .8)
+  .attr('stroke-dasharray', d => d.status === 'warning' ? '3 2' : 'none')
   .attr('opacity', .5);
 
 // Main circle
 nodeEls.append('circle')
-  .attr('class','node-circle')
   .attr('r', d => nodeRadius(d))
   .attr('fill', d => (CATEGORY_COLORS[d.category]||{fill:'#333'}).fill)
   .attr('stroke', d => (CATEGORY_COLORS[d.category]||{stroke:'#888'}).stroke)
-  .attr('stroke-width', 1.5)
+  .attr('stroke-width', 1.2)
   .attr('filter','url(#glow)');
 
 // External indicator (dashed outer ring)
 nodeEls.filter(d => d.external).append('circle')
-  .attr('r', d => nodeRadius(d) + 9)
+  .attr('r', d => nodeRadius(d) + 7)
   .attr('fill','none')
   .attr('stroke', d => (CATEGORY_COLORS[d.category]||{stroke:'#888'}).stroke)
-  .attr('stroke-width', .5)
-  .attr('stroke-dasharray', '5 4')
-  .attr('opacity', .3);
+  .attr('stroke-width', .4)
+  .attr('stroke-dasharray', '4 3')
+  .attr('opacity', .35);
 
-// Labels — always visible, bold, with strong text shadow
+// Labels
 nodeEls.append('text')
   .attr('text-anchor','middle')
-  .attr('dy', d => nodeRadius(d) + 16)
+  .attr('dy', d => nodeRadius(d) + 13)
   .text(d => d.label);
 
 // Tick
@@ -542,11 +542,6 @@ function onNodeClick(event, d) {
   event.stopPropagation();
   if (selectedNode === d.id) { closeDetail(); return; }
   selectedNode = d.id;
-
-  // Reset all strokes, highlight selected
-  nodeEls.selectAll('.node-circle').attr('stroke-width', 1.5);
-  d3.select(event.currentTarget).select('.node-circle').attr('stroke-width', 3);
-
   highlightNode(d);
   tooltip.style.display = 'none';
   openDetail(d);
@@ -555,77 +550,33 @@ function onNodeClick(event, d) {
 svg.on('click', () => { if(selectedNode) closeDetail(); });
 
 function openDetail(d) {
-  const cc = CATEGORY_COLORS[d.category]||{stroke:'#888',fill:'#333',label:d.category};
+  const cc = CATEGORY_COLORS[d.category]||{stroke:'#888',label:d.category};
   const ss = STATUS_STYLES[d.status]||STATUS_STYLES.stable;
 
-  const outLinks = links.filter(l => (l.source.id||l.source)===d.id);
   const inLinks = links.filter(l => (l.target.id||l.target)===d.id);
+  const outLinks = links.filter(l => (l.source.id||l.source)===d.id);
 
   detailPanel.innerHTML = `
     <div class="dp-header">
       <div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <div style="width:12px;height:12px;border-radius:50%;background:${cc.stroke};flex-shrink:0"></div>
-          <span style="font-size:10px;color:${cc.stroke};text-transform:uppercase;letter-spacing:1px;font-weight:700">${cc.label}${d.subcategory ? ' · '+d.subcategory : ''}</span>
-        </div>
+        <div class="dp-cat-badge" style="background:${cc.fill};color:${cc.stroke};border:.5px solid ${cc.stroke}66">${cc.label}${d.subcategory ? ' · '+d.subcategory : ''}</div>
         <div class="dp-title">${d.label}</div>
-        <div class="dp-status">
-          <span style="width:7px;height:7px;border-radius:50%;background:${ss.ring};display:inline-block"></span>
-          <span style="color:${ss.ring}">${ss.label}</span>
-          ${d.external ? '<span style="font-size:10px;color:#5a4a72;margin-left:4px">· Externo</span>' : ''}
-        </div>
+        <div class="dp-status"><span style="width:6px;height:6px;border-radius:50%;background:${ss.ring};display:inline-block"></span> ${ss.label}${d.external ? ' · Externo' : ''}</div>
       </div>
       <button class="dp-close" onclick="closeDetail()">✕</button>
     </div>
     <div class="dp-body">
-      ${d.desc ? `<div style="font-size:13px;color:#c8b8e8;line-height:1.7;padding:10px 12px;background:rgba(130,10,209,0.06);border:.5px solid rgba(130,10,209,0.15);border-radius:8px">${d.desc}</div>` : ''}
-
-      ${d.features && d.features.length ? `
-      <div>
-        <div class="dp-section-title">Funcionalidades</div>
-        ${d.features.map(f=>`
-          <div style="display:flex;align-items:flex-start;gap:6px;padding:5px 0;border-bottom:.5px solid rgba(130,10,209,0.1)">
-            <div style="width:4px;height:4px;border-radius:50%;background:#820AD1;flex-shrink:0;margin-top:5px"></div>
-            <span style="font-size:12px;color:#c8b8e8">${f}</span>
-          </div>
-        `).join('')}
-      </div>` : ''}
-
-      ${d.file ? `
-      <div>
-        <div class="dp-section-title">Arquivo</div>
-        <code style="font-size:11px;color:#b06aff;background:rgba(130,10,209,0.08);padding:6px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;display:block;word-break:break-all;border:.5px solid rgba(130,10,209,0.15)">${d.file}</code>
-      </div>` : ''}
-
-      ${outLinks.length ? `
-      <div>
-        <div class="dp-section-title">Conecta para (${outLinks.length})</div>
-        ${outLinks.map(l=>{
-          const tgtId = l.target.id||l.target;
-          const tgt = nodeById.get(tgtId);
-          const tc = CATEGORY_COLORS[tgt?.category]||{stroke:'#820AD1'};
-          return `<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:.5px solid rgba(130,10,209,0.08)">
-            <div style="width:6px;height:6px;border-radius:50%;background:${tc.stroke};flex-shrink:0"></div>
-            <span style="font-size:12px;color:#c8b8e8;flex:1">${tgt?.label||tgtId}</span>
-            <span style="font-size:10px;color:#5a4a72;font-style:italic">${l.label||''}</span>
-          </div>`;
-        }).join('')}
-      </div>` : ''}
-
-      ${inLinks.length ? `
-      <div>
-        <div class="dp-section-title">Recebe de (${inLinks.length})</div>
-        ${inLinks.map(l=>{
-          const srcId = l.source.id||l.source;
-          const src = nodeById.get(srcId);
-          const sc = CATEGORY_COLORS[src?.category]||{stroke:'#820AD1'};
-          return `<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:.5px solid rgba(130,10,209,0.08)">
-            <div style="width:6px;height:6px;border-radius:50%;background:${sc.stroke};flex-shrink:0"></div>
-            <span style="font-size:12px;color:#c8b8e8;flex:1">${src?.label||srcId}</span>
-            <span style="font-size:10px;color:#5a4a72;font-style:italic">${l.label||''}</span>
-          </div>`;
-        }).join('')}
-      </div>` : ''}
+      <div><div class="dp-section-title">Descrição</div><div class="dp-desc">${d.desc}</div></div>
+      ${d.features && d.features.length ? `<div><div class="dp-section-title">Features</div>${d.features.map(f=>`<div class="dp-feature">${f}</div>`).join('')}</div>` : ''}
+      ${d.file ? `<div><div class="dp-section-title">Arquivo</div><div class="dp-file">${d.file}</div></div>` : ''}
+      ${inLinks.length ? `<div><div class="dp-section-title">Recebe de (${inLinks.length})</div>${inLinks.map(l=>{
+        const src = nodeById.get(l.source.id||l.source);
+        return `<div class="dp-conn"><span class="dp-conn-arrow">←</span> ${src?.label||l.source.id||l.source}<span class="dp-conn-label">${l.label||''}</span></div>`;
+      }).join('')}</div>` : ''}
+      ${outLinks.length ? `<div><div class="dp-section-title">Envia para (${outLinks.length})</div>${outLinks.map(l=>{
+        const tgt = nodeById.get(l.target.id||l.target);
+        return `<div class="dp-conn"><span class="dp-conn-arrow">→</span> ${tgt?.label||l.target.id||l.target}<span class="dp-conn-label">${l.label||''}</span></div>`;
+      }).join('')}</div>` : ''}
     </div>
   `;
   detailPanel.classList.add('open');
@@ -634,10 +585,8 @@ function openDetail(d) {
 function closeDetail() {
   selectedNode = null;
   clearHighlight();
-  nodeEls.selectAll('.node-circle').attr('stroke-width', 1.5);
   detailPanel.classList.remove('open');
 }
-window.closeDetail = closeDetail;
 
 /* ============================================================
    FILTERS & SEARCH
