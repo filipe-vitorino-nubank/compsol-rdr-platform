@@ -3054,6 +3054,28 @@ code, kbd, pre, .mono { font-family: var(--font-mono); }
 }
 .bot-mini-link:hover { text-decoration: underline; }
 
+/* ── Clear form button ── */
+.btn-clear-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  border: 0.5px solid var(--border-hover);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all var(--transition);
+}
+.btn-clear-form:hover {
+  border-color: var(--danger, #E24B4A);
+  color: var(--danger, #E24B4A);
+  background: rgba(226,75,74,0.06);
+}
+
 /* ── Responsividade ── */
 @media (max-width: 900px) {
   .dashboard-grid,

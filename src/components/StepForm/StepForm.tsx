@@ -1122,6 +1122,24 @@ export function RdrRequestForm() {
     navigate("/painel");
   };
 
+  const handleClearClick = () => {
+    modal.showModal({
+      type: "warning",
+      title: "Limpar formulário",
+      message: "Todos os dados preenchidos serão perdidos. Tem certeza que deseja limpar o formulário?",
+      confirmLabel: "Sim, limpar",
+      cancelLabel: "Cancelar",
+      onConfirm: () => {
+        reset();
+        setStep(1);
+        setSlideDir("left");
+        setConfirmed(false);
+        setValidatedSteps([]);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      },
+    });
+  };
+
   return (
     <>
       <div className="wizard-grid">
@@ -1158,12 +1176,19 @@ export function RdrRequestForm() {
         {/* Footer / navigation */}
         <div className="border-t border-[var(--color-border)] px-5 py-4 sm:px-8 sm:pb-8 sm:pt-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
+            <div className="flex items-center gap-3">
               {step > 1 && (
                 <Button variant="ghost" onClick={goPrev}>
                   {t("common.back")}
                 </Button>
               )}
+              <button type="button" className="btn-clear-form" onClick={handleClearClick}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="1 4 1 10 7 10" />
+                  <path d="M3.51 15a9 9 0 1 0 .49-3.36" />
+                </svg>
+                Limpar formulário
+              </button>
             </div>
             <div>
               {step < 3 ? (
