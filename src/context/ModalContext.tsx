@@ -1,5 +1,4 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
-import { createPortal } from "react-dom";
+import React, { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import type { ModalConfig, ModalType } from "../types/modal";
 
 interface ModalContextValue {
@@ -96,27 +95,21 @@ const MODAL_THEME: Record<
   },
 };
 
-function FeedbackModal({ config, onClose }: { config: ModalConfig; onClose: () => void }) {
+function FeedbackModal({
+  config,
+  setModal,
+}: {
+  config: ModalConfig;
+  setModal: React.Dispatch<React.SetStateAction<ModalConfig | null>>;
+}) {
   const theme = MODAL_THEME[config.type];
 
-  const handleConfirm = () => {
-    try {
-      config.onConfirm?.();
-    } catch { /* ensure modal closes */ }
-    onClose();
-  };
-
-  const handleCancel = () => {
-    try {
-      config.onCancel?.();
-    } catch { /* ensure modal closes */ }
-    onClose();
-  };
+  const dismiss = () => setModal(null);
 
   return (
     <div
       className="feedback-overlay"
-      onClick={handleCancel}
+      onClick={() => { config.onCancel?.(); dismiss(); }}
       role="dialog"
       aria-modal="true"
     >
@@ -136,13 +129,17 @@ function FeedbackModal({ config, onClose }: { config: ModalConfig; onClose: () =
             type="button"
             className="feedback-btn-primary"
             style={{ background: theme.btnBg }}
-            onClick={handleConfirm}
+            onClick={() => { config.onConfirm?.(); dismiss(); }}
           >
             {config.confirmLabel || "OK"}
           </button>
 
           {config.cancelLabel && (
-            <button type="button" className="feedback-btn-cancel" onClick={handleCancel}>
+            <button
+              type="button"
+              className="feedback-btn-cancel"
+              onClick={() => { config.onCancel?.(); dismiss(); }}
+            >
               {config.cancelLabel}
             </button>
           )}
@@ -200,7 +197,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   return (
     <ModalContext.Provider value={{ showModal, closeModal, error, warning, success, info, confirm }}>
       {children}
-      {modal && createPortal(<FeedbackModal config={modal} onClose={closeModal} />, document.body)}
+      {modal && <FeedbackModal config={modal} setModal={setModal} />}
     </ModalContext.Provider>
   );
 }

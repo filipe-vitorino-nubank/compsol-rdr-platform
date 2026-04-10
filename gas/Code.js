@@ -15,7 +15,7 @@ function ensureAdminsSheet() {
       Logger.log('Aba Admins criada: ' + adminEmail);
     }
   } catch(e) {
-    Logger.log('Erro ao criar aba Admins: ' + e.message);
+    Logger.log('Erro ensureAdminsSheet: ' + e.message);
   }
 }
 
@@ -54,25 +54,28 @@ function doGet(e) {
     GOOGLE_API_KEY:    props.getProperty('GOOGLE_API_KEY'),
   };
 
-  var userName = userEmail.split('@')[0];
+  var userName  = userEmail.split('@')[0];
+  var userPhoto = '';
+
   try {
-    var people = UrlFetchApp.fetch(
+    var peopleRes = UrlFetchApp.fetch(
       'https://people.googleapis.com/v1/people/me?personFields=names,photos',
-      { headers: { Authorization: 'Bearer ' + accessToken }, muteHttpExceptions: true }
+      {
+        headers: { Authorization: 'Bearer ' + accessToken },
+        muteHttpExceptions: true,
+      }
     );
-    if (people.getResponseCode() === 200) {
-      var data = JSON.parse(people.getContentText());
-      userName = data.names && data.names[0] && data.names[0].displayName || userName;
-      config.USER_PHOTO = data.photos && data.photos[0] && data.photos[0].url || '';
-      config.USER_NAME  = userName;
-    } else {
-      config.USER_PHOTO = '';
-      config.USER_NAME  = userName;
+    if (peopleRes.getResponseCode() === 200) {
+      var peopleData = JSON.parse(peopleRes.getContentText());
+      userName  = (peopleData.names && peopleData.names[0] && peopleData.names[0].displayName) || userName;
+      userPhoto = (peopleData.photos && peopleData.photos[0] && peopleData.photos[0].url) || '';
     }
   } catch(e) {
-    config.USER_PHOTO = '';
-    config.USER_NAME  = userName;
+    Logger.log('People API erro: ' + e.message);
   }
+
+  config.USER_NAME  = userName;
+  config.USER_PHOTO = userPhoto;
 
   var template = HtmlService.createTemplateFromFile('index');
   template.appConfig = JSON.stringify(config);

@@ -302,11 +302,11 @@ code, kbd, pre, .mono { font-family: var(--font-mono); }
 
 /* ── Sidebar scope ── */
 .sidebar-scope {
-  position: fixed;
+  position: fixed !important;
   top: 0;
   left: 0;
   height: 100vh;
-  overflow: visible;
+  overflow: visible !important;
   --color-surface: var(--sidebar-bg);
   --color-surface-raised: var(--sidebar-bg);
   --color-border: var(--sidebar-border);
@@ -1114,28 +1114,32 @@ code, kbd, pre, .mono { font-family: var(--font-mono); }
 
   /* ── Sidebar float toggle ── */
   .sidebar-float-toggle {
-    position: absolute;
-    top: 50%;
-    right: -13px;
-    transform: translateY(-50%);
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    background: var(--sidebar-bg);
-    border: 1px solid var(--border-hover);
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 200;
-    opacity: 0;
-    transition: opacity 200ms ease, background 150ms ease;
+    position: absolute !important;
+    top: 20px !important;
+    right: -13px !important;
+    transform: none !important;
+    width: 26px !important;
+    height: 26px !important;
+    border-radius: 50% !important;
+    background: var(--sidebar-bg, #06000f) !important;
+    border: 1px solid rgba(130,10,209,0.4) !important;
+    color: #5a4a72 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    z-index: 9999 !important;
+    opacity: 0 !important;
+    transition: opacity 200ms ease, background 150ms ease !important;
+    padding: 0 !important;
   }
-  .sidebar-scope:hover .sidebar-float-toggle { opacity: 1; }
+  .sidebar-scope:hover .sidebar-float-toggle,
+  .sidebar:hover .sidebar-float-toggle {
+    opacity: 1 !important;
+  }
   .sidebar-float-toggle:hover {
-    background: var(--purple-700) !important;
-    border-color: var(--purple-700) !important;
+    background: #820AD1 !important;
+    border-color: #820AD1 !important;
     color: #fff !important;
     opacity: 1 !important;
   }
@@ -2091,14 +2095,20 @@ code, kbd, pre, .mono { font-family: var(--font-mono); }
 
   /* ── Feedback Modal ── */
   .feedback-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.45) !important;
+    position: fixed !important;
+    inset: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.5) !important;
     backdrop-filter: blur(2px);
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    z-index: 99999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     padding: 20px;
     animation: feedbackFadeIn 200ms ease;
   }

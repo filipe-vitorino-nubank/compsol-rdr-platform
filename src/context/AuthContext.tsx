@@ -249,7 +249,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const refreshLogin = useCallback(() => {
-    if (isGAS) return;
+    if (isGAS) {
+      window.location.reload();
+      return;
+    }
     const clientId = env.googleClientId;
     if (!clientId || !window.google?.accounts?.oauth2) return;
 
@@ -268,7 +271,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [persistToken, isGAS]);
 
   const signOut = useCallback(() => {
-    if (isGAS) return;
+    if (isGAS) {
+      tokenRef.current = null;
+      tokenExpiresAtRef.current = null;
+      setIsAuthenticated(false);
+      setGoogleUser(null);
+      window.location.reload();
+      return;
+    }
     if (tokenRef.current && window.google?.accounts?.oauth2) {
       try {
         window.google.accounts.oauth2.revoke(tokenRef.current, () => undefined);
