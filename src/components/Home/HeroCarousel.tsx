@@ -25,7 +25,7 @@ function HeroGear() {
         </g>
       </svg>
       <div className="hero-theme-text">
-        <div className="hero-theme-title">COMPSOL <span>RDR</span></div>
+        <div className="hero-theme-title">BOAS <span>RDR</span></div>
         <div className="hero-theme-sub">Automação · Squad BOAS</div>
         <div className="hero-theme-badges">
           <span>UiPath RPA</span>
@@ -59,7 +59,7 @@ function HeroNeural() {
         <text x="180" y="54" textAnchor="middle" fontSize="8" fill="#820AD1" fontWeight="700">IA</text>
       </svg>
       <div className="hero-theme-text">
-        <div className="hero-theme-title">COMPSOL <span>RDR</span></div>
+        <div className="hero-theme-title">BOAS <span>RDR</span></div>
         <div className="hero-theme-sub">IA conectando sistemas · Squad BOAS</div>
       </div>
     </div>
@@ -83,7 +83,7 @@ function HeroCycle() {
         <circle cx="12" cy="50" r="4" fill="rgba(130,10,209,0.5)" />
       </svg>
       <div className="hero-theme-text">
-        <div className="hero-theme-title">COMPSOL <span>RDR</span></div>
+        <div className="hero-theme-title">BOAS <span>RDR</span></div>
         <div className="hero-theme-steps">
           <div><span>→</span> Analista solicita</div>
           <div><span>→</span> UiPath captura</div>
@@ -102,7 +102,7 @@ function HeroMinimal() {
         <div className="hero-eyebrow-dot" />
         Squad BOAS · Área do Produto
       </div>
-      <div className="hero-theme-title large">COMPSOL <span>RDR</span></div>
+      <div className="hero-theme-title large">BOAS <span>RDR</span></div>
       <div className="hero-minimal-stats">
         <div className="hero-stat">
           <span className="hero-stat-val">~21<em>min</em></span>

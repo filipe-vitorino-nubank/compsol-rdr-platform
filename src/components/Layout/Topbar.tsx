@@ -26,8 +26,8 @@ export function Topbar() {
           </svg>
         </div>
         <div className="logo-text-wrap">
-          <span className="logo-name">COMPSOL</span>
-          <span className="logo-sub">RDR &middot; Automa&ccedil;&atilde;o</span>
+          <span className="logo-name">BOAS</span>
+          <span className="logo-sub">Squad BOAS &middot; Nubank</span>
         </div>
       </div>
 
