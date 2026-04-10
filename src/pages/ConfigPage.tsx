@@ -8,6 +8,7 @@ import { getSpreadsheetId, setSpreadsheetId } from "../lib/spreadsheetConfig";
 import { fetchLastSync, syncTeamNow } from "../services/slackService";
 import { env } from "../config/env";
 import { useAdminCheck } from "../hooks/useAdminCheck";
+import { isAppsScriptEnv } from "../lib/gasClient";
 
 export function ConfigPage() {
   const { isAdmin, isLoading: adminLoading } = useAdminCheck();
@@ -24,17 +25,20 @@ export function ConfigPage() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    getAccessTokenForSheets({ interactive: false })
-      .then((tk) => fetchLastSync(tk))
-      .then(setLastSync)
-      .catch(() => {});
+    (async () => {
+      try {
+        const tk = isAppsScriptEnv() ? "" : await getAccessTokenForSheets({ interactive: false });
+        const sync = await fetchLastSync(tk);
+        setLastSync(sync);
+      } catch { /* ignore */ }
+    })();
   }, [isAuthenticated, getAccessTokenForSheets]);
 
   const handleTeamSync = async () => {
     setSyncing(true);
     try {
       await syncTeamNow();
-      const tk = await getAccessTokenForSheets({ interactive: false });
+      const tk = isAppsScriptEnv() ? "" : await getAccessTokenForSheets({ interactive: false });
       const updated = await fetchLastSync(tk);
       setLastSync(updated);
       showToast(t("profile.syncSuccess"), "success");

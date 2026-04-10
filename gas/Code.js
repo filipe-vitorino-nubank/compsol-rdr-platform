@@ -197,6 +197,32 @@ function writeSheetHeaders(headers) {
   }
 }
 
+function getEquipeSyncTimestamp() {
+  try {
+    var sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+    var ss    = SpreadsheetApp.openById(sheetId);
+    var sheet = ss.getSheetByName('Equipe');
+    if (!sheet) return { timestamp: null, error: 'Aba Equipe não encontrada' };
+    var val = sheet.getRange('H1').getValue();
+    return { timestamp: val || null, error: null };
+  } catch(e) {
+    return { timestamp: null, error: e.message };
+  }
+}
+
+function setEquipeSyncTimestamp(timestamp) {
+  try {
+    var sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+    var ss    = SpreadsheetApp.openById(sheetId);
+    var sheet = ss.getSheetByName('Equipe');
+    if (!sheet) return { success: false, error: 'Aba Equipe não encontrada' };
+    sheet.getRange('H1').setValue(timestamp);
+    return { success: true, error: null };
+  } catch(e) {
+    return { success: false, error: e.message };
+  }
+}
+
 function checkIsAdmin(email) {
   try {
     var sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID');

@@ -1,6 +1,7 @@
 import { getSpreadsheetId } from "../lib/spreadsheetConfig";
 import { fetchWithTimeout } from "../lib/fetchWithTimeout";
 import { env } from "../config/env";
+import { gasRun, isAppsScriptEnv } from "../lib/gasClient";
 
 const MEMBERS_RANGE = "Equipe!A2:G100";
 const LAST_SYNC_RANGE = "Equipe!H1";
@@ -39,13 +40,20 @@ export async function fetchChannelMembers(
 ): Promise<SlackMember[]> {
   if (_cachedMembers !== null) return _cachedMembers;
 
-  const sheetId = getSpreadsheetId();
-  if (!sheetId) {
-    console.warn("Spreadsheet ID não configurado");
-    return [];
-  }
-
   try {
+    if (isAppsScriptEnv()) {
+      const res = await gasRun<{ members: SlackMember[]; error: string | null }>("getEquipeMembers");
+      if (res.error) throw new Error(res.error);
+      _cachedMembers = res.members.filter((m) => m.name || m.email);
+      return _cachedMembers;
+    }
+
+    const sheetId = getSpreadsheetId();
+    if (!sheetId) {
+      console.warn("Spreadsheet ID não configurado");
+      return [];
+    }
+
     const rows = await sheetsGet(accessToken, sheetId, MEMBERS_RANGE);
 
     _cachedMembers = rows
@@ -69,10 +77,16 @@ export async function fetchChannelMembers(
 }
 
 export async function fetchLastSync(accessToken: string): Promise<string> {
-  const sheetId = getSpreadsheetId();
-  if (!sheetId) return "Nunca sincronizado";
-
   try {
+    if (isAppsScriptEnv()) {
+      const res = await gasRun<{ timestamp: string | null; error: string | null }>("getEquipeSyncTimestamp");
+      if (res.error) throw new Error(res.error);
+      return res.timestamp || "Nunca sincronizado";
+    }
+
+    const sheetId = getSpreadsheetId();
+    if (!sheetId) return "Nunca sincronizado";
+
     const rows = await sheetsGet(accessToken, sheetId, LAST_SYNC_RANGE);
     return rows[0]?.[0] || "Nunca sincronizado";
   } catch {

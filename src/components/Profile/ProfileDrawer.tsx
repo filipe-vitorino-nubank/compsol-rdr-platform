@@ -10,6 +10,7 @@ import {
   buildSlackWebLink,
   type SlackMember,
 } from "../../services/slackService";
+import { isAppsScriptEnv } from "../../lib/gasClient";
 
 function MemberCard({ member, t }: { member: SlackMember; t: (k: string) => string }) {
   const [expanded, setExpanded] = useState(false);
@@ -109,7 +110,7 @@ export function ProfileDrawer({ open, onClose }: { open: boolean; onClose: () =>
 
     (async () => {
       try {
-        const token = await getAccessTokenForSheets({ interactive: false });
+        const token = isAppsScriptEnv() ? "" : await getAccessTokenForSheets({ interactive: false });
         const [membersList, syncTs] = await Promise.all([
           fetchChannelMembers(token),
           fetchLastSync(token),
@@ -132,7 +133,7 @@ export function ProfileDrawer({ open, onClose }: { open: boolean; onClose: () =>
     setSyncing(true);
     try {
       await syncTeamNow();
-      const token = await getAccessTokenForSheets({ interactive: false });
+      const token = isAppsScriptEnv() ? "" : await getAccessTokenForSheets({ interactive: false });
       const [newMembers, newSync] = await Promise.all([
         fetchChannelMembers(token),
         fetchLastSync(token),
