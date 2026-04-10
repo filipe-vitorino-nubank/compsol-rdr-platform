@@ -415,6 +415,121 @@ function DonutChart({ data }: { data: Record<string, number> }) {
   );
 }
 
+/* ── Right-column panels ── */
+
+function AssistentePanel({ solicitacoes }: { solicitacoes: Solicitacao[] }) {
+  const pendentes = solicitacoes
+    .filter((s) => s.status === "Pendente")
+    .sort((a, b) => {
+      const ta = new Date(a.timestamp).getTime() || 0;
+      const tb = new Date(b.timestamp).getTime() || 0;
+      return ta - tb;
+    });
+  const maisAntiga = pendentes[0];
+
+  return (
+    <div className="right-panel">
+      <div className="right-panel-title">Assistente IA</div>
+      {maisAntiga ? (
+        <div className="bot-alert">
+          <div className="bot-alert-icon">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--purple-700)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
+          <div className="bot-alert-text">
+            <strong>{pendentes.length} solicitaç{pendentes.length > 1 ? "ões pendentes" : "ão pendente"}</strong>.{" "}
+            A mais antiga ({maisAntiga.id}) aguarda {timeAgo(maisAntiga.timestamp)}.
+          </div>
+        </div>
+      ) : (
+        <div className="bot-alert">
+          <div className="bot-alert-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          </div>
+          <div className="bot-alert-text" style={{ color: "var(--success)" }}>
+            Nenhuma solicitação pendente — tudo em dia!
+          </div>
+        </div>
+      )}
+      <div className="bot-cta">Pergunte ao assistente sobre qualquer solicitação ou processo RDR...</div>
+    </div>
+  );
+}
+
+function AtividadePanel({ solicitacoes }: { solicitacoes: Solicitacao[] }) {
+  const recentes = [...solicitacoes]
+    .sort((a, b) => {
+      const ta = new Date(a.timestamp).getTime() || 0;
+      const tb = new Date(b.timestamp).getTime() || 0;
+      return tb - ta;
+    })
+    .slice(0, 5);
+
+  const dotColor = (status: string) => {
+    if (status === "Concluído") return "var(--success)";
+    if (status === "Pendente") return "var(--warning)";
+    if (status === "Em Análise") return "var(--purple-700)";
+    return "var(--color-ink-muted)";
+  };
+
+  const activityLabel = (s: Solicitacao) => {
+    if (s.status === "Concluído") return "dossiê gerado com sucesso";
+    if (s.status === "Pendente") return "nova solicitação criada";
+    if (s.status === "Em Análise") return "em processamento pelo UiPath";
+    return s.status;
+  };
+
+  return (
+    <div className="right-panel">
+      <div className="right-panel-title">Atividade Recente</div>
+      {recentes.length === 0 ? (
+        <p className="activity-empty">Nenhuma atividade ainda</p>
+      ) : (
+        recentes.map((s) => (
+          <div key={s.id} className="activity-item">
+            <div className="activity-dot" style={{ background: dotColor(s.status) }} />
+            <div className="activity-text">
+              <span className="activity-id">{s.id}</span>
+              {" — "}
+              {activityLabel(s)}
+            </div>
+            <div className="activity-time">{timeAgo(s.timestamp)}</div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+function StatusSistemasPanel() {
+  return (
+    <div className="right-panel">
+      <div className="right-panel-title">Status dos Sistemas</div>
+      <div className="status-item">
+        <div className="status-dot" style={{ background: "var(--success)" }} />
+        <span className="status-name">UiPath Orchestrator</span>
+        <span className="status-badge badge-success">Operacional</span>
+      </div>
+      <div className="status-item">
+        <div className="status-dot" style={{ background: "var(--purple-700)" }} />
+        <span className="status-name">Google Drive</span>
+        <span className="status-badge badge-purple">Automático</span>
+      </div>
+      <div className="status-item">
+        <div className="status-dot" style={{ background: "var(--warning)" }} />
+        <span className="status-name">Shuffle API</span>
+        <span className="status-badge badge-warning">Monitorar</span>
+      </div>
+    </div>
+  );
+}
+
 /* ── Main dashboard ── */
 
 export function DashboardPage() {
@@ -733,7 +848,7 @@ export function DashboardPage() {
   return (
     <div className="painel-wrap">
       {/* ── Topbar ── */}
-      <div className="painel-topbar">
+      <div className="painel-topbar" style={{ padding: "20px 24px 0" }}>
         <h1 className="painel-title">Painel de Acompanhamento</h1>
         <div className="search-wrap">
           <div className="search-bar">
@@ -796,7 +911,7 @@ export function DashboardPage() {
       </div>
 
       {/* ── Filtros ── */}
-      <div className="filter-row">
+      <div className="filter-row" style={{ padding: "0 24px" }}>
         {FILTERS.map((f) => (
           <button
             key={f}
@@ -810,6 +925,9 @@ export function DashboardPage() {
           </button>
         ))}
       </div>
+
+      <div className="dashboard-grid">
+      <div className="dashboard-left">
 
       {/* ── Search results ── */}
       {searchTerm.trim() && (
@@ -1137,6 +1255,16 @@ export function DashboardPage() {
           )}
         </div>
       </div>
+
+      </div>{/* end dashboard-left */}
+
+      <div className="dashboard-right">
+        <AssistentePanel solicitacoes={solicitacoes} />
+        <AtividadePanel solicitacoes={solicitacoes} />
+        <StatusSistemasPanel />
+      </div>
+
+      </div>{/* end dashboard-grid */}
 
       {/* ── Drawer ── */}
       {detail && (

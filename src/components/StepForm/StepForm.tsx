@@ -848,6 +848,123 @@ function CheckCircleIcon() {
   );
 }
 
+/* ── Right-column wizard panels ── */
+
+const STEP_NAMES = ["Dados Gerais", "Trilha", "Confirmação"];
+
+const DICAS: Record<string, { highlight: string; text: string }[]> = {
+  "1": [
+    { highlight: "Protocolo RDR", text: "é obrigatório para o robô localizar o caso no sistema" },
+    { highlight: "CPF Demandante", text: "deve ser o CPF do cliente que realizou a reclamação" },
+  ],
+  "2": [
+    { highlight: "Saldo em Conta", text: "determina qual template o robô vai usar para BACEN e Cliente" },
+    { highlight: "Regras Preventivas", text: "verifique no Databricks se há marcação DICT antes de prosseguir" },
+    { highlight: "Ticket Zendesk", text: "se houver contestação externa, os campos de data serão habilitados" },
+  ],
+  "3": [
+    { highlight: "Revise os dados", text: "antes de confirmar — após o envio o robô inicia automaticamente" },
+    { highlight: "Documentos", text: "serão gerados em .docx e salvos no Drive em até 30 minutos" },
+  ],
+};
+
+function ProgressPanel({ step, validated }: { step: number; validated: number[] }) {
+  const pct = Math.round(((step - 1) / (STEP_NAMES.length - 1)) * 100);
+
+  return (
+    <div className="right-panel">
+      <div className="right-panel-title">Progresso</div>
+      {STEP_NAMES.map((s, i) => {
+        const num = i + 1;
+        const isDone = validated.includes(num);
+        const isActive = step === num;
+        return (
+          <div key={i} className="progress-step">
+            <div className={`progress-step-dot ${isDone ? "dot-done" : isActive ? "dot-active" : "dot-idle"}`} />
+            <span className={`progress-step-label ${isDone ? "label-done" : isActive ? "label-active" : "label-idle"}`}>
+              {s}
+            </span>
+            {isDone && (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            )}
+            {isActive && <div className="dot-pulse" />}
+          </div>
+        );
+      })}
+      <div className="progress-bar-wrap">
+        <div className="progress-bar-fill" style={{ width: `${pct}%` }} />
+      </div>
+      <div className="progress-pct">{pct}% concluído</div>
+    </div>
+  );
+}
+
+function DicasPanel({ step }: { step: number }) {
+  const dicas = DICAS[String(step)] || [];
+  return (
+    <div className="right-panel">
+      <div className="right-panel-title">Dicas do processo</div>
+      {dicas.map((d, i) => (
+        <div key={i} className="dica-item">
+          <div className="dica-icon">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--purple-700)" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+          </div>
+          <div className="dica-text">
+            <span className="dica-highlight">{d.highlight}</span>
+            {" — "}{d.text}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AtalhosPanel() {
+  return (
+    <div className="right-panel">
+      <div className="right-panel-title">Atalhos</div>
+      <div className="shortcut-row">
+        <span className="shortcut-desc">Avançar etapa</span>
+        <kbd className="shortcut-key">Enter ↵</kbd>
+      </div>
+      <div className="shortcut-row">
+        <span className="shortcut-desc">Voltar etapa</span>
+        <kbd className="shortcut-key">Esc</kbd>
+      </div>
+      <div className="shortcut-row">
+        <span className="shortcut-desc">Abrir assistente</span>
+        <kbd className="shortcut-key">⌘ K</kbd>
+      </div>
+    </div>
+  );
+}
+
+function AssistenteMiniPanel() {
+  return (
+    <div className="right-panel" style={{ padding: "10px 12px" }}>
+      <div className="bot-mini">
+        <div className="bot-mini-icon">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--purple-700)" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+        </div>
+        <div className="bot-mini-text">
+          Dúvida sobre o processo?{" "}
+          <span className="bot-mini-link">Pergunte ao assistente IA</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function RdrRequestForm() {
   const { state, setErrors, reset } = useFormContext();
   const { isAuthenticated, getAccessTokenForSheets, scriptReady, signInWithGoogle } = useAuth();
@@ -857,6 +974,7 @@ export function RdrRequestForm() {
   const navigate = useNavigate();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [validatedSteps, setValidatedSteps] = useState<number[]>([]);
   const [slideDir, setSlideDir] = useState<"right" | "left">("right");
   const [confirmed, setConfirmed] = useState(false);
   const [overlay, setOverlay] = useState<"hidden" | "loading" | "success">("hidden");
@@ -908,6 +1026,7 @@ export function RdrRequestForm() {
       return;
     }
 
+    setValidatedSteps((prev) => prev.includes(step) ? prev : [...prev, step]);
     setSlideDir("right");
     setStep((s) => Math.min(s + 1, 3) as 1 | 2 | 3);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -984,6 +1103,8 @@ export function RdrRequestForm() {
 
   return (
     <>
+      <div className="wizard-grid">
+      <div className="wizard-left">
       <article className="surface-card overflow-hidden">
         {/* Header */}
         <div className="border-b border-[var(--color-border)] bg-[var(--color-surface-raised)] px-5 py-5 sm:px-8 sm:py-6">
@@ -1035,6 +1156,15 @@ export function RdrRequestForm() {
           </div>
         </div>
       </article>
+      </div>{/* end wizard-left */}
+
+      <div className="wizard-right">
+        <ProgressPanel step={step} validated={validatedSteps} />
+        <DicasPanel step={step} />
+        <AtalhosPanel />
+        <AssistenteMiniPanel />
+      </div>
+      </div>{/* end wizard-grid */}
 
       {/* Submit overlay */}
       {overlay !== "hidden" && (
