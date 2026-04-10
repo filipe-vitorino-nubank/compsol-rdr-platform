@@ -37,4 +37,17 @@ if ! grep -q 'function doGet' dist/Code.js; then
   exit 2
 fi
 
-echo "==> Build complete. Ready for 'clasp push'."
+echo "==> Build complete. Pushing to Apps Script..."
+clasp push --force
+
+echo "==> Deploying..."
+clasp deploy --description "deploy $(date +'%Y-%m-%d %H:%M')"
+
+DEPLOY_ID=$(clasp deployments 2>/dev/null | grep -o 'AKfycb[^ ]*' | tail -1)
+
+if [ -n "$DEPLOY_ID" ]; then
+  echo ""
+  echo "🌐 App URL:"
+  echo "https://script.google.com/a/macros/nubank.com.br/s/${DEPLOY_ID}/exec"
+  echo ""
+fi

@@ -1,6 +1,8 @@
 interface AppConfig {
   isAppsScript: boolean;
   userEmail: string;
+  userName: string;
+  userPhoto: string;
   accessToken: string;
   tokenExp: number;
   googleClientId: string;
@@ -32,6 +34,8 @@ function r(gasKey: string, viteKey: string, fallback = ""): string {
 export const env: AppConfig = {
   isAppsScript: isGAS,
   userEmail: gc?.USER_EMAIL || "",
+  userName: gc?.USER_NAME || gc?.USER_EMAIL?.split("@")[0] || "",
+  userPhoto: gc?.USER_PHOTO || "",
   accessToken: gc?.ACCESS_TOKEN || "",
   tokenExp: Number(gc?.TOKEN_EXP || "0"),
   googleClientId: r("GOOGLE_CLIENT_ID", "VITE_GOOGLE_CLIENT_ID"),

@@ -16,27 +16,37 @@ export function useAdminCheck() {
 
     const checkAdmin = async () => {
       try {
-        const token = await getAccessTokenForSheets({ interactive: false });
-        const sheetId = env.sheetId;
-        const range = "Admins!A2:C";
-        const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}`;
+        if (env.isAppsScript && (window as any).google?.script?.run) {
+          const result = await new Promise<{ isAdmin: boolean; error: string | null }>((resolve, reject) => {
+            (window as any).google.script.run
+              .withSuccessHandler(resolve)
+              .withFailureHandler(reject)
+              .checkIsAdmin(googleUser.email);
+          });
+          setIsAdmin(result.isAdmin);
+        } else {
+          const token = await getAccessTokenForSheets({ interactive: false });
+          const sheetId = env.sheetId;
+          const range = "Admins!A2:C";
+          const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}`;
 
-        const res = await fetch(url, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+          const res = await fetch(url, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
 
-        if (!res.ok) throw new Error(`Sheets API ${res.status}`);
+          if (!res.ok) throw new Error(`Sheets API ${res.status}`);
 
-        const data = await res.json();
-        const rows: string[][] = data.values || [];
+          const data = await res.json();
+          const rows: string[][] = data.values || [];
 
-        const found = rows.find(
-          (row) =>
-            row[0]?.toLowerCase() === googleUser.email.toLowerCase() &&
-            row[2]?.toLowerCase() === "true",
-        );
+          const found = rows.find(
+            (row) =>
+              row[0]?.toLowerCase() === googleUser.email.toLowerCase() &&
+              row[2]?.toLowerCase() === "true",
+          );
 
-        setIsAdmin(!!found);
+          setIsAdmin(!!found);
+        }
       } catch (err) {
         console.error("[useAdminCheck] Erro:", (err as Error).message);
         setIsAdmin(false);

@@ -24,9 +24,31 @@ export function Home() {
     <div className="home-page">
       {/* ── Hero ── */}
       <section className="home-hero">
+        <div className="hero-grid-bg" />
+
+        {/* Bot animado */}
+        <div className="bot-wrap">
+          <div className="bot-ring bot-ring-1" />
+          <div className="bot-ring bot-ring-2" />
+          <div className="bot-body">
+            <div className="bot-face">
+              <div className="bot-eyes">
+                <div className="bot-eye" />
+                <div className="bot-eye bot-eye-2" />
+              </div>
+              <div className="bot-mouth" />
+            </div>
+            <div className="bot-dots">
+              <div className="bot-dot" />
+              <div className="bot-dot" />
+              <div className="bot-dot" />
+            </div>
+          </div>
+        </div>
+
         <div className="home-tag">
           <div className="home-tag-dot" />
-          <span>COMPSOL · Área do Produto</span>
+          <span>COMPSOL &middot; &Aacute;rea do Produto</span>
         </div>
 
         <h1 className="home-title">

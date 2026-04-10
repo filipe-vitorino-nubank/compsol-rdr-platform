@@ -4,8 +4,10 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
+import { useTheme } from "../../context/ThemeContext";
 import { env } from "../../config/env";
 import type { Locale } from "../../i18n/translations";
+import { Topbar } from "./Topbar";
 import { ProfileDrawer } from "../Profile/ProfileDrawer";
 import { TeamDrawer } from "../team/TeamDrawer";
 
@@ -44,6 +46,7 @@ export function AppLayout() {
     signOut,
   } = useAuth();
   const { t, locale, setLocale } = useLanguage();
+  const { isDark } = useTheme();
   const clientConfigured = Boolean(env.googleClientId);
 
   const handleTriggerClick = () => {
@@ -163,7 +166,8 @@ export function AppLayout() {
   );
 
   return (
-    <div className="min-h-screen">
+    <div className="app-shell" data-theme={isDark ? "dark" : "light"}>
+      <Topbar />
       <a
         href="#conteudo-principal"
         className="skip-link"
@@ -177,6 +181,7 @@ export function AppLayout() {
         {t("nav.skipToContent")}
       </a>
 
+      <div className="app-body">
       {/* Sidebar */}
       <motion.aside
         initial={false}
@@ -388,7 +393,8 @@ export function AppLayout() {
         initial={false}
         animate={{ marginLeft: sidebarOpen ? 260 : 72 }}
         transition={{ type: "spring", stiffness: 380, damping: 38 }}
-        className="min-h-screen overflow-auto bg-[var(--color-bg)] outline-none"
+        className="min-h-screen overflow-auto bg-[var(--bg-primary)] outline-none"
+        style={{ transition: "background var(--transition-slow)" }}
       >
         {isFullWidth ? (
           <Outlet />
@@ -398,6 +404,7 @@ export function AppLayout() {
           </div>
         )}
       </motion.main>
+      </div>
 
       <ProfileDrawer open={profileDrawerOpen} onClose={() => setProfileDrawerOpen(false)} />
       <TeamDrawer open={teamDrawerOpen} onClose={() => setTeamDrawerOpen(false)} />

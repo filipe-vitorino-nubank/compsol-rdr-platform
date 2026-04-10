@@ -90,24 +90,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshPromiseRef = useRef<Promise<string> | null>(null);
 
   useEffect(() => {
-    if (isGAS && env.userEmail && env.accessToken) {
-      fetch(
-        "https://people.googleapis.com/v1/people/me?personFields=photos,names",
-        { headers: { Authorization: `Bearer ${env.accessToken}` } },
-      )
-        .then((r) => r.json())
-        .then((data) => {
-          const photo = data.photos?.[0]?.url || "";
-          const name = data.names?.[0]?.displayName || env.userEmail.split("@")[0];
-          setGoogleUser({ email: env.userEmail, name, picture: photo });
-        })
-        .catch(() => {
-          setGoogleUser({
-            email: env.userEmail,
-            name: env.userEmail.split("@")[0],
-            picture: "",
-          });
-        });
+    if (isGAS && env.userEmail) {
+      setGoogleUser({
+        email: env.userEmail,
+        name: env.userName || env.userEmail.split("@")[0],
+        picture: env.userPhoto || "",
+      });
+      tokenRef.current = env.accessToken;
+      tokenExpiresAtRef.current = env.tokenExp;
       return;
     }
 

@@ -31,6 +31,26 @@ function doGet(e) {
     GOOGLE_API_KEY:    props.getProperty('GOOGLE_API_KEY'),
   };
 
+  var userName = userEmail.split('@')[0];
+  try {
+    var people = UrlFetchApp.fetch(
+      'https://people.googleapis.com/v1/people/me?personFields=names,photos',
+      { headers: { Authorization: 'Bearer ' + accessToken }, muteHttpExceptions: true }
+    );
+    if (people.getResponseCode() === 200) {
+      var data = JSON.parse(people.getContentText());
+      userName = data.names && data.names[0] && data.names[0].displayName || userName;
+      config.USER_PHOTO = data.photos && data.photos[0] && data.photos[0].url || '';
+      config.USER_NAME  = userName;
+    } else {
+      config.USER_PHOTO = '';
+      config.USER_NAME  = userName;
+    }
+  } catch(e) {
+    config.USER_PHOTO = '';
+    config.USER_NAME  = userName;
+  }
+
   var template = HtmlService.createTemplateFromFile('index');
   template.appConfig = JSON.stringify(config);
 
@@ -46,4 +66,67 @@ function getNewToken() {
     exp:         Date.now() + 55 * 60 * 1000,
     email:       Session.getActiveUser().getEmail(),
   };
+}
+
+function testAccess() {
+  var token   = ScriptApp.getOAuthToken();
+  var sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+
+  var url = 'https://sheets.googleapis.com/v4/spreadsheets/' + sheetId + '?fields=title';
+  var res = UrlFetchApp.fetch(url, {
+    headers: { Authorization: 'Bearer ' + token },
+    muteHttpExceptions: true,
+  });
+
+  Logger.log('Status: ' + res.getResponseCode());
+  Logger.log('Body: '   + res.getContentText());
+  Logger.log('Email: '  + Session.getActiveUser().getEmail());
+  Logger.log('Token length: ' + token.length + ' chars');
+}
+
+function getEquipeMembers() {
+  try {
+    var sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+    var ss      = SpreadsheetApp.openById(sheetId);
+    var sheet   = ss.getSheetByName('Equipe');
+
+    if (!sheet) return { members: [], error: 'Aba Equipe não encontrada' };
+
+    var rows = sheet.getDataRange().getValues();
+    var members = rows.slice(1).map(function(row) {
+      return {
+        id:           row[0] || '',
+        name:         row[1] || '',
+        display_name: row[2] || '',
+        title:        row[3] || '',
+        avatar:       row[4] || '',
+        is_admin:     row[5] === true || row[5] === 'true' || row[5] === 'TRUE',
+        email:        row[6] || '',
+      };
+    }).filter(function(m) { return m.name || m.email; });
+
+    return { members: members, error: null };
+  } catch (e) {
+    return { members: [], error: e.message };
+  }
+}
+
+function checkIsAdmin(email) {
+  try {
+    var sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+    var ss    = SpreadsheetApp.openById(sheetId);
+    var sheet = ss.getSheetByName('Admins');
+
+    if (!sheet) return { isAdmin: false, error: 'Aba Admins não encontrada' };
+
+    var rows = sheet.getDataRange().getValues();
+    var found = rows.slice(1).find(function(row) {
+      return row[0] && row[0].toString().toLowerCase() === (email || '').toLowerCase()
+          && (row[2] === true || row[2] === 'true' || row[2] === 'TRUE');
+    });
+
+    return { isAdmin: !!found, error: null };
+  } catch (e) {
+    return { isAdmin: false, error: e.message };
+  }
 }

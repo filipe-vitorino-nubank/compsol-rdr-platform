@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
+import { env } from "../../config/env";
 import {
   fetchChannelMembers,
   buildSlackDMLink,
@@ -103,11 +104,23 @@ export function TeamDrawer({ open, onClose }: { open: boolean; onClose: () => vo
     setLoading(true);
     setError(null);
     try {
-      const token = await getAccessTokenForSheets({ interactive: false });
-      const membersList = await fetchChannelMembers(token);
-      setMembers(membersList);
-      if (!membersList || membersList.length === 0) {
-        setError("empty");
+      if (env.isAppsScript && (window as any).google?.script?.run) {
+        const result = await new Promise<{ members: SlackMember[]; error: string | null }>((resolve, reject) => {
+          (window as any).google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .getEquipeMembers();
+        });
+        if (result.error) throw new Error(result.error);
+        setMembers(result.members);
+        if (!result.members.length) setError("empty");
+      } else {
+        const token = await getAccessTokenForSheets({ interactive: false });
+        const membersList = await fetchChannelMembers(token);
+        setMembers(membersList);
+        if (!membersList || membersList.length === 0) {
+          setError("empty");
+        }
       }
     } catch (err) {
       console.error("[TeamDrawer] Erro:", (err as Error).message);
