@@ -2843,11 +2843,17 @@ code, kbd, pre, .mono { font-family: var(--font-mono); }
   grid-template-columns: 1fr 260px;
   gap: 16px;
   padding: 20px 24px;
+  width: 100%;
   align-items: start;
-  max-width: 100%;
 }
-.wizard-left  { display: flex; flex-direction: column; min-width: 0; }
-.wizard-left .surface-card { width: 100%; }
+.wizard-left {
+  display: flex; flex-direction: column;
+  min-width: 0; width: 100%;
+}
+.wizard-left .surface-card {
+  width: 100% !important;
+  max-width: none !important;
+}
 .wizard-right {
   display: flex; flex-direction: column; gap: 10px;
   position: sticky; top: 80px;

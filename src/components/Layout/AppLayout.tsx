@@ -97,7 +97,7 @@ export function AppLayout() {
   }, [menuOpen]);
 
   const location = useLocation();
-  const isFullWidth = location.pathname === "/" || location.pathname === "/painel";
+  const isFullWidth = location.pathname === "/" || location.pathname === "/painel" || location.pathname === "/solicitacao";
 
   const NAV_ICONS: Record<string, string> = {
     "/": "🏠",
