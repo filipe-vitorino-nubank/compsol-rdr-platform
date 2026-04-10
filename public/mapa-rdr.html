@@ -1,469 +1,709 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Mapa Neural — RDR Platform</title>
-  <script src="https://d3js.org/d3.v7.min.js"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>COMPSOL RDR — Mapa Neural</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#06000f;color:#c8b8e8;font-family:'DM Sans',system-ui,sans-serif;overflow:hidden;height:100vh;-webkit-font-smoothing:antialiased}
 
-    body {
-      background: #0a0a0f;
-      font-family: 'Segoe UI', sans-serif;
-      overflow: hidden;
-      color: #e0e0ff;
-    }
+/* ── Topbar ── */
+#topbar{position:fixed;top:0;left:0;right:0;height:48px;background:#0d0118;border-bottom:.5px solid rgba(130,10,209,.25);display:flex;align-items:center;padding:0 16px;gap:12px;z-index:100}
+.tb-logo{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.tb-hex{width:28px;height:28px;background:#820AD1;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff}
+.tb-title{font-size:14px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.tb-sub{font-size:10px;color:#5a4a72;margin-left:-4px}
+.tb-sep{width:1px;height:20px;background:rgba(130,10,209,.25);flex-shrink:0}
+.tb-filters{display:flex;gap:4px;flex-wrap:wrap;flex:1;overflow:hidden}
+.tb-pill{font-size:10px;font-weight:600;padding:3px 10px;border-radius:999px;border:.5px solid rgba(130,10,209,.25);background:transparent;color:#5a4a72;cursor:pointer;transition:all .15s;white-space:nowrap}
+.tb-pill:hover{border-color:rgba(130,10,209,.5);color:#c8b8e8}
+.tb-pill.active{background:rgba(130,10,209,.2);border-color:#820AD1;color:#d8a8ff}
+.tb-search{position:relative;flex-shrink:0}
+.tb-search input{background:rgba(255,255,255,.05);border:.5px solid rgba(130,10,209,.25);border-radius:6px;padding:5px 10px 5px 28px;font-size:11px;color:#c8b8e8;outline:none;width:160px;font-family:inherit;transition:border-color .15s}
+.tb-search input:focus{border-color:#820AD1}
+.tb-search input::placeholder{color:#5a4a72}
+.tb-search svg{position:absolute;left:8px;top:50%;transform:translateY(-50%);pointer-events:none}
+.tb-controls{display:flex;gap:4px;flex-shrink:0}
+.tb-btn{width:28px;height:28px;border-radius:6px;border:.5px solid rgba(130,10,209,.25);background:transparent;color:#5a4a72;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;font-size:13px}
+.tb-btn:hover{border-color:#820AD1;color:#c8b8e8}
 
-    #canvas { width: 100vw; height: 100vh; }
+/* ── Graph SVG ── */
+#graph{position:fixed;top:48px;left:0;right:0;bottom:0}
+.node-g{cursor:pointer}
+.node-g text{pointer-events:none;font-size:10px;fill:#c8b8e8;font-weight:500;text-shadow:0 0 6px #06000f,0 0 12px #06000f}
+.link-line{stroke-opacity:.25;stroke-width:1}
+.link-line.highlight{stroke-opacity:.8;stroke-width:2}
+.link-line.dimmed{stroke-opacity:.04}
+.node-g.dimmed circle,.node-g.dimmed text{opacity:.1}
 
-    .node circle {
-      stroke-width: 2;
-      cursor: pointer;
-      transition: r 0.2s;
-      filter: drop-shadow(0 0 6px currentColor);
-    }
+/* ── Detail Panel ── */
+#detail-panel{position:fixed;top:48px;right:0;width:340px;height:calc(100vh - 48px);background:#0d0118;border-left:.5px solid rgba(130,10,209,.3);overflow-y:auto;transform:translateX(100%);transition:transform .3s ease;z-index:50;padding:0}
+#detail-panel.open{transform:translateX(0)}
+.dp-header{padding:16px 20px;border-bottom:.5px solid rgba(130,10,209,.18);display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.dp-cat-badge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:999px;letter-spacing:.5px;text-transform:uppercase;display:inline-block;margin-bottom:6px}
+.dp-title{font-size:16px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.dp-status{font-size:10px;font-weight:600;display:inline-flex;align-items:center;gap:4px;margin-top:4px}
+.dp-close{width:28px;height:28px;border-radius:6px;border:.5px solid rgba(130,10,209,.25);background:transparent;color:#5a4a72;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;font-size:14px}
+.dp-close:hover{border-color:#820AD1;color:#fff}
+.dp-body{padding:16px 20px;display:flex;flex-direction:column;gap:16px}
+.dp-desc{font-size:12px;color:#c8b8e8;line-height:1.7}
+.dp-section-title{font-size:10px;font-weight:700;color:#5a4a72;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.dp-feature{font-size:11px;color:#c8b8e8;padding:4px 0;border-bottom:.5px solid rgba(130,10,209,.1);display:flex;align-items:center;gap:6px}
+.dp-feature::before{content:'';width:4px;height:4px;border-radius:50%;background:#820AD1;flex-shrink:0}
+.dp-file{font-size:11px;font-family:'JetBrains Mono',monospace;color:#b06aff;background:rgba(130,10,209,.1);padding:6px 10px;border-radius:6px;border:.5px solid rgba(130,10,209,.15);word-break:break-all}
+.dp-conn{font-size:11px;color:#c8b8e8;padding:3px 0;display:flex;align-items:center;gap:6px}
+.dp-conn-arrow{font-size:9px;color:#5a4a72;flex-shrink:0}
+.dp-conn-label{font-size:9px;color:#5a4a72;margin-left:auto}
 
-    .node circle:hover { filter: drop-shadow(0 0 16px currentColor); }
+/* ── Legend ── */
+#legend{position:fixed;bottom:16px;left:16px;z-index:50;background:rgba(13,1,24,.92);border:.5px solid rgba(130,10,209,.2);border-radius:10px;padding:10px 14px;backdrop-filter:blur(8px);max-height:calc(100vh - 120px);overflow-y:auto}
+.leg-title{font-size:10px;font-weight:700;color:#5a4a72;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:10px;color:#c8b8e8;padding:2px 0;cursor:pointer;transition:opacity .15s}
+.leg-item:hover{opacity:.8}
+.leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;border:1.5px solid transparent}
 
-    .node text {
-      pointer-events: none;
-      font-size: 11px;
-      fill: #e0e0ff;
-      text-shadow: 0 0 6px #000, 0 0 12px #000;
-      font-weight: 500;
-    }
+/* ── Metrics Panel ── */
+#metrics{position:fixed;top:60px;right:16px;z-index:40;background:rgba(13,1,24,.92);border:.5px solid rgba(130,10,209,.2);border-radius:10px;padding:12px 14px;backdrop-filter:blur(8px);min-width:170px;font-size:10px}
+.met-title{font-size:10px;font-weight:700;color:#5a4a72;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.met-row{display:flex;justify-content:space-between;align-items:center;padding:2px 0;color:#c8b8e8}
+.met-val{font-family:'JetBrains Mono',monospace;color:#d8a8ff;font-weight:600}
+.met-divider{height:1px;background:rgba(130,10,209,.15);margin:6px 0}
+.met-url{font-size:9px;color:#b06aff;word-break:break-all;margin-top:4px;display:block;text-decoration:none}
+.met-url:hover{text-decoration:underline}
 
-    .link {
-      stroke-opacity: 0.4;
-      stroke-width: 1.5;
-    }
+/* ── Minimap ── */
+#minimap{position:fixed;bottom:16px;right:16px;z-index:50;background:rgba(13,1,24,.92);border:.5px solid rgba(130,10,209,.2);border-radius:10px;overflow:hidden}
+#minimap canvas{display:block}
+.mm-viewport{position:absolute;border:1px solid rgba(130,10,209,.6);background:rgba(130,10,209,.08);pointer-events:none}
 
-    .link.highlight { stroke-opacity: 1; stroke-width: 2.5; }
+/* ── Tooltip ── */
+#tooltip{position:fixed;background:rgba(13,1,24,.95);border:.5px solid rgba(130,10,209,.4);border-radius:8px;padding:8px 12px;font-size:11px;pointer-events:none;display:none;max-width:240px;line-height:1.5;backdrop-filter:blur(8px);z-index:200}
+#tooltip .tt-name{font-weight:700;color:#fff;margin-bottom:2px}
+#tooltip .tt-desc{color:#c8b8e8;font-size:10px}
 
-    .node.dimmed circle { opacity: 0.15; }
-    .node.dimmed text { opacity: 0.1; }
-    .link.dimmed { stroke-opacity: 0.04; }
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(130,10,209,.3);border-radius:2px}
 
-    /* Tooltip */
-    #tooltip {
-      position: fixed;
-      background: rgba(10,10,20,0.92);
-      border: 1px solid #5533ff88;
-      border-radius: 10px;
-      padding: 12px 16px;
-      font-size: 13px;
-      pointer-events: none;
-      display: none;
-      max-width: 260px;
-      line-height: 1.6;
-      backdrop-filter: blur(8px);
-      z-index: 100;
-    }
-    #tooltip strong { color: #a78bfa; font-size: 14px; display: block; margin-bottom: 4px; }
-    #tooltip span { color: #94a3b8; }
-
-    /* Legend */
-    #legend {
-      position: fixed;
-      bottom: 24px;
-      left: 24px;
-      background: rgba(10,10,20,0.85);
-      border: 1px solid #ffffff18;
-      border-radius: 12px;
-      padding: 14px 18px;
-      font-size: 12px;
-      backdrop-filter: blur(8px);
-    }
-    #legend h4 { color: #a78bfa; margin-bottom: 10px; font-size: 13px; letter-spacing: 0.5px; }
-    .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-    .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-
-    /* Header */
-    #header {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      padding: 16px 24px;
-      background: linear-gradient(to bottom, rgba(10,10,20,0.95), transparent);
-      pointer-events: none;
-    }
-    #header h1 { font-size: 18px; color: #a78bfa; font-weight: 600; letter-spacing: 0.5px; }
-    #header p { font-size: 12px; color: #64748b; margin-top: 2px; }
-
-    /* Controls */
-    #controls {
-      position: fixed;
-      top: 70px;
-      right: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    #controls button {
-      background: rgba(10,10,20,0.85);
-      border: 1px solid #ffffff18;
-      border-radius: 8px;
-      color: #a78bfa;
-      padding: 8px 14px;
-      font-size: 12px;
-      cursor: pointer;
-      backdrop-filter: blur(8px);
-      transition: border-color 0.2s;
-    }
-    #controls button:hover { border-color: #a78bfa88; }
-
-    /* Pulse animation for central node */
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.6; }
-    }
-    .pulse { animation: pulse 2.5s ease-in-out infinite; }
-
-    /* Particle/flow animation on edges */
-    .flow-particle {
-      fill: #a78bfa;
-      opacity: 0;
-    }
-  </style>
+/* ── Animations ── */
+@keyframes fadeScale{0%{opacity:0;transform:scale(.6)}100%{opacity:1;transform:scale(1)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
 </head>
 <body>
 
-<div id="header">
-  <h1>⬡ Mapa Neural — COMPSOL RDR Platform</h1>
-  <p>Clique em um nó para explorar conexões · Scroll para zoom · Arraste para mover</p>
+<!-- Topbar -->
+<div id="topbar">
+  <div class="tb-logo">
+    <div class="tb-hex">⬡</div>
+    <span class="tb-title">Mapa Neural</span>
+    <span class="tb-sub">COMPSOL RDR</span>
+  </div>
+  <div class="tb-sep"></div>
+  <div class="tb-filters" id="filters"></div>
+  <div class="tb-search">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5a4a72" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <input type="text" id="search" placeholder="Buscar nó..."/>
+  </div>
+  <div class="tb-controls">
+    <button class="tb-btn" id="btn-zoom-in" title="Zoom in">+</button>
+    <button class="tb-btn" id="btn-zoom-out" title="Zoom out">−</button>
+    <button class="tb-btn" id="btn-reset" title="Centralizar">⊙</button>
+    <button class="tb-btn" id="btn-labels" title="Toggle labels">T</button>
+  </div>
 </div>
 
-<div id="controls">
-  <button onclick="resetZoom()">⊙ Centralizar</button>
-  <button onclick="toggleLabels()">⊞ Labels</button>
-</div>
-
-<div id="legend">
-  <h4>Categorias</h4>
-  <div class="legend-item"><div class="legend-dot" style="background:#a78bfa"></div> Plataforma RDR</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#38bdf8"></div> UiPath / Bot</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#34d399"></div> Integrações Google</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#fb923c"></div> Usuários / Squads</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#f472b6"></div> Dados / Dossiê</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#facc15"></div> Fluxo / Status</div>
-</div>
-
+<!-- Panels -->
+<div id="detail-panel"></div>
+<div id="legend"></div>
+<div id="metrics"></div>
+<div id="minimap"><canvas width="160" height="100"></canvas><div class="mm-viewport"></div></div>
 <div id="tooltip"></div>
-<svg id="canvas"></svg>
+
+<!-- Graph SVG -->
+<svg id="graph"></svg>
 
 <script>
-const COLOR = {
-  platform:    '#a78bfa',
-  uipath:      '#38bdf8',
-  google:      '#34d399',
-  user:        '#fb923c',
-  data:        '#f472b6',
-  flow:        '#facc15',
+/* ============================================================
+   DATA — GRAPH_DATA
+   ============================================================ */
+const GRAPH_DATA = {
+  meta: {
+    projeto: "COMPSOL RDR Platform",
+    squad: "BOAS",
+    versao: "BUILD_VERSION",
+    ultimaAtualizacao: "BUILD_DATE",
+    deployUrl: "DEPLOY_URL",
+  },
+
+  nodes: [
+    // ── Páginas ──
+    {id:"home",label:"Home",category:"pagina",subcategory:"navegacao",status:"stable",desc:"Página inicial com hero carousel (Bot Alpha, Engrenagem, Rede Neural, Métricas), tag Equipe BOAS, status dos sistemas e botões de ação.",features:["Hero carousel 4 temas","Bot Alpha animado","Status sistemas","Botões CTA"],file:"src/pages/Home.tsx"},
+    {id:"dashboard",label:"Painel",category:"pagina",subcategory:"monitoramento",status:"stable",desc:"Painel de acompanhamento com KPIs, lista de solicitações, gráficos de distribuição, busca e filtros.",features:["KPIs em tempo real","Busca por ID/CPF/Protocolo","Filtros por status/squad","Gráfico donut","Volume semanal","Painel direito: Assistente IA + Atividade + Sistemas"],file:"src/pages/DashboardPage.tsx"},
+    {id:"solicitacao",label:"Nova Solicitação",category:"pagina",subcategory:"formulario",status:"stable",desc:"Wizard de 3 etapas para criar solicitação RDR com derivação automática de templates.",features:["Etapa 1: Dados Gerais","Etapa 2: Trilha (CS/InvOps)","Etapa 3: Confirmação","Painel direito: Progresso + Dicas + Atalhos","Limpar formulário","Derivação automática de templates"],file:"src/pages/RdrRequestPage.tsx"},
+    {id:"config",label:"Configurações",category:"pagina",subcategory:"admin",status:"stable",desc:"Página de configurações restrita a admins (verificação via aba Admins na planilha).",features:["Acesso restrito via useAdminCheck","Gerenciamento de configurações","Integração com planilha"],file:"src/pages/ConfigPage.tsx"},
+    {id:"mapa",label:"Mapa Neural",category:"pagina",subcategory:"admin",status:"stable",desc:"Visualização interativa da arquitetura do projeto. Exclusiva para admins. Atualizada a cada deploy.",features:["Exclusivo para admin","D3.js force-directed","Atualizado no deploy","Técnico + Funcional"],file:"public/mapa-rdr.html"},
+
+    // ── Componentes ──
+    {id:"topbar",label:"Topbar",category:"componente",subcategory:"layout",status:"stable",desc:"Barra superior fixa com logo BOAS, toggle dark/light mode e avatar do usuário.",features:["Logo BOAS","Toggle dark/light","Avatar + foto Google","Fixo em todas as páginas"],file:"src/components/Layout/Topbar.tsx"},
+    {id:"sidebar",label:"Sidebar",category:"componente",subcategory:"layout",status:"stable",desc:"Menu lateral colapsável (64px/220px) com navegação, botão flutuante de toggle.",features:["64px colapsado / 220px expandido","Botão toggle flutuante (top: 72px)","Ícones Lucide React","Avatar no rodapé"],file:"src/components/Layout/AppLayout.tsx"},
+    {id:"hero_carousel",label:"HeroCarousel",category:"componente",subcategory:"home",status:"stable",desc:"Carousel de 4 temas no hero: Bot Alpha, Engrenagem, Rede Neural, Métricas. Alterna a cada 5s.",features:["Bot Alpha (olhos piscando, 3 anéis)","Engrenagem animada","Rede Neural (nós pulsando)","Grid métricas 2x2","Dots de navegação"],file:"src/components/Home/HeroCarousel.tsx"},
+    {id:"step_form",label:"StepForm",category:"componente",subcategory:"formulario",status:"stable",desc:"Formulário multi-etapas com validação, navegação e botão Limpar.",features:["3 etapas","Validação por etapa","Botão Limpar com confirmação","Derivação automática templates"],file:"src/components/StepForm/StepForm.tsx"},
+    {id:"loading_screen",label:"LoadingScreen",category:"componente",subcategory:"ui",status:"stable",desc:"Tela de loading padronizada com logo hexagonal animado e barra de progresso.",features:["Logo hexagonal SVG","Barra de progresso","Mensagem customizável","fullScreen mode"],file:"src/components/ui/LoadingScreen.tsx"},
+    {id:"chat_widget",label:"ChatWidget",category:"componente",subcategory:"ia",status:"stable",desc:"Chat com IA (Gemini/Vertex AI) acessível via botão flutuante ou link no formulário.",features:["Integração Gemini","Botão flutuante","Abre via ChatContext","Contexto da etapa atual"],file:"src/components/chat/ChatWidget.tsx"},
+    {id:"team_drawer",label:"TeamDrawer",category:"componente",subcategory:"equipe",status:"stable",desc:"Drawer lateral com membros da equipe BOAS sincronizados do Slack.",features:["Membros do Slack","Avatar + cargo","Sincronização via proxy","Fallback planilha Equipe"],file:"src/components/team/TeamDrawer.tsx"},
+
+    // ── Contextos ──
+    {id:"auth_context",label:"AuthContext",category:"contexto",subcategory:"auth",status:"stable",desc:"Autenticação OAuth via GIS (dev) ou Session.getActiveUser() (Apps Script). Injeta USER_NAME, USER_PHOTO, ACCESS_TOKEN.",features:["GIS dev local","Apps Script: Session.getActiveUser()","People API para foto/nome","Fallback aba Equipe","Token renovação automática"],file:"src/context/AuthContext.tsx"},
+    {id:"theme_context",label:"ThemeContext",category:"contexto",subcategory:"ui",status:"stable",desc:"Gerencia dark/light mode com persistência no localStorage. Token data-theme no html.",features:["dark/light toggle","localStorage persistence","CSS vars via data-theme"],file:"src/context/ThemeContext.tsx"},
+    {id:"modal_context",label:"ModalContext",category:"contexto",subcategory:"ui",status:"stable",desc:"Modais de confirmação padronizados (warning, error, info). Renderização inline (sem createPortal).",features:["warning/error/info/success","Inline (sem createPortal)","onConfirm/onCancel callbacks"],file:"src/context/ModalContext.tsx"},
+    {id:"chat_context",label:"ChatContext",category:"contexto",subcategory:"ia",status:"stable",desc:"Controla abertura/fechamento do ChatWidget de qualquer parte da aplicação.",features:["openChat()","closeChat()","isOpen state"],file:"src/context/ChatContext.tsx"},
+
+    // ── Hooks ──
+    {id:"use_admin_check",label:"useAdminCheck",category:"hook",subcategory:"auth",status:"stable",desc:"Verifica se o usuário logado é admin via aba Admins da planilha. Retorna isAdmin, isLoading.",features:["Lê aba Admins via gasRun","email + role + ativo","Nenhum email hardcoded"],file:"src/hooks/useAdminCheck.ts"},
+
+    // ── Libs / Utils ──
+    {id:"gas_client",label:"gasClient",category:"lib",subcategory:"gas",status:"stable",desc:"Helper para chamar funções server-side do Apps Script via google.script.run.",features:["isGAS() detection","gasRun(fn, ...args)","Promise wrapper","withSuccessHandler/withFailureHandler"],file:"src/lib/gasClient.ts"},
+    {id:"sheets_api",label:"sheetsApi",category:"lib",subcategory:"sheets",status:"stable",desc:"Operações na planilha: fetch solicitações, append row. Usa gasRun no GAS, fetch direto no dev local.",features:["fetchSolicitacoes","appendRequestRow","isGAS() branch","Dev: Sheets API REST"],file:"src/lib/sheetsApi.ts"},
+    {id:"derive_templates",label:"deriveTemplates",category:"util",subcategory:"regras",status:"stable",desc:"Deriva templates BACEN e Cliente automaticamente com base em Saldo em Conta + Tipo TFO.",features:["saldoEmConta: Sim/Não","tipoTfo: Total Cliente/Nubank/Parcial","template_bacen derivado","template_cliente derivado"],file:"src/utils/deriveRobotTemplates.ts"},
+
+    // ── Apps Script ──
+    {id:"code_js",label:"Code.js",category:"gas",subcategory:"servidor",status:"stable",desc:"Servidor Apps Script. doGet() injeta config + user + token. Funções SpreadsheetApp para leitura/escrita.",features:["doGet(): auth + config injection","getSolicitacoes()","appendSolicitacao(rowData)","getEquipeMembers()","checkIsAdmin(email)","ensureAdminsSheet()","getUserProfile_(email)","getNewToken()","updateSheetCell(row, col, value)"],file:"gas/Code.js"},
+
+    // ── Google ──
+    {id:"sheet_main",label:"Sheet1",category:"google",subcategory:"planilha",status:"stable",desc:"Planilha principal com todas as solicitações RDR. Colunas A:BE (~57 colunas).",features:["ID auto-gerado","Colunas A:BE","Templates derivados","Status workflow"],external:true},
+    {id:"sheet_equipe",label:"Aba Equipe",category:"google",subcategory:"planilha",status:"stable",desc:"Aba com membros da equipe BOAS sincronizados do Slack.",features:["Sincronização Slack","avatar URL","email para match","Fallback nome/foto"],external:true},
+    {id:"sheet_admins",label:"Aba Admins",category:"google",subcategory:"planilha",status:"stable",desc:"Aba de controle de acesso. Criada automaticamente pelo ensureAdminsSheet() no primeiro acesso.",features:["email + role + ativo","Criação automática","Sem email hardcoded"],external:true},
+    {id:"google_drive",label:"Google Drive",category:"google",subcategory:"storage",status:"stable",desc:"Armazenamento dos dossiês .docx gerados pelo UiPath.",features:["Upload automático","Dossiês .docx","Organização por data/ID"],external:true},
+    {id:"people_api",label:"People API",category:"google",subcategory:"api",status:"stable",desc:"API Google para buscar nome e foto do perfil do usuário autenticado.",features:["displayName","photo URL","Chamada no doGet()","Fallback: aba Equipe"],external:true},
+
+    // ── UiPath ──
+    {id:"uipath_dispatcher",label:"Dispatcher",category:"uipath",subcategory:"rpa",status:"stable",desc:"Robô UiPath que lê novas solicitações da planilha e cria filas no Orchestrator.",features:["Lê Sheet1","Valida dados","Cria queue items","Status: Pendente → Em Análise"],external:true},
+    {id:"uipath_performer",label:"Performer",category:"uipath",subcategory:"rpa",status:"stable",desc:"Robô UiPath que processa a fila, captura widgets no Shuffle e gera dossiê .docx.",features:["Captura widgets Shuffle","Monta dossiê .docx","Upload Drive","Notifica Slack","Status: Em Análise → Concluído"],external:true},
+    {id:"uipath_orchestrator",label:"Orchestrator",category:"uipath",subcategory:"rpa",status:"stable",desc:"Plataforma UiPath para gerenciamento e monitoramento dos robôs.",features:["Gerencia filas","Monitora execuções","Logs de execução"],external:true},
+
+    // ── Sistemas ──
+    {id:"shuffle",label:"Shuffle API",category:"sistema",subcategory:"bacen",status:"warning",desc:"Sistema BACEN para captura de widgets RDR. Integrado pelo UiPath Performer.",features:["Widgets RDR","Captura automatizada","Status: Monitorar"],external:true},
+    {id:"bacen",label:"BACEN",category:"sistema",subcategory:"regulatorio",status:"stable",desc:"Banco Central do Brasil. Destino final dos dossiês RDR gerados.",features:["RDR","Dossiês de evidência","Prazo regulatório"],external:true},
+
+    // ── Slack ──
+    {id:"slack_proxy",label:"Slack Proxy",category:"slack",subcategory:"proxy",status:"stable",desc:"Apps Script proxy para comunicação com a API do Slack.",features:["Script separado","SLACK_PROXY_TOKEN","Channel: rpa_notification_comp_sol"],external:true},
+    {id:"slack_channel",label:"Slack Channel",category:"slack",subcategory:"notificacao",status:"stable",desc:"Canal rpa_notification_comp_sol (C06L82PDYJX). Notificações de dossiês concluídos.",features:["Notificações UiPath","Dossiê concluído","ID: C06L82PDYJX"],external:true},
+
+    // ── IA ──
+    {id:"gemini",label:"Gemini / Vertex AI",category:"ia",subcategory:"llm",status:"stable",desc:"LLM para assistente de IA no ChatWidget. Projeto GCP: iteng-itsystems.",features:["Gemini 2.0 Flash","Vertex AI","GCP: iteng-itsystems","us-central1"],external:true},
+    {id:"glean",label:"Glean",category:"ia",subcategory:"search",status:"stable",desc:"Busca interna Nubank integrada ao ChatWidget.",features:["nubank-prod-be.glean.com","Contexto interno","Opcional"],external:true},
+
+    // ── Fluxos / Templates ──
+    {id:"template_sem_saldo",label:"Conta Sem Saldo",category:"fluxo",subcategory:"template",status:"stable",desc:"Template quando Saldo em Conta = Não. BACEN: CONTA SEM SALDO. Cliente: CONTA SEM SALDO.",features:["Saldo = Não","BACEN: CONTA SEM SALDO","Cliente: CONTA SEM SALDO"]},
+    {id:"template_tfo_total_cliente",label:"TFO Total Cliente",category:"fluxo",subcategory:"template",status:"stable",desc:"Template TFO Total Realizado pelo Cliente.",features:["Saldo = Sim","Tipo TFO = Total Cliente","BACEN + Cliente: mesmo template"]},
+    {id:"template_tfo_total_nubank",label:"TFO Total Nubank",category:"fluxo",subcategory:"template",status:"stable",desc:"Template TFO Total Realizado pelo Nubank.",features:["Saldo = Sim","Tipo TFO = Total Nubank","BACEN + Cliente: mesmo template"]},
+    {id:"template_tfo_parcial",label:"TFO Parcial",category:"fluxo",subcategory:"template",status:"warning",desc:"Template TFO Parcial. Preservado para uso futuro.",features:["Saldo = Sim","Tipo TFO = Parcial","Preservado para futuro"]},
+  ],
+
+  links: [
+    {source:"home",target:"hero_carousel",strength:3,label:"renderiza"},
+    {source:"home",target:"topbar",strength:2,label:"usa"},
+    {source:"home",target:"sidebar",strength:2,label:"usa"},
+    {source:"dashboard",target:"topbar",strength:2,label:"usa"},
+    {source:"dashboard",target:"sidebar",strength:2,label:"usa"},
+    {source:"dashboard",target:"chat_widget",strength:2,label:"usa"},
+    {source:"solicitacao",target:"step_form",strength:3,label:"renderiza"},
+    {source:"solicitacao",target:"topbar",strength:2,label:"usa"},
+    {source:"solicitacao",target:"sidebar",strength:2,label:"usa"},
+    {source:"solicitacao",target:"chat_widget",strength:2,label:"abre via ChatContext"},
+    {source:"config",target:"use_admin_check",strength:3,label:"verifica admin"},
+    {source:"auth_context",target:"topbar",strength:2,label:"fornece user/foto"},
+    {source:"theme_context",target:"topbar",strength:2,label:"fornece toggle"},
+    {source:"modal_context",target:"step_form",strength:2,label:"confirmações"},
+    {source:"chat_context",target:"chat_widget",strength:3,label:"controla abertura"},
+    {source:"use_admin_check",target:"gas_client",strength:3,label:"checkIsAdmin()"},
+    {source:"use_admin_check",target:"sheet_admins",strength:2,label:"lê aba"},
+    {source:"gas_client",target:"code_js",strength:3,label:"google.script.run"},
+    {source:"sheets_api",target:"gas_client",strength:3,label:"usa no GAS"},
+    {source:"sheets_api",target:"sheet_main",strength:3,label:"lê/escreve"},
+    {source:"derive_templates",target:"template_sem_saldo",strength:2,label:"deriva"},
+    {source:"derive_templates",target:"template_tfo_total_cliente",strength:2,label:"deriva"},
+    {source:"derive_templates",target:"template_tfo_total_nubank",strength:2,label:"deriva"},
+    {source:"derive_templates",target:"template_tfo_parcial",strength:1,label:"preservado"},
+    {source:"step_form",target:"derive_templates",strength:3,label:"chama"},
+    {source:"code_js",target:"sheet_main",strength:3,label:"SpreadsheetApp"},
+    {source:"code_js",target:"sheet_equipe",strength:2,label:"getEquipeMembers()"},
+    {source:"code_js",target:"sheet_admins",strength:2,label:"ensureAdminsSheet()"},
+    {source:"code_js",target:"people_api",strength:2,label:"busca foto/nome"},
+    {source:"auth_context",target:"people_api",strength:2,label:"foto/nome"},
+    {source:"auth_context",target:"code_js",strength:3,label:"Session.getActiveUser()"},
+    {source:"uipath_dispatcher",target:"sheet_main",strength:3,label:"lê solicitações"},
+    {source:"uipath_dispatcher",target:"uipath_orchestrator",strength:3,label:"cria fila"},
+    {source:"uipath_performer",target:"uipath_orchestrator",strength:3,label:"processa fila"},
+    {source:"uipath_performer",target:"shuffle",strength:3,label:"captura widgets"},
+    {source:"uipath_performer",target:"google_drive",strength:3,label:"upload .docx"},
+    {source:"uipath_performer",target:"sheet_main",strength:2,label:"atualiza status"},
+    {source:"uipath_performer",target:"slack_proxy",strength:2,label:"notifica"},
+    {source:"shuffle",target:"bacen",strength:2,label:"evidências RDR"},
+    {source:"slack_proxy",target:"slack_channel",strength:3,label:"envia notificação"},
+    {source:"team_drawer",target:"slack_proxy",strength:2,label:"sync equipe"},
+    {source:"team_drawer",target:"sheet_equipe",strength:2,label:"fallback"},
+    {source:"chat_widget",target:"gemini",strength:3,label:"LLM"},
+    {source:"chat_widget",target:"glean",strength:2,label:"busca interna"},
+    {source:"solicitacao",target:"sheet_main",strength:2,label:"appendSolicitacao()"},
+    {source:"sheet_main",target:"uipath_dispatcher",strength:3,label:"trigger"},
+    {source:"uipath_performer",target:"bacen",strength:2,label:"dossiê final"},
+    {source:"dashboard",target:"sheet_main",strength:3,label:"getSolicitacoes()"},
+  ],
 };
 
-const nodes = [
-  // === PLATAFORMA ===
-  { id: 'rdr',         label: 'RDR Platform',        group: 'platform', r: 28, desc: 'Plataforma web React + TypeScript. Hub central para solicitações de dossiê RDR ao Banco Central.' },
-  { id: 'form',        label: 'Formulário\n3 Etapas', group: 'platform', r: 18, desc: 'Wizard com 53 colunas. Coleta dados do caso, squad, tipo de investigação e datas.' },
-  { id: 'dashboard',   label: 'Dashboard',            group: 'platform', r: 17, desc: 'Painel de monitoramento em tempo real. Polling a cada 30s. Filtros por status, squad, prioridade.' },
-  { id: 'chat_ai',     label: 'Chat IA\n(Gemini)',    group: 'platform', r: 15, desc: 'Widget de IA contextual com Google Gemini 2.0 Flash. Suporta upload de imagens, PDFs e áudio.' },
-  { id: 'config',      label: 'Configurações',        group: 'platform', r: 13, desc: 'Gerenciamento de Sheets ID, sync do Slack, timestamp de última sincronização.' },
+/* ============================================================
+   CATEGORY COLORS
+   ============================================================ */
+const CATEGORY_COLORS = {
+  pagina:     {fill:"#3a0a80",stroke:"#820AD1",label:"Páginas"},
+  componente: {fill:"#0a2a80",stroke:"#3b82f6",label:"Componentes"},
+  contexto:   {fill:"#0a6040",stroke:"#22c55e",label:"Contextos"},
+  hook:       {fill:"#6040a0",stroke:"#a855f7",label:"Hooks"},
+  lib:        {fill:"#804020",stroke:"#f59e0b",label:"Libs"},
+  util:       {fill:"#804020",stroke:"#f59e0b",label:"Utils"},
+  gas:        {fill:"#406020",stroke:"#84cc16",label:"Apps Script"},
+  google:     {fill:"#204060",stroke:"#38bdf8",label:"Google"},
+  uipath:     {fill:"#602020",stroke:"#f87171",label:"UiPath RPA"},
+  sistema:    {fill:"#403000",stroke:"#fbbf24",label:"Sistemas"},
+  slack:      {fill:"#4a2060",stroke:"#c084fc",label:"Slack"},
+  ia:         {fill:"#002040",stroke:"#67e8f9",label:"IA"},
+  fluxo:      {fill:"#304030",stroke:"#86efac",label:"Fluxos/Templates"},
+};
 
-  // === UIPATH ===
-  { id: 'orchestrator',label: 'UiPath\nOrchestrator', group: 'uipath',   r: 22, desc: 'Gerencia e dispara os bots Performer. Monitora filas de trabalho.' },
-  { id: 'performer',   label: 'Performer\nBot',       group: 'uipath',   r: 20, desc: 'Bot principal. Lê Sheets → captura widgets → gera .DOCX → faz upload no Drive → atualiza status.' },
-  { id: 'dispatcher',  label: 'Dispatcher',           group: 'uipath',   r: 14, desc: 'Valida solicitações antes de enfileirar para o Performer.' },
-  { id: 'widget',      label: 'Captura\nWidgets',     group: 'uipath',   r: 14, desc: 'Bot captura evidências visuais dos sistemas internos (ex-Shuffle). Screenshots e dados estruturados.' },
-  { id: 'docx',        label: 'Geração\n.DOCX',       group: 'uipath',   r: 14, desc: 'Monta o dossiê Word com evidências capturadas, datas, IDs e dados do caso.' },
-  { id: 'upload',      label: 'Upload\nDrive',        group: 'uipath',   r: 13, desc: 'Envia o .DOCX gerado para pasta no Google Drive e escreve os links de volta no Sheets (col. AN, AO, AP).' },
-  { id: 'slack_notif', label: 'Notificação\nSlack',   group: 'uipath',   r: 12, desc: 'Bot envia notificação no Slack quando o dossiê está pronto.' },
+const STATUS_STYLES = {
+  stable:  {ring:"#22c55e",label:"Estável"},
+  warning: {ring:"#f59e0b",label:"Atenção"},
+  error:   {ring:"#ef4444",label:"Erro"},
+  building:{ring:"#3b82f6",label:"Em construção"},
+};
 
-  // === GOOGLE INTEGRATIONS ===
-  { id: 'sheets',      label: 'Google Sheets',        group: 'google',   r: 20, desc: '53 colunas (A→BA). Backbone de dados. Append-only writes com proteção contra injeção de fórmulas.' },
-  { id: 'drive',       label: 'Google Drive',         group: 'google',   r: 17, desc: 'Armazena dossiês .DOCX. Pasta: "RDR - Ops Defense - Complaint Solutions". Links em colunas AN/AO.' },
-  { id: 'oauth',       label: 'Google OAuth',         group: 'google',   r: 14, desc: 'Autenticação restrita a @nubank.com.br. Token com refresh automático e backoff exponencial.' },
-  { id: 'vertex',      label: 'Vertex AI\n(Gemini)',  group: 'google',   r: 14, desc: 'Endpoint generateContent com sistema de prompts RDR. Modelo: gemini-2.0-flash-001.' },
-  { id: 'apps_script', label: 'Apps Script\n(Proxy)', group: 'google',   r: 12, desc: 'Proxy CORS para Slack API. Roda na infraestrutura do Google. Sincroniza membros do time.' },
+/* ============================================================
+   CATEGORY POSITIONS (force grouping)
+   ============================================================ */
+const CAT_POS = {
+  pagina:     {x:.15,y:.25},
+  componente: {x:.35,y:.35},
+  contexto:   {x:.2, y:.55},
+  hook:       {x:.35,y:.6},
+  lib:        {x:.5, y:.5},
+  util:       {x:.55,y:.6},
+  gas:        {x:.6, y:.35},
+  google:     {x:.75,y:.3},
+  uipath:     {x:.85,y:.55},
+  sistema:    {x:.9, y:.35},
+  slack:      {x:.75,y:.65},
+  ia:         {x:.5, y:.2},
+  fluxo:      {x:.6, y:.75},
+};
 
-  // === USUÁRIOS ===
-  { id: 'analista',    label: 'Analista RDR',         group: 'user',     r: 17, desc: '47 analistas. Antes: 21min por dossiê manual. Agora: submete formulário e acompanha no dashboard.' },
-  { id: 'cs',          label: 'Squad CS',             group: 'user',     r: 14, desc: 'Customer Security. Casos de autorização de dispositivo, fallback email/app, device revogado.' },
-  { id: 'invops',      label: 'Squad Inv Ops',        group: 'user',     r: 14, desc: 'Investigation Operations. 6.278+ reclamações. Casos de vítima e fraudador — PIX, DICT, bloqueio cautelar.' },
-  { id: 'bacen',       label: 'Banco Central\n(BACEN)',group: 'user',    r: 15, desc: 'Destino regulatório. Recebe dossiê gerado como evidência de investigação de fraude.' },
+/* ============================================================
+   STATE
+   ============================================================ */
+let selectedNode = null;
+let activeFilters = new Set();
+let labelsVisible = true;
+let searchTerm = '';
 
-  // === DADOS ===
-  { id: 'dossie',      label: 'Dossiê RDR',           group: 'data',     r: 18, desc: 'Documento .DOCX com evidências, capturas de tela, datas e IDs do caso. Enviado ao BACEN.' },
-  { id: 'pix',         label: 'PIX',                  group: 'data',     r: 14, desc: 'Dados de transferências PIX: listas de IDs enviados/recebidos, datas início/fim (TP_START/END_DATE).' },
-  { id: 'dict',        label: 'DICT',                 group: 'data',     r: 13, desc: 'Marcação DICT: data, notificação cliente, status de contestação (DC_UPDATED_DATE, CM_NOTIFICATION_DATE).' },
-  { id: 'bloqueio',    label: 'Bloqueio\nCautelar',   group: 'data',     r: 12, desc: 'Bloqueio preventivo de conta. Datas: data_bloqueio_produtos, data_desbloqueio_conta, data_cancelamento_conta.' },
-  { id: 'evidencias',  label: 'Evidências',           group: 'data',     r: 14, desc: 'Conjunto de dados capturados: screenshots de widgets, logs de transações, registros DICT.' },
+const {nodes, links} = GRAPH_DATA;
+const nodeById = new Map(nodes.map(n => [n.id, n]));
 
-  // === FLUXO / STATUS ===
-  { id: 'pendente',    label: 'Pendente',             group: 'flow',     r: 12, desc: 'Status inicial. Analista submeteu, aguardando dispatcher ou performer.' },
-  { id: 'em_analise',  label: 'Em Análise',           group: 'flow',     r: 12, desc: 'Performer processou e gerou o dossiê. Aguardando revisão do analista.' },
-  { id: 'concluido',   label: 'Concluído',            group: 'flow',     r: 12, desc: 'Analista revisou e aprovou o dossiê.' },
-  { id: 'cancelado',   label: 'Cancelado',            group: 'flow',     r: 11, desc: 'Solicitação cancelada pelo analista ou por erro no processamento.' },
-  { id: 'slack',       label: 'Slack',                group: 'flow',     r: 13, desc: 'Canal de comunicação do time. Notificações automáticas do bot e sync de membros.' },
-  { id: 'zendesk',     label: 'Zendesk',              group: 'flow',     r: 12, desc: 'Sistema de tickets. ID do ticket referenciado no formulário para rastreabilidade.' },
-];
+/* ============================================================
+   SIZING
+   ============================================================ */
+function nodeRadius(n) {
+  const base = {pagina:18,componente:14,contexto:13,hook:12,lib:12,util:12,gas:16,google:14,uipath:15,sistema:13,slack:12,ia:14,fluxo:11};
+  return base[n.category] || 12;
+}
 
-const links = [
-  // Plataforma → core
-  { source: 'rdr',         target: 'form' },
-  { source: 'rdr',         target: 'dashboard' },
-  { source: 'rdr',         target: 'chat_ai' },
-  { source: 'rdr',         target: 'config' },
-  { source: 'rdr',         target: 'oauth' },
+/* ============================================================
+   BUILD UI
+   ============================================================ */
+// Filters
+const filtersEl = document.getElementById('filters');
+const cats = [...new Set(nodes.map(n => n.category))];
+cats.forEach(cat => {
+  const c = CATEGORY_COLORS[cat] || {stroke:'#888',label:cat};
+  const btn = document.createElement('button');
+  btn.className = 'tb-pill';
+  btn.textContent = c.label;
+  btn.style.borderColor = c.stroke + '66';
+  btn.addEventListener('click', () => {
+    if (activeFilters.has(cat)) { activeFilters.delete(cat); btn.classList.remove('active'); }
+    else { activeFilters.add(cat); btn.classList.add('active'); }
+    applyFilters();
+  });
+  filtersEl.appendChild(btn);
+});
 
-  // Formulário → squads
-  { source: 'form',        target: 'cs' },
-  { source: 'form',        target: 'invops' },
-  { source: 'form',        target: 'sheets' },
-  { source: 'form',        target: 'zendesk' },
+// Legend
+const legendEl = document.getElementById('legend');
+legendEl.innerHTML = '<div class="leg-title">Categorias</div>' +
+  cats.map(cat => {
+    const c = CATEGORY_COLORS[cat] || {stroke:'#888',label:cat};
+    return `<div class="leg-item" data-cat="${cat}"><div class="leg-dot" style="background:${c.stroke}"></div>${c.label}</div>`;
+  }).join('');
+legendEl.querySelectorAll('.leg-item').forEach(el => {
+  el.addEventListener('click', () => {
+    const cat = el.dataset.cat;
+    const pills = filtersEl.querySelectorAll('.tb-pill');
+    const idx = cats.indexOf(cat);
+    if (idx >= 0 && pills[idx]) pills[idx].click();
+  });
+});
 
-  // Analista
-  { source: 'analista',    target: 'form' },
-  { source: 'analista',    target: 'dashboard' },
-  { source: 'analista',    target: 'cs' },
-  { source: 'analista',    target: 'invops' },
+// Metrics
+const metricsEl = document.getElementById('metrics');
+const catCounts = {};
+nodes.forEach(n => { catCounts[n.category] = (catCounts[n.category]||0)+1; });
+metricsEl.innerHTML = `
+  <div class="met-title">Grafo</div>
+  <div class="met-row"><span>Nós</span><span class="met-val">${nodes.length}</span></div>
+  <div class="met-row"><span>Links</span><span class="met-val">${links.length}</span></div>
+  <div class="met-divider"></div>
+  ${cats.map(c => `<div class="met-row"><span>${(CATEGORY_COLORS[c]||{label:c}).label}</span><span class="met-val">${catCounts[c]||0}</span></div>`).join('')}
+  <div class="met-divider"></div>
+  <div class="met-row"><span>Versão</span><span class="met-val">${GRAPH_DATA.meta.versao}</span></div>
+  <div class="met-row"><span>Atualizado</span><span class="met-val">${GRAPH_DATA.meta.ultimaAtualizacao}</span></div>
+  ${GRAPH_DATA.meta.deployUrl && GRAPH_DATA.meta.deployUrl !== 'DEPLOY_URL' ? `<a class="met-url" href="${GRAPH_DATA.meta.deployUrl}" target="_blank">Abrir plataforma ↗</a>` : ''}
+`;
 
-  // Dashboard → sheets → drive
-  { source: 'dashboard',   target: 'sheets' },
-  { source: 'dashboard',   target: 'drive' },
-
-  // UiPath flow
-  { source: 'orchestrator',target: 'performer' },
-  { source: 'orchestrator',target: 'dispatcher' },
-  { source: 'dispatcher',  target: 'sheets' },
-  { source: 'performer',   target: 'sheets' },
-  { source: 'performer',   target: 'widget' },
-  { source: 'performer',   target: 'docx' },
-  { source: 'performer',   target: 'upload' },
-  { source: 'performer',   target: 'slack_notif' },
-  { source: 'widget',      target: 'evidencias' },
-  { source: 'docx',        target: 'dossie' },
-  { source: 'upload',      target: 'drive' },
-  { source: 'upload',      target: 'sheets' },
-  { source: 'slack_notif', target: 'slack' },
-
-  // Google
-  { source: 'sheets',      target: 'drive' },
-  { source: 'chat_ai',     target: 'vertex' },
-  { source: 'config',      target: 'apps_script' },
-  { source: 'apps_script', target: 'slack' },
-
-  // Dados
-  { source: 'invops',      target: 'pix' },
-  { source: 'invops',      target: 'dict' },
-  { source: 'invops',      target: 'bloqueio' },
-  { source: 'pix',         target: 'evidencias' },
-  { source: 'dict',        target: 'evidencias' },
-  { source: 'bloqueio',    target: 'evidencias' },
-  { source: 'evidencias',  target: 'dossie' },
-  { source: 'dossie',      target: 'bacen' },
-
-  // Status flow
-  { source: 'sheets',      target: 'pendente' },
-  { source: 'pendente',    target: 'em_analise' },
-  { source: 'em_analise',  target: 'concluido' },
-  { source: 'em_analise',  target: 'cancelado' },
-  { source: 'performer',   target: 'em_analise' },
-  { source: 'analista',    target: 'concluido' },
-  { source: 'analista',    target: 'cancelado' },
-  { source: 'rdr',         target: 'orchestrator' },
-];
-
-// ——— D3 setup ———
-const svg = d3.select('#canvas');
-const width  = window.innerWidth;
-const height = window.innerHeight;
-svg.attr('viewBox', `0 0 ${width} ${height}`);
+/* ============================================================
+   D3 SETUP
+   ============================================================ */
+const svg = d3.select('#graph');
+const W = window.innerWidth;
+const H = window.innerHeight - 48;
+svg.attr('viewBox', `0 0 ${W} ${H}`);
 
 const g = svg.append('g');
 
 // Zoom
-const zoom = d3.zoom()
-  .scaleExtent([0.2, 4])
-  .on('zoom', e => g.attr('transform', e.transform));
-svg.call(zoom);
+const zoomBehavior = d3.zoom().scaleExtent([.15, 4]).on('zoom', e => {
+  g.attr('transform', e.transform);
+  updateMinimap(e.transform);
+});
+svg.call(zoomBehavior);
 
-// Defs: gradients + glow filter
+// Defs
 const defs = svg.append('defs');
+const glowFilter = defs.append('filter').attr('id','glow').attr('x','-50%').attr('y','-50%').attr('width','200%').attr('height','200%');
+glowFilter.append('feGaussianBlur').attr('stdDeviation','3').attr('result','blur');
+const fm = glowFilter.append('feMerge');
+fm.append('feMergeNode').attr('in','blur');
+fm.append('feMergeNode').attr('in','SourceGraphic');
 
-// Glow filter
-const filter = defs.append('filter').attr('id', 'glow');
-filter.append('feGaussianBlur').attr('stdDeviation', '3.5').attr('result', 'coloredBlur');
-const feMerge = filter.append('feMerge');
-feMerge.append('feMergeNode').attr('in', 'coloredBlur');
-feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
-
-// Starfield background
-const starCount = 180;
-for (let i = 0; i < starCount; i++) {
+// Starfield
+for (let i = 0; i < 200; i++) {
   g.append('circle')
-    .attr('cx', Math.random() * width * 2 - width * 0.5)
-    .attr('cy', Math.random() * height * 2 - height * 0.5)
-    .attr('r', Math.random() * 1.2)
-    .attr('fill', '#ffffff')
-    .attr('opacity', Math.random() * 0.4 + 0.05);
+    .attr('cx', Math.random()*W*2.5 - W*.75)
+    .attr('cy', Math.random()*H*2.5 - H*.75)
+    .attr('r', Math.random()*1)
+    .attr('fill','#fff')
+    .attr('opacity', Math.random()*.3+.03);
 }
 
-// Simulation
+/* ============================================================
+   SIMULATION
+   ============================================================ */
 const simulation = d3.forceSimulation(nodes)
-  .force('link',   d3.forceLink(links).id(d => d.id).distance(d => {
-    const s = d.source.r || 12, t = d.target.r || 12;
-    return (s + t) * 3.2;
-  }).strength(0.6))
-  .force('charge', d3.forceManyBody().strength(d => -d.r * 60))
-  .force('center', d3.forceCenter(width / 2, height / 2))
-  .force('collision', d3.forceCollide().radius(d => d.r + 18));
+  .force('link', d3.forceLink(links).id(d=>d.id).distance(d => {
+    const base = 80;
+    return base + (4 - (d.strength||2)) * 30;
+  }).strength(d => (d.strength||2) * .15))
+  .force('charge', d3.forceManyBody().strength(d => d.external ? -200 : -350))
+  .force('center', d3.forceCenter(W/2, H/2).strength(.05))
+  .force('collision', d3.forceCollide().radius(d => nodeRadius(d) + 12))
+  .force('x', d3.forceX(d => (CAT_POS[d.category]?.x || .5) * W).strength(.08))
+  .force('y', d3.forceY(d => (CAT_POS[d.category]?.y || .5) * H).strength(.08))
+  .alphaDecay(.015);
 
 // Links
-const linkEls = g.append('g').attr('class', 'links')
-  .selectAll('line')
-  .data(links)
-  .join('line')
-  .attr('class', 'link')
+const linkEls = g.append('g').selectAll('line').data(links).join('line')
+  .attr('class','link-line')
   .attr('stroke', d => {
-    const sg = nodes.find(n => n.id === (d.source.id || d.source))?.group;
-    return COLOR[sg] || '#ffffff';
-  });
+    const n = nodeById.get(d.source.id || d.source);
+    return (CATEGORY_COLORS[n?.category]||{stroke:'#555'}).stroke;
+  })
+  .attr('stroke-width', d => Math.max(.5, (d.strength||2) * .6));
 
 // Nodes
-const nodeEls = g.append('g').attr('class', 'nodes')
-  .selectAll('g')
-  .data(nodes)
-  .join('g')
-  .attr('class', 'node')
+const nodeEls = g.append('g').selectAll('g').data(nodes).join('g')
+  .attr('class','node-g')
+  .style('animation', (d,i) => `fadeScale .4s ${i*15}ms both`)
   .call(d3.drag()
-    .on('start', (e, d) => { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
-    .on('drag',  (e, d) => { d.fx = e.x; d.fy = e.y; })
-    .on('end',   (e, d) => { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; })
+    .on('start', (e,d) => { if(!e.active) simulation.alphaTarget(.3).restart(); d.fx=d.x; d.fy=d.y; })
+    .on('drag',  (e,d) => { d.fx=e.x; d.fy=e.y; })
+    .on('end',   (e,d) => { if(!e.active) simulation.alphaTarget(0); d.fx=null; d.fy=null; })
   )
   .on('click', onNodeClick)
   .on('mouseover', onMouseOver)
-  .on('mouseout',  onMouseOut);
+  .on('mouseout', onMouseOut);
 
+// Status ring
 nodeEls.append('circle')
-  .attr('r', d => d.r)
-  .attr('fill', d => COLOR[d.group] + '22')
-  .attr('stroke', d => COLOR[d.group])
-  .attr('filter', 'url(#glow)')
-  .each(function(d) {
-    if (d.id === 'rdr') d3.select(this).classed('pulse', true);
-  });
+  .attr('r', d => nodeRadius(d) + 3)
+  .attr('fill','none')
+  .attr('stroke', d => (STATUS_STYLES[d.status]||STATUS_STYLES.stable).ring)
+  .attr('stroke-width', .8)
+  .attr('stroke-dasharray', d => d.status === 'warning' ? '3 2' : 'none')
+  .attr('opacity', .5);
 
-// Extra ring for central node
-nodeEls.filter(d => d.id === 'rdr')
-  .append('circle')
-  .attr('r', d => d.r + 8)
-  .attr('fill', 'none')
-  .attr('stroke', COLOR.platform)
-  .attr('stroke-width', 1)
-  .attr('opacity', 0.3)
-  .attr('filter', 'url(#glow)');
+// Main circle
+nodeEls.append('circle')
+  .attr('r', d => nodeRadius(d))
+  .attr('fill', d => (CATEGORY_COLORS[d.category]||{fill:'#333'}).fill)
+  .attr('stroke', d => (CATEGORY_COLORS[d.category]||{stroke:'#888'}).stroke)
+  .attr('stroke-width', 1.2)
+  .attr('filter','url(#glow)');
 
+// External indicator (dashed outer ring)
+nodeEls.filter(d => d.external).append('circle')
+  .attr('r', d => nodeRadius(d) + 7)
+  .attr('fill','none')
+  .attr('stroke', d => (CATEGORY_COLORS[d.category]||{stroke:'#888'}).stroke)
+  .attr('stroke-width', .4)
+  .attr('stroke-dasharray', '4 3')
+  .attr('opacity', .35);
+
+// Labels
 nodeEls.append('text')
-  .attr('text-anchor', 'middle')
-  .attr('dy', d => d.r + 14)
-  .each(function(d) {
-    const lines = d.label.split('\n');
-    const el = d3.select(this);
-    lines.forEach((line, i) => {
-      el.append('tspan')
-        .attr('x', 0)
-        .attr('dy', i === 0 ? 0 : '1.1em')
-        .text(line);
-    });
-  });
+  .attr('text-anchor','middle')
+  .attr('dy', d => nodeRadius(d) + 13)
+  .text(d => d.label);
 
 // Tick
 simulation.on('tick', () => {
-  linkEls
-    .attr('x1', d => d.source.x)
-    .attr('y1', d => d.source.y)
-    .attr('x2', d => d.target.x)
-    .attr('y2', d => d.target.y);
-
-  nodeEls.attr('transform', d => `translate(${d.x},${d.y})`);
+  linkEls.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+  nodeEls.attr('transform', d=>`translate(${d.x},${d.y})`);
 });
 
-// ——— Interactions ———
+/* ============================================================
+   INTERACTIONS
+   ============================================================ */
 const tooltip = document.getElementById('tooltip');
-let selectedNode = null;
-let labelsVisible = true;
+const detailPanel = document.getElementById('detail-panel');
 
 function onMouseOver(event, d) {
   if (selectedNode) return;
-  tooltip.style.display = 'block';
-  tooltip.innerHTML = `<strong>${d.label.replace('\n', ' ')}</strong><span>${d.desc}</span>`;
-  tooltip.style.left = (event.clientX + 14) + 'px';
-  tooltip.style.top  = (event.clientY - 10) + 'px';
+  highlightNode(d);
+  showTooltip(event, d);
 }
 
 function onMouseOut() {
   if (selectedNode) return;
+  clearHighlight();
   tooltip.style.display = 'none';
+}
+
+function showTooltip(event, d) {
+  tooltip.innerHTML = `<div class="tt-name">${d.label}</div><div class="tt-desc">${d.desc.slice(0,100)}${d.desc.length>100?'...':''}</div>`;
+  tooltip.style.display = 'block';
+  const r = tooltip.getBoundingClientRect();
+  let x = event.clientX + 14;
+  let y = event.clientY - 10;
+  if (x + r.width > window.innerWidth - 10) x = event.clientX - r.width - 14;
+  if (y + r.height > window.innerHeight - 10) y = window.innerHeight - r.height - 10;
+  tooltip.style.left = x + 'px';
+  tooltip.style.top = y + 'px';
+}
+
+function highlightNode(d) {
+  const connected = new Set([d.id]);
+  links.forEach(l => {
+    const s = l.source.id||l.source, t = l.target.id||l.target;
+    if (s===d.id) connected.add(t);
+    if (t===d.id) connected.add(s);
+  });
+  nodeEls.classed('dimmed', n => !connected.has(n.id));
+  linkEls.classed('dimmed', l => {
+    const s = l.source.id||l.source, t = l.target.id||l.target;
+    return !(s===d.id||t===d.id);
+  });
+  linkEls.classed('highlight', l => {
+    const s = l.source.id||l.source, t = l.target.id||l.target;
+    return s===d.id||t===d.id;
+  });
+}
+
+function clearHighlight() {
+  nodeEls.classed('dimmed', false);
+  linkEls.classed('dimmed', false).classed('highlight', false);
 }
 
 function onNodeClick(event, d) {
   event.stopPropagation();
-
-  if (selectedNode === d.id) {
-    clearHighlight();
-    return;
-  }
-
+  if (selectedNode === d.id) { closeDetail(); return; }
   selectedNode = d.id;
-
-  const connectedIds = new Set([d.id]);
-  links.forEach(l => {
-    const sid = l.source.id || l.source;
-    const tid = l.target.id || l.target;
-    if (sid === d.id) connectedIds.add(tid);
-    if (tid === d.id) connectedIds.add(sid);
-  });
-
-  nodeEls.classed('dimmed', n => !connectedIds.has(n.id));
-  linkEls.classed('dimmed',   l => {
-    const sid = l.source.id || l.source;
-    const tid = l.target.id || l.target;
-    return !(sid === d.id || tid === d.id);
-  });
-  linkEls.classed('highlight', l => {
-    const sid = l.source.id || l.source;
-    const tid = l.target.id || l.target;
-    return sid === d.id || tid === d.id;
-  });
-
-  tooltip.style.display = 'block';
-  tooltip.innerHTML = `<strong>${d.label.replace('\n', ' ')}</strong><span>${d.desc}</span>`;
-  tooltip.style.left = (event.clientX + 14) + 'px';
-  tooltip.style.top  = (event.clientY - 10) + 'px';
-}
-
-svg.on('click', clearHighlight);
-
-function clearHighlight() {
-  selectedNode = null;
-  nodeEls.classed('dimmed', false);
-  linkEls.classed('dimmed', false).classed('highlight', false);
+  highlightNode(d);
   tooltip.style.display = 'none';
+  openDetail(d);
 }
 
-function resetZoom() {
-  svg.transition().duration(600).call(zoom.transform, d3.zoomIdentity);
+svg.on('click', () => { if(selectedNode) closeDetail(); });
+
+function openDetail(d) {
+  const cc = CATEGORY_COLORS[d.category]||{stroke:'#888',label:d.category};
+  const ss = STATUS_STYLES[d.status]||STATUS_STYLES.stable;
+
+  const inLinks = links.filter(l => (l.target.id||l.target)===d.id);
+  const outLinks = links.filter(l => (l.source.id||l.source)===d.id);
+
+  detailPanel.innerHTML = `
+    <div class="dp-header">
+      <div>
+        <div class="dp-cat-badge" style="background:${cc.fill};color:${cc.stroke};border:.5px solid ${cc.stroke}66">${cc.label}${d.subcategory ? ' · '+d.subcategory : ''}</div>
+        <div class="dp-title">${d.label}</div>
+        <div class="dp-status"><span style="width:6px;height:6px;border-radius:50%;background:${ss.ring};display:inline-block"></span> ${ss.label}${d.external ? ' · Externo' : ''}</div>
+      </div>
+      <button class="dp-close" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="dp-body">
+      <div><div class="dp-section-title">Descrição</div><div class="dp-desc">${d.desc}</div></div>
+      ${d.features && d.features.length ? `<div><div class="dp-section-title">Features</div>${d.features.map(f=>`<div class="dp-feature">${f}</div>`).join('')}</div>` : ''}
+      ${d.file ? `<div><div class="dp-section-title">Arquivo</div><div class="dp-file">${d.file}</div></div>` : ''}
+      ${inLinks.length ? `<div><div class="dp-section-title">Recebe de (${inLinks.length})</div>${inLinks.map(l=>{
+        const src = nodeById.get(l.source.id||l.source);
+        return `<div class="dp-conn"><span class="dp-conn-arrow">←</span> ${src?.label||l.source.id||l.source}<span class="dp-conn-label">${l.label||''}</span></div>`;
+      }).join('')}</div>` : ''}
+      ${outLinks.length ? `<div><div class="dp-section-title">Envia para (${outLinks.length})</div>${outLinks.map(l=>{
+        const tgt = nodeById.get(l.target.id||l.target);
+        return `<div class="dp-conn"><span class="dp-conn-arrow">→</span> ${tgt?.label||l.target.id||l.target}<span class="dp-conn-label">${l.label||''}</span></div>`;
+      }).join('')}</div>` : ''}
+    </div>
+  `;
+  detailPanel.classList.add('open');
 }
 
-function toggleLabels() {
+function closeDetail() {
+  selectedNode = null;
+  clearHighlight();
+  detailPanel.classList.remove('open');
+}
+
+/* ============================================================
+   FILTERS & SEARCH
+   ============================================================ */
+function applyFilters() {
+  const hasFilter = activeFilters.size > 0;
+  const term = searchTerm.toLowerCase();
+
+  nodeEls.style('display', d => {
+    const catOk = !hasFilter || activeFilters.has(d.category);
+    const searchOk = !term || d.label.toLowerCase().includes(term) || d.id.toLowerCase().includes(term) || d.desc.toLowerCase().includes(term);
+    return (catOk && searchOk) ? null : 'none';
+  });
+
+  const visibleIds = new Set();
+  nodeEls.each(function(d) { if (d3.select(this).style('display') !== 'none') visibleIds.add(d.id); });
+
+  linkEls.style('display', l => {
+    const s = l.source.id||l.source, t = l.target.id||l.target;
+    return (visibleIds.has(s) && visibleIds.has(t)) ? null : 'none';
+  });
+}
+
+document.getElementById('search').addEventListener('input', e => {
+  searchTerm = e.target.value;
+  applyFilters();
+  if (searchTerm) {
+    const term = searchTerm.toLowerCase();
+    nodeEls.each(function(d) {
+      const match = d.label.toLowerCase().includes(term) || d.id.toLowerCase().includes(term);
+      d3.select(this).select('circle:nth-child(2)').attr('stroke-width', match ? 2.5 : 1.2);
+    });
+  } else {
+    nodeEls.select('circle:nth-child(2)').attr('stroke-width', 1.2);
+  }
+});
+
+/* ============================================================
+   CONTROLS
+   ============================================================ */
+document.getElementById('btn-zoom-in').addEventListener('click', () => svg.transition().duration(300).call(zoomBehavior.scaleBy, 1.4));
+document.getElementById('btn-zoom-out').addEventListener('click', () => svg.transition().duration(300).call(zoomBehavior.scaleBy, .7));
+document.getElementById('btn-reset').addEventListener('click', () => svg.transition().duration(500).call(zoomBehavior.transform, d3.zoomIdentity));
+document.getElementById('btn-labels').addEventListener('click', () => {
   labelsVisible = !labelsVisible;
   nodeEls.selectAll('text').style('display', labelsVisible ? null : 'none');
+});
+
+/* ============================================================
+   MINIMAP
+   ============================================================ */
+const mmCanvas = document.querySelector('#minimap canvas');
+const mmCtx = mmCanvas.getContext('2d');
+const mmViewport = document.querySelector('.mm-viewport');
+const mmW = 160, mmH = 100;
+
+function updateMinimap(transform) {
+  mmCtx.clearRect(0,0,mmW,mmH);
+
+  const ext = {minX:Infinity,minY:Infinity,maxX:-Infinity,maxY:-Infinity};
+  nodes.forEach(n => {
+    if (n.x!=null) { ext.minX=Math.min(ext.minX,n.x); ext.maxX=Math.max(ext.maxX,n.x); ext.minY=Math.min(ext.minY,n.y); ext.maxY=Math.max(ext.maxY,n.y); }
+  });
+
+  const pad = 40;
+  const gw = (ext.maxX-ext.minX)+pad*2 || 1;
+  const gh = (ext.maxY-ext.minY)+pad*2 || 1;
+  const sx = mmW/gw, sy = mmH/gh;
+  const s = Math.min(sx,sy);
+
+  // Draw links
+  mmCtx.strokeStyle = 'rgba(130,10,209,.15)';
+  mmCtx.lineWidth = .5;
+  links.forEach(l => {
+    if (l.source.x==null) return;
+    mmCtx.beginPath();
+    mmCtx.moveTo((l.source.x-ext.minX+pad)*s,(l.source.y-ext.minY+pad)*s);
+    mmCtx.lineTo((l.target.x-ext.minX+pad)*s,(l.target.y-ext.minY+pad)*s);
+    mmCtx.stroke();
+  });
+
+  // Draw nodes
+  nodes.forEach(n => {
+    if (n.x==null) return;
+    const cc = CATEGORY_COLORS[n.category]||{stroke:'#888'};
+    mmCtx.fillStyle = cc.stroke;
+    mmCtx.globalAlpha = .7;
+    mmCtx.beginPath();
+    mmCtx.arc((n.x-ext.minX+pad)*s,(n.y-ext.minY+pad)*s, Math.max(1.5, nodeRadius(n)*s*.5), 0, Math.PI*2);
+    mmCtx.fill();
+    mmCtx.globalAlpha = 1;
+  });
+
+  // Viewport rectangle
+  if (transform) {
+    const vx = (-transform.x/transform.k - ext.minX + pad)*s;
+    const vy = (-transform.y/transform.k - ext.minY + pad)*s;
+    const vw = (W/transform.k)*s;
+    const vh = (H/transform.k)*s;
+    mmViewport.style.left = Math.max(0,vx)+'px';
+    mmViewport.style.top = Math.max(0,vy)+'px';
+    mmViewport.style.width = Math.min(mmW, vw)+'px';
+    mmViewport.style.height = Math.min(mmH, vh)+'px';
+    mmViewport.style.display = 'block';
+  }
 }
 
-// Resize
+// Initial minimap after simulation stabilizes
+simulation.on('tick.minimap', () => { updateMinimap(d3.zoomTransform(svg.node())); });
+
+/* ============================================================
+   RESIZE
+   ============================================================ */
 window.addEventListener('resize', () => {
-  const w = window.innerWidth, h = window.innerHeight;
+  const w = window.innerWidth, h = window.innerHeight - 48;
   svg.attr('viewBox', `0 0 ${w} ${h}`);
-  simulation.force('center', d3.forceCenter(w / 2, h / 2)).alpha(0.3).restart();
+  simulation.force('center', d3.forceCenter(w/2, h/2)).alpha(.2).restart();
 });
 </script>
 </body>

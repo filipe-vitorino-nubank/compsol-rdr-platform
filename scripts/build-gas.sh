@@ -37,6 +37,35 @@ if ! grep -q 'function doGet' dist/Code.js; then
   exit 2
 fi
 
+echo "==> Copying mapa-rdr.html to dist/..."
+cp public/mapa-rdr.html dist/mapa-rdr.html 2>/dev/null || true
+
+echo "==> Injecting build metadata into mapa-rdr.html..."
+BUILD_DATE=$(date +'%d/%m/%Y %H:%M')
+BUILD_VERSION=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+
+FIXED_DEPLOY_ID_PRE=$(clasp deployments 2>/dev/null | \
+  grep -v "@HEAD" | \
+  grep "AKfycb" | \
+  head -1 | \
+  awk '{print $2}')
+
+if [ -n "$FIXED_DEPLOY_ID_PRE" ]; then
+  DEPLOY_URL_VAL="https://script.google.com/a/macros/nubank.com.br/s/${FIXED_DEPLOY_ID_PRE}/exec"
+else
+  DEPLOY_URL_VAL=""
+fi
+
+if [ -f dist/mapa-rdr.html ]; then
+  sed -i.bak \
+    -e "s|BUILD_DATE|${BUILD_DATE}|g" \
+    -e "s|BUILD_VERSION|${BUILD_VERSION}|g" \
+    -e "s|DEPLOY_URL|${DEPLOY_URL_VAL}|g" \
+    dist/mapa-rdr.html
+  rm -f dist/mapa-rdr.html.bak
+  echo "    Mapa neural atualizado: v${BUILD_VERSION} (${BUILD_DATE})"
+fi
+
 echo "==> Build complete. Pushing to Apps Script..."
 clasp push --force
 

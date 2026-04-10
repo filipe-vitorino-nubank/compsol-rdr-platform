@@ -6,6 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { useTheme } from "../../context/ThemeContext";
 import { env } from "../../config/env";
+import { useAdminCheck } from "../../hooks/useAdminCheck";
 import type { Locale } from "../../i18n/translations";
 import { Topbar } from "./Topbar";
 import { ProfileDrawer } from "../Profile/ProfileDrawer";
@@ -48,6 +49,7 @@ export function AppLayout() {
   } = useAuth();
   const { t, locale, setLocale } = useLanguage();
   const { isDark } = useTheme();
+  const { isAdmin } = useAdminCheck();
   const clientConfigured = Boolean(env.googleClientId);
 
   if (!scriptReady && !env.isAppsScript) {
@@ -97,13 +99,14 @@ export function AppLayout() {
   }, [menuOpen]);
 
   const location = useLocation();
-  const isFullWidth = location.pathname === "/" || location.pathname === "/painel" || location.pathname === "/solicitacao";
+  const isFullWidth = location.pathname === "/" || location.pathname === "/painel" || location.pathname === "/solicitacao" || location.pathname === "/mapa";
 
   const NAV_ICONS: Record<string, string> = {
     "/": "🏠",
     "/solicitacao": "📝",
     "/painel": "📊",
     "/config": "⚙️",
+    "/mapa": "⬡",
   };
 
   const nav = [
@@ -111,6 +114,7 @@ export function AppLayout() {
     { to: "/solicitacao", label: t("nav.newRequest"), end: true },
     { to: "/painel", label: t("nav.dashboard") },
     { to: "/config", label: t("nav.settings") },
+    ...(isAdmin ? [{ to: "/mapa", label: "Mapa Neural", end: true }] : []),
   ];
 
   const displayName = googleUser?.name ?? googleUser?.email ?? "—";
