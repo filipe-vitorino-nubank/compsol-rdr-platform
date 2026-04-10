@@ -17,6 +17,7 @@ import {
 } from "../../lib/sheetsApi";
 import { getSpreadsheetId } from "../../lib/spreadsheetConfig";
 import { isMissingCredentials } from "../../config/env";
+import { isAppsScriptEnv } from "../../lib/gasClient";
 import { FieldTooltip } from "./FieldTooltip";
 import {
   INSTITUICAO_OPTIONS,
@@ -933,9 +934,11 @@ export function RdrRequestForm() {
     isSubmittingRef.current = true;
     setOverlay("loading");
     try {
-      const accessToken = await getAccessTokenForSheets({ interactive: false }).catch(() =>
-        getAccessTokenForSheets({ interactive: true }),
-      );
+      const accessToken = isAppsScriptEnv()
+        ? ""
+        : await getAccessTokenForSheets({ interactive: false }).catch(() =>
+            getAccessTokenForSheets({ interactive: true }),
+          );
       const spreadsheetId = getSpreadsheetId();
       await ensureHeaders(accessToken, spreadsheetId);
       const id = await generateId(accessToken, spreadsheetId);

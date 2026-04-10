@@ -1115,7 +1115,7 @@ code, kbd, pre, .mono { font-family: var(--font-mono); }
   /* ── Sidebar float toggle ── */
   .sidebar-float-toggle {
     position: absolute !important;
-    top: 20px !important;
+    top: 72px !important;
     right: -13px !important;
     transform: none !important;
     width: 26px !important;

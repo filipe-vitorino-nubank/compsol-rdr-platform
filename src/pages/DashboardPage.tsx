@@ -7,6 +7,7 @@ import { useModal } from "../context/ModalContext";
 import { useLanguage } from "../context/LanguageContext";
 import { fetchAllRows, mapRowToSolicitacao, rowStatusA1, updateCell } from "../lib/sheetsApi";
 import { getSpreadsheetId } from "../lib/spreadsheetConfig";
+import { isAppsScriptEnv } from "../lib/gasClient";
 import { COL, type RequestStatus } from "../types/form";
 import type { Solicitacao } from "../types/dossie";
 import { buildDriveLink } from "../utils/buildDriveLink";
@@ -461,6 +462,11 @@ export function DashboardPage() {
 
   const fetchRows = useCallback(async (): Promise<RowView[] | null> => {
     const sid = getSpreadsheetId();
+
+    if (isAppsScriptEnv()) {
+      return fetchAllRows("", sid);
+    }
+
     if (!sid) {
       if (!warnedNoSheet.current) {
         warnedNoSheet.current = true;
@@ -671,7 +677,9 @@ export function DashboardPage() {
     if (!sid) return;
     setSavingStatus(true);
     try {
-      const token = await getAccessTokenForSheets({ interactive: true });
+      const token = isAppsScriptEnv()
+        ? ""
+        : await getAccessTokenForSheets({ interactive: true });
       await updateCell(token, sid, rowStatusA1(detail.rowIndex), newStatus);
       setRows((prev) =>
         prev.map((x) =>
