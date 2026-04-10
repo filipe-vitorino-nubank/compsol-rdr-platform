@@ -8,6 +8,7 @@ import {
   buildSlackWebLink,
   type SlackMember,
 } from "../../services/slackService";
+import { LoadingScreen } from "../ui/LoadingScreen";
 
 function MemberCard({ member, t }: { member: SlackMember; t: (k: string) => string }) {
   const [expanded, setExpanded] = useState(false);
@@ -181,12 +182,7 @@ export function TeamDrawer({ open, onClose }: { open: boolean; onClose: () => vo
 
         <div className="profile-members-list">
           {loading ? (
-            <div className="profile-loading">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="spin" aria-hidden>
-                <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-              </svg>
-              <span>{t("profile.loadingTeam")}</span>
-            </div>
+            <LoadingScreen message={t("profile.loadingTeam")} />
           ) : error === "empty" ? (
             <div className="profile-loading" style={{ flexDirection: "column", gap: 6 }}>
               <p style={{ fontSize: 13, color: "var(--color-ink-muted)" }}>

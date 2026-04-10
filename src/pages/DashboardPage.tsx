@@ -8,6 +8,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { fetchAllRows, mapRowToSolicitacao, rowStatusA1, updateCell } from "../lib/sheetsApi";
 import { getSpreadsheetId } from "../lib/spreadsheetConfig";
 import { isAppsScriptEnv } from "../lib/gasClient";
+import { LoadingScreen } from "../components/ui/LoadingScreen";
 import { COL, type RequestStatus } from "../types/form";
 import type { Solicitacao } from "../types/dossie";
 import { buildDriveLink } from "../utils/buildDriveLink";
@@ -726,16 +727,7 @@ export function DashboardPage() {
   /* ── Skeleton ── */
 
   if (loading) {
-    return (
-      <div className="space-y-4 p-4 animate-pulse">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div
-            key={i}
-            className="h-14 rounded-lg bg-[var(--color-surface-raised)]"
-          />
-        ))}
-      </div>
-    );
+    return <LoadingScreen message="Carregando solicitações..." fullScreen />;
   }
 
   return (

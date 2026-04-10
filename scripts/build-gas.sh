@@ -41,13 +41,21 @@ echo "==> Build complete. Pushing to Apps Script..."
 clasp push --force
 
 echo "==> Deploying..."
-clasp deploy --description "deploy $(date +'%Y-%m-%d %H:%M')"
+DEPLOY_OUTPUT=$(clasp deploy --description "deploy $(date +'%Y-%m-%d %H:%M')" 2>&1)
+echo "$DEPLOY_OUTPUT"
 
-DEPLOY_ID=$(clasp deployments 2>/dev/null | grep -o 'AKfycb[^ ]*' | tail -1)
+DEPLOY_ID=$(echo "$DEPLOY_OUTPUT" | grep -o 'AKfycb[^ ]*' | head -1)
 
 if [ -n "$DEPLOY_ID" ]; then
   echo ""
-  echo "🌐 App URL:"
+  echo "🌐 App URL (este deploy):"
   echo "https://script.google.com/a/macros/nubank.com.br/s/${DEPLOY_ID}/exec"
+  echo ""
+fi
+
+HEAD_ID=$(clasp deployments 2>/dev/null | grep '@HEAD' | grep -o 'AKfycb[^ ]*')
+if [ -n "$HEAD_ID" ]; then
+  echo "🔗 HEAD URL (sempre a versão mais recente):"
+  echo "https://script.google.com/a/macros/nubank.com.br/s/${HEAD_ID}/dev"
   echo ""
 fi

@@ -59,19 +59,41 @@ function doGet(e) {
 
   try {
     var peopleRes = UrlFetchApp.fetch(
-      'https://people.googleapis.com/v1/people/me?personFields=names,photos',
+      'https://people.googleapis.com/v1/people/me?personFields=names,photos,emailAddresses',
       {
-        headers: { Authorization: 'Bearer ' + accessToken },
+        headers: {
+          Authorization: 'Bearer ' + accessToken,
+          Accept: 'application/json',
+        },
         muteHttpExceptions: true,
       }
     );
-    if (peopleRes.getResponseCode() === 200) {
-      var peopleData = JSON.parse(peopleRes.getContentText());
-      userName  = (peopleData.names && peopleData.names[0] && peopleData.names[0].displayName) || userName;
-      userPhoto = (peopleData.photos && peopleData.photos[0] && peopleData.photos[0].url) || '';
+
+    var code = peopleRes.getResponseCode();
+    Logger.log('People API status: ' + code);
+
+    if (code === 200) {
+      var d = JSON.parse(peopleRes.getContentText());
+      Logger.log('People API data: ' + JSON.stringify(d).substring(0, 300));
+
+      var displayName = d.names && d.names[0] && d.names[0].displayName;
+      var photoUrl    = d.photos && d.photos[0] && d.photos[0].url;
+
+      if (displayName) userName  = displayName;
+      if (photoUrl)    userPhoto = photoUrl;
+
+      Logger.log('Nome: ' + userName + ' | Foto: ' + (userPhoto ? 'ok' : 'vazio'));
+    } else {
+      Logger.log('People API erro: ' + peopleRes.getContentText().substring(0, 200));
     }
   } catch(e) {
-    Logger.log('People API erro: ' + e.message);
+    Logger.log('People API exception: ' + e.message);
+  }
+
+  if (!userPhoto || userName === userEmail.split('@')[0]) {
+    var profile = getUserProfile_(userEmail);
+    if (profile.name)  userName  = profile.name;
+    if (profile.photo) userPhoto = profile.photo;
   }
 
   config.USER_NAME  = userName;
@@ -240,5 +262,29 @@ function checkIsAdmin(email) {
     return { isAdmin: !!found, error: null };
   } catch (e) {
     return { isAdmin: false, error: e.message };
+  }
+}
+
+function getUserProfile_(email) {
+  try {
+    var sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+    var ss    = SpreadsheetApp.openById(sheetId);
+    var sheet = ss.getSheetByName('Equipe');
+    if (!sheet) return { name: null, photo: null };
+
+    var rows = sheet.getDataRange().getValues();
+    for (var i = 1; i < rows.length; i++) {
+      var rowEmail = (rows[i][6] || '').toString().toLowerCase();
+      if (rowEmail === (email || '').toLowerCase()) {
+        return {
+          name:  rows[i][1] || rows[i][2] || null,
+          photo: rows[i][4] || null,
+        };
+      }
+    }
+    return { name: null, photo: null };
+  } catch(e) {
+    Logger.log('getUserProfile_ erro: ' + e.message);
+    return { name: null, photo: null };
   }
 }

@@ -10,6 +10,7 @@ import type { Locale } from "../../i18n/translations";
 import { Topbar } from "./Topbar";
 import { ProfileDrawer } from "../Profile/ProfileDrawer";
 import { TeamDrawer } from "../team/TeamDrawer";
+import { LoadingScreen } from "../ui/LoadingScreen";
 
 const LANG_LABEL: Record<Locale, string> = { "pt-BR": "PT", en: "EN", es: "ES" };
 
@@ -48,6 +49,10 @@ export function AppLayout() {
   const { t, locale, setLocale } = useLanguage();
   const { isDark } = useTheme();
   const clientConfigured = Boolean(env.googleClientId);
+
+  if (!scriptReady && !env.isAppsScript) {
+    return <LoadingScreen message="Iniciando plataforma..." fullScreen />;
+  }
 
   const handleTriggerClick = () => {
     if (triggerRef.current) {
@@ -371,7 +376,7 @@ export function AppLayout() {
             </div>
           ) : isAuthenticated && !googleUser ? (
             <div className="mb-2 rounded-lg border border-[var(--sidebar-border)] bg-[rgba(255,255,255,0.04)] px-2 py-3 text-center">
-              <p className="text-[11px] text-[var(--sidebar-text-muted)]">{t("auth.loadingAccount")}</p>
+              <LoadingScreen message={t("auth.loadingAccount")} />
               {sidebarOpen ? (
                 <button type="button" onClick={signOut} className="mt-2 text-[11px] text-[var(--sidebar-text-muted)] underline hover:text-[var(--sidebar-text)]">
                   {t("auth.cancel")}

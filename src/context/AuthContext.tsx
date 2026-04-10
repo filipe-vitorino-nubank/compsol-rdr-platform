@@ -250,7 +250,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshLogin = useCallback(() => {
     if (isGAS) {
-      window.location.reload();
+      modal.showModal({
+        type: "info",
+        title: "Token atualizado",
+        message:
+          "No Apps Script a autenticação é gerenciada automaticamente. " +
+          "Recarregue a página se necessário.",
+        confirmLabel: "Recarregar",
+        onConfirm: () => {
+          try {
+            window.top?.location.reload();
+          } catch {
+            window.location.reload();
+          }
+        },
+      });
       return;
     }
     const clientId = env.googleClientId;
@@ -268,7 +282,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     });
     client.requestAccessToken({ prompt: "select_account" });
-  }, [persistToken, isGAS]);
+  }, [persistToken, isGAS, modal]);
 
   const signOut = useCallback(() => {
     if (isGAS) {
@@ -276,7 +290,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       tokenExpiresAtRef.current = null;
       setIsAuthenticated(false);
       setGoogleUser(null);
-      window.location.reload();
+      try {
+        window.top?.location.replace("https://accounts.google.com/logout");
+      } catch {
+        modal.info(
+          "Sair da conta",
+          "Para sair, acesse myaccount.google.com e faça logout da sua conta Google.",
+        );
+      }
       return;
     }
     if (tokenRef.current && window.google?.accounts?.oauth2) {
@@ -287,7 +308,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
     clearAuth();
-  }, [clearAuth, isGAS]);
+  }, [clearAuth, isGAS, modal]);
 
   const value = useMemo(
     () => ({
