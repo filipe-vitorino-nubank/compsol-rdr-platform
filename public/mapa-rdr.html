@@ -379,8 +379,10 @@ metricsEl.innerHTML = `
 `;
 
 /* ============================================================
-   D3 SETUP
+   D3 SETUP — wrapped in load event for iframe compatibility
    ============================================================ */
+window.addEventListener('load', () => {
+
 const svg = d3.select('#graph');
 const W = window.innerWidth;
 const H = window.innerHeight - 48;
@@ -761,6 +763,8 @@ window.addEventListener('resize', () => {
   svg.attr('viewBox', `0 0 ${w} ${h}`);
   simulation.force('center', d3.forceCenter(w/2, h/2)).alpha(.2).restart();
 });
+
+}); // end window.addEventListener('load')
 </script>
 </body>
 </html>
