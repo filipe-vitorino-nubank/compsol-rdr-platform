@@ -1,4 +1,27 @@
+function ensureAdminsSheet() {
+  try {
+    var sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+    var ss    = SpreadsheetApp.openById(sheetId);
+    var sheet = ss.getSheetByName('Admins');
+
+    if (!sheet) {
+      sheet = ss.insertSheet('Admins');
+      sheet.getRange('A1:C1').setValues([['email', 'role', 'ativo']]);
+      sheet.getRange('A1:C1').setFontWeight('bold')
+           .setBackground('#820AD1').setFontColor('#ffffff');
+
+      var adminEmail = Session.getEffectiveUser().getEmail();
+      sheet.getRange('A2:C2').setValues([[adminEmail, 'admin', 'true']]);
+      Logger.log('Aba Admins criada: ' + adminEmail);
+    }
+  } catch(e) {
+    Logger.log('Erro ao criar aba Admins: ' + e.message);
+  }
+}
+
 function doGet(e) {
+  ensureAdminsSheet();
+
   var userEmail = Session.getActiveUser().getEmail();
 
   if (!userEmail || !userEmail.endsWith('@nubank.com.br')) {

@@ -100,21 +100,23 @@ function FeedbackModal({ config, onClose }: { config: ModalConfig; onClose: () =
   const theme = MODAL_THEME[config.type];
 
   const handleConfirm = () => {
-    config.onConfirm?.();
+    try {
+      config.onConfirm?.();
+    } catch { /* ensure modal closes */ }
     onClose();
   };
 
   const handleCancel = () => {
-    config.onCancel?.();
+    try {
+      config.onCancel?.();
+    } catch { /* ensure modal closes */ }
     onClose();
   };
-
-  const dismissOnOverlay = config.type !== "confirm";
 
   return (
     <div
       className="feedback-overlay"
-      onClick={dismissOnOverlay ? handleCancel : undefined}
+      onClick={handleCancel}
       role="dialog"
       aria-modal="true"
     >
