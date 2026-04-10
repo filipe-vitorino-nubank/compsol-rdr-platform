@@ -151,8 +151,8 @@ export function formStateToRow(
 ): string[] {
   const sv = sanitizeSheetValue;
 
-  const rpDerived = deriveTemplates(s.saldoEmContaRp || 'Sim');
-  const bcDerived = deriveTemplates(s.saldoEmContaBc || 'Sim');
+  const rpDerived = deriveTemplates(s.saldoEmContaRp || 'Não', s.tipoTfoRp);
+  const bcDerived = deriveTemplates(s.saldoEmContaBc || 'Não', s.tipoTfoBc);
 
   return [
     id,                                            // A  - ID

@@ -129,6 +129,7 @@ export interface RdrFormState {
   contaSemSaldoRp: SimNao | "";
   tfoParcialRp: SimNao | "";
   saldoEmContaRp: SimNao | "";
+  tipoTfoRp: string;
 
   tfoConcluidoBc: SimNao | "";
   contaSemSaldoBc: SimNao | "";
@@ -137,6 +138,7 @@ export interface RdrFormState {
   tfoParcialBc: SimNao | "";
   devolucaoOrigemBc: SimNao | "";
   saldoEmContaBc: SimNao | "";
+  tipoTfoBc: string;
 
   transacaoCodigo: string;
   transacaoValor: string;
@@ -189,6 +191,7 @@ export const initialFormState: RdrFormState = {
   contaSemSaldoRp: "",
   tfoParcialRp: "",
   saldoEmContaRp: "",
+  tipoTfoRp: "",
   tfoConcluidoBc: "",
   contaSemSaldoBc: "",
   bcFraudadorPfpj: "",
@@ -196,6 +199,7 @@ export const initialFormState: RdrFormState = {
   tfoParcialBc: "",
   devolucaoOrigemBc: "",
   saldoEmContaBc: "",
+  tipoTfoBc: "",
   transacaoCodigo: "",
   transacaoValor: "",
   savingsAccountId: "",

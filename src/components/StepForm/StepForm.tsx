@@ -486,12 +486,24 @@ function Step2Trilha() {
               </div>
               <div className="sm:col-span-2" data-field="saldoEmContaRp">
                 <Field label={<>Saldo em Conta<FieldTooltip text="O cliente ainda possui saldo disponível na conta?" /></>} error={e.saldoEmContaRp} required>
-                  <RadioGroup name="saldoEmContaRp" options={["Sim", "Não"] as const} value={state.saldoEmContaRp} onChange={(v) => setField("saldoEmContaRp", v as SimNao)} labels={simNaoLabels} />
+                  <RadioGroup name="saldoEmContaRp" options={["Sim", "Não"] as const} value={state.saldoEmContaRp} onChange={(v) => { setField("saldoEmContaRp", v as SimNao); setField("tipoTfoRp", ""); }} labels={simNaoLabels} />
                 </Field>
               </div>
+              {state.saldoEmContaRp === "Sim" && (
+                <div className="sm:col-span-2" data-field="tipoTfoRp">
+                  <Field label={<>Tipo de TFO<FieldTooltip text="Selecione o tipo de transferência de fundos realizada" /></>} error={e.tipoTfoRp} required>
+                    <select className={`input-field ${e.tipoTfoRp ? "input-field--error" : ""}`} value={state.tipoTfoRp} onChange={(ev) => setField("tipoTfoRp", ev.target.value)}>
+                      <option value="">Selecione...</option>
+                      <option value="TFO_TOTAL_CLIENTE">TFO TOTAL REALIZADO PELO CLIENTE</option>
+                      <option value="TFO_TOTAL_NUBANK">TFO TOTAL REALIZADO PELO NUBANK</option>
+                      <option value="TFO_PARCIAL">TFO PARCIAL (CLIENTE/NUBANK)</option>
+                    </select>
+                  </Field>
+                </div>
+              )}
             </div>
-            {state.saldoEmContaRp && (() => {
-              const d = deriveTemplates(state.saldoEmContaRp);
+            {(state.saldoEmContaRp === "Não" || (state.saldoEmContaRp === "Sim" && state.tipoTfoRp)) && (() => {
+              const d = deriveTemplates(state.saldoEmContaRp, state.tipoTfoRp);
               return (
                 <div className="template-preview">
                   <div className="template-preview-label">Robô vai usar:</div>
@@ -514,9 +526,21 @@ function Step2Trilha() {
             <div className="grid gap-6 sm:grid-cols-2">
               <div className="sm:col-span-2" data-field="saldoEmContaBc">
                 <Field label={<>Saldo em Conta<FieldTooltip text="O cliente ainda possui saldo disponível na conta?" /></>} error={e.saldoEmContaBc} required>
-                  <RadioGroup name="saldoEmContaBc" options={["Sim", "Não"] as const} value={state.saldoEmContaBc} onChange={(v) => setField("saldoEmContaBc", v as SimNao)} labels={simNaoLabels} />
+                  <RadioGroup name="saldoEmContaBc" options={["Sim", "Não"] as const} value={state.saldoEmContaBc} onChange={(v) => { setField("saldoEmContaBc", v as SimNao); setField("tipoTfoBc", ""); }} labels={simNaoLabels} />
                 </Field>
               </div>
+              {state.saldoEmContaBc === "Sim" && (
+                <div className="sm:col-span-2" data-field="tipoTfoBc">
+                  <Field label={<>Tipo de TFO<FieldTooltip text="Selecione o tipo de transferência de fundos realizada" /></>} error={e.tipoTfoBc} required>
+                    <select className={`input-field ${e.tipoTfoBc ? "input-field--error" : ""}`} value={state.tipoTfoBc} onChange={(ev) => setField("tipoTfoBc", ev.target.value)}>
+                      <option value="">Selecione...</option>
+                      <option value="TFO_TOTAL_CLIENTE">TFO TOTAL REALIZADO PELO CLIENTE</option>
+                      <option value="TFO_TOTAL_NUBANK">TFO TOTAL REALIZADO PELO NUBANK</option>
+                      <option value="TFO_PARCIAL">TFO PARCIAL (CLIENTE/NUBANK)</option>
+                    </select>
+                  </Field>
+                </div>
+              )}
               <div data-field="bcFraudadorPfpj">
                 <Field label={<>{t("step2.fraudadorPfpj")}<FieldTooltip text={t("tooltip.fraudadorPfpj")} /></>} error={e.bcFraudadorPfpj} required>
                   <RadioGroup name="bcFraudadorPfpj" options={["Sim", "Não"] as const} value={state.bcFraudadorPfpj} onChange={(v) => { setField("bcFraudadorPfpj", v as SimNao); if (v === "Não") setField("bcFraudadorTipo", ""); }} labels={simNaoLabels} />
@@ -556,8 +580,8 @@ function Step2Trilha() {
                 </Field>
               </div>
             </div>
-            {state.saldoEmContaBc && (() => {
-              const d = deriveTemplates(state.saldoEmContaBc);
+            {(state.saldoEmContaBc === "Não" || (state.saldoEmContaBc === "Sim" && state.tipoTfoBc)) && (() => {
+              const d = deriveTemplates(state.saldoEmContaBc, state.tipoTfoBc);
               return (
                 <div className="template-preview">
                   <div className="template-preview-label">Robô vai usar:</div>
@@ -706,8 +730,9 @@ function buildTrilhaItems(s: RdrFormState, t: (k: string) => string): ReviewEntr
         if (s.casosCercadinho) items.push({ label: t("step3.reviewCasosCercadinho"), value: s.casosCercadinho });
         if (s.casosBoleto) items.push({ label: t("step3.reviewCasosBoleto"), value: s.casosBoleto });
         if (s.saldoEmContaRp) {
-          const rpDerived = deriveTemplates(s.saldoEmContaRp);
+          const rpDerived = deriveTemplates(s.saldoEmContaRp, s.tipoTfoRp);
           items.push({ label: "Saldo em Conta", value: s.saldoEmContaRp });
+          if (s.tipoTfoRp) items.push({ label: "Tipo TFO", value: s.tipoTfoRp });
           items.push({ label: "→ BACEN", value: rpDerived.template_bacen });
           items.push({ label: "→ Cliente", value: rpDerived.template_cliente });
         }
@@ -715,8 +740,9 @@ function buildTrilhaItems(s: RdrFormState, t: (k: string) => string): ReviewEntr
 
       if (s.subreasonFraudster === "Bloqueio Cautelar") {
         if (s.saldoEmContaBc) {
-          const bcDerived = deriveTemplates(s.saldoEmContaBc);
+          const bcDerived = deriveTemplates(s.saldoEmContaBc, s.tipoTfoBc);
           items.push({ label: "Saldo em Conta", value: s.saldoEmContaBc });
+          if (s.tipoTfoBc) items.push({ label: "Tipo TFO", value: s.tipoTfoBc });
           items.push({ label: "→ BACEN", value: bcDerived.template_bacen });
           items.push({ label: "→ Cliente", value: bcDerived.template_cliente });
         }

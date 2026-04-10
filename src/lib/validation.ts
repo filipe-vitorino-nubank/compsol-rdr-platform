@@ -54,10 +54,12 @@ export function validateStep2(s: RdrFormState, t?: TFn): Record<string, string> 
         if (!s[f]) e[f] = req;
       });
       if (!s.saldoEmContaRp) e.saldoEmContaRp = req;
+      if (s.saldoEmContaRp === "Sim" && !s.tipoTfoRp) e.tipoTfoRp = "Selecione o tipo de TFO";
     }
 
     if (s.subreasonFraudster === "Bloqueio Cautelar") {
       if (!s.saldoEmContaBc) e.saldoEmContaBc = req;
+      if (s.saldoEmContaBc === "Sim" && !s.tipoTfoBc) e.tipoTfoBc = "Selecione o tipo de TFO";
       const bc = [
         "bcFraudadorPfpj",
         "devolucaoOrigemBc",
