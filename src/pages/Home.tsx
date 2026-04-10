@@ -27,86 +27,65 @@ export function Home() {
       <section className="home-hero">
         <div className="hero-grid-bg" />
 
-        <div className="hero-inner">
-          {/* Left column */}
-          <div className="hero-left">
-            <div className="home-tag">
-              <div className="home-tag-dot" />
-              <span>Equipe BOAS &middot; &Aacute;rea do Produto</span>
+        {/* Topbar com tag + status */}
+        <div className="hero-topbar">
+          <div className="hero-tag">
+            <div className="hero-tag-dot" />
+            <span className="hero-tag-text">Equipe BOAS &middot; &Aacute;rea do Produto</span>
+          </div>
+          <div className="hero-status-bar">
+            <div className="hero-status-item">
+              <div className="hero-status-dot" style={{ background: 'var(--success, #22c55e)' }} />
+              <span>UiPath Operacional</span>
             </div>
+            <div className="hero-status-sep" />
+            <div className="hero-status-item">
+              <div className="hero-status-dot" style={{ background: 'var(--purple-600, #820AD1)' }} />
+              <span>Drive Autom&aacute;tico</span>
+            </div>
+            <div className="hero-status-sep" />
+            <div className="hero-status-item">
+              <div className="hero-status-dot" style={{ background: 'var(--warning, #f59e0b)' }} />
+              <span>Shuffle Monitorar</span>
+            </div>
+          </div>
+        </div>
 
-            <h1 className="home-title">
+        {/* Grid principal 2 colunas */}
+        <div className="hero-inner">
+          {/* Coluna esquerda */}
+          <div className="hero-left">
+            <h1 className="hero-title">
               RDR Dossiê<br />
-              <span className="home-title-accent">Automação</span>
+              <span className="hero-title-accent">Automação</span>
             </h1>
-
-            <p className="home-subtitle">
-              Plataforma RPA que automatiza a geração dos dossiês enviados ao
-              Banco Central, eliminando o processo manual de captura de widgets
-              no Shuffle e montagem das evidências em .docx.
+            <p className="hero-desc">
+              Plataforma RPA que automatiza a geração dos dossiês
+              enviados ao Banco Central, eliminando o processo manual
+              de captura de widgets no Shuffle.
             </p>
-
-            <div className="home-btns">
-              <button className="home-btn-primary" onClick={() => navigate("/solicitacao")}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <div className="hero-buttons">
+              <button className="btn-hero-primary" onClick={() => navigate("/solicitacao")}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
+                  <line x1="12" y1="8" x2="12" y2="16" />
+                  <line x1="8" y1="12" x2="16" y2="12" />
                 </svg>
                 Nova Solicitação
               </button>
-              <button className="home-btn-ghost" onClick={() => navigate("/painel")}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="7" height="7" />
-                  <rect x="14" y="3" width="7" height="7" />
-                  <rect x="14" y="14" width="7" height="7" />
-                  <rect x="3" y="14" width="7" height="7" />
+              <button className="btn-hero-ghost" onClick={() => navigate("/painel")}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <path d="M3 9h18M9 21V9" />
                 </svg>
                 Ver Painel
               </button>
             </div>
-
-            <div className="hero-carousel-wrap">
-              <HeroCarousel />
-            </div>
           </div>
 
-          {/* Right column */}
+          {/* Coluna direita — Carousel tamanho real */}
           <div className="hero-right">
-            <div className="bot-wrap">
-              <div className="bot-ring bot-ring-1" />
-              <div className="bot-ring bot-ring-2" />
-              <div className="bot-body">
-                <div className="bot-face">
-                  <div className="bot-eyes">
-                    <div className="bot-eye" />
-                    <div className="bot-eye bot-eye-2" />
-                  </div>
-                  <div className="bot-mouth" />
-                </div>
-                <div className="bot-dots">
-                  <div className="bot-dot" />
-                  <div className="bot-dot" />
-                  <div className="bot-dot" />
-                </div>
-              </div>
-            </div>
-
-            <div className="hero-metrics">
-              <div className="hero-metric">
-                <span className="hero-metric-val">~21<em>min</em></span>
-                <span className="hero-metric-label">economizados<br />por dossiê</span>
-              </div>
-              <div className="hero-metric-divider" />
-              <div className="hero-metric">
-                <span className="hero-metric-val">94<em>/dia</em></span>
-                <span className="hero-metric-label">dossiês<br />processados</span>
-              </div>
-              <div className="hero-metric-divider" />
-              <div className="hero-metric">
-                <span className="hero-metric-val">47</span>
-                <span className="hero-metric-label">analistas<br />atendidos</span>
-              </div>
-            </div>
+            <HeroCarousel />
           </div>
         </div>
       </section>
