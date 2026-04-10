@@ -27,124 +27,89 @@ export function Home() {
       <section className="home-hero">
         <div className="hero-grid-bg" />
 
-        {/* Bot Alpha + Carousel */}
-        <div className="hero-right-col">
-          <div className="bot-wrap">
-            <div className="bot-ring bot-ring-1" />
-            <div className="bot-ring bot-ring-2" />
-            <div className="bot-body">
-              <div className="bot-face">
-                <div className="bot-eyes">
-                  <div className="bot-eye" />
-                  <div className="bot-eye bot-eye-2" />
+        <div className="hero-inner">
+          {/* Left column */}
+          <div className="hero-left">
+            <div className="home-tag">
+              <div className="home-tag-dot" />
+              <span>Equipe BOAS &middot; &Aacute;rea do Produto</span>
+            </div>
+
+            <h1 className="home-title">
+              RDR Dossiê<br />
+              <span className="home-title-accent">Automação</span>
+            </h1>
+
+            <p className="home-subtitle">
+              Plataforma RPA que automatiza a geração dos dossiês enviados ao
+              Banco Central, eliminando o processo manual de captura de widgets
+              no Shuffle e montagem das evidências em .docx.
+            </p>
+
+            <div className="home-btns">
+              <button className="home-btn-primary" onClick={() => navigate("/solicitacao")}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                Nova Solicitação
+              </button>
+              <button className="home-btn-ghost" onClick={() => navigate("/painel")}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7" />
+                  <rect x="14" y="3" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" />
+                  <rect x="3" y="14" width="7" height="7" />
+                </svg>
+                Ver Painel
+              </button>
+            </div>
+
+            <div className="hero-carousel-wrap">
+              <HeroCarousel />
+            </div>
+          </div>
+
+          {/* Right column */}
+          <div className="hero-right">
+            <div className="bot-wrap">
+              <div className="bot-ring bot-ring-1" />
+              <div className="bot-ring bot-ring-2" />
+              <div className="bot-body">
+                <div className="bot-face">
+                  <div className="bot-eyes">
+                    <div className="bot-eye" />
+                    <div className="bot-eye bot-eye-2" />
+                  </div>
+                  <div className="bot-mouth" />
                 </div>
-                <div className="bot-mouth" />
+                <div className="bot-dots">
+                  <div className="bot-dot" />
+                  <div className="bot-dot" />
+                  <div className="bot-dot" />
+                </div>
               </div>
-              <div className="bot-dots">
-                <div className="bot-dot" />
-                <div className="bot-dot" />
-                <div className="bot-dot" />
+            </div>
+
+            <div className="hero-metrics">
+              <div className="hero-metric">
+                <span className="hero-metric-val">~21<em>min</em></span>
+                <span className="hero-metric-label">economizados<br />por dossiê</span>
+              </div>
+              <div className="hero-metric-divider" />
+              <div className="hero-metric">
+                <span className="hero-metric-val">94<em>/dia</em></span>
+                <span className="hero-metric-label">dossiês<br />processados</span>
+              </div>
+              <div className="hero-metric-divider" />
+              <div className="hero-metric">
+                <span className="hero-metric-val">47</span>
+                <span className="hero-metric-label">analistas<br />atendidos</span>
               </div>
             </div>
           </div>
-          <HeroCarousel />
-        </div>
-
-        <div className="home-tag">
-          <div className="home-tag-dot" />
-          <span>Equipe BOAS &middot; Nubank</span>
-        </div>
-
-        <h1 className="home-title">
-          RDR Dossiê
-          <br />
-          <span className="home-title-accent">Automação</span>
-        </h1>
-
-        <p className="home-subtitle">
-          Este projeto de RPA automatiza a geração dos dossiês RDR enviados ao
-          Banco Central, substituindo a captura manual de widgets no Shuffle e a
-          montagem das evidências em .docx. O robô consolida automaticamente os
-          dados dos squads, traduz informações para português, registra data e
-          hora de acesso às evidências e, quando possível, bloqueia as tabelas
-          geradas para evitar alterações manuais. Com isso, reduzimos tempo de
-          resposta e SLA, liberando o time para focar em análises e estratégias
-          que suportem nossos OKRs.
-        </p>
-
-        <div className="home-btns">
-          <button
-            className="home-btn-primary"
-            onClick={() => navigate("/solicitacao")}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
-            Nova Solicitação
-          </button>
-          <button
-            className="home-btn-ghost"
-            onClick={() => navigate("/painel")}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="3" y="3" width="7" height="7" />
-              <rect x="14" y="3" width="7" height="7" />
-              <rect x="14" y="14" width="7" height="7" />
-              <rect x="3" y="14" width="7" height="7" />
-            </svg>
-            Ver Painel
-          </button>
         </div>
       </section>
-
-      {/* ── Métricas ── */}
-      <div className="home-metrics">
-        <div className="home-metric">
-          <div className="home-metric-value">
-            94<span>/dia</span>
-          </div>
-          <div className="home-metric-label">
-            Dossiês processados em média por dia
-          </div>
-        </div>
-        <div className="home-metric">
-          <div className="home-metric-value">6.278</div>
-          <div className="home-metric-label">
-            Reclamações InvOps jan–ago (escopo)
-          </div>
-        </div>
-        <div className="home-metric">
-          <div className="home-metric-value">
-            ~21<span> min</span>
-          </div>
-          <div className="home-metric-label">
-            Tempo médio manual por dossiê
-          </div>
-        </div>
-        <div className="home-metric">
-          <div className="home-metric-value">47</div>
-          <div className="home-metric-label">Analistas RDR no processo</div>
-        </div>
-      </div>
 
       {/* ── Conteúdo ── */}
       <section className="home-content">
