@@ -35,6 +35,12 @@ try {
   execSync('git push origin-personal main', { stdio: 'inherit' });
   console.log('✅ Push concluído!');
 
+  console.log('🔨 Building & deploying to Apps Script...');
+  execSync('npm run build', { stdio: 'inherit' });
+  execSync('clasp push --force', { stdio: 'inherit' });
+  execSync(`clasp deploy --description "deploy ${date}"`, { stdio: 'inherit' });
+  console.log('✅ Deploy Apps Script concluído!');
+
 } catch (err) {
   if (err.message.includes('nothing to commit')) {
     console.log('✅ Nada para commitar — tudo já está salvo.');

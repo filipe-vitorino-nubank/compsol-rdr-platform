@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { sendGeminiMessage, type ChatMessage, type ChatAttachment } from "../../services/geminiService";
 import { useAuth } from "../../context/AuthContext";
 import { useModal } from "../../context/ModalContext";
+import { env } from "../../config/env";
 
 type ChatMode = null | "gemini" | "glean";
 
@@ -91,7 +92,7 @@ export default function ChatWidget() {
     const h = 680;
     const left = window.screen.width - w - 20;
     const top = window.screen.height - h - 60;
-    const gleanUrl = import.meta.env.VITE_GLEAN_URL || "https://nubank-prod-be.glean.com/chat";
+    const gleanUrl = env.gleanUrl;
     window.open(
       gleanUrl,
       "GleanChat",

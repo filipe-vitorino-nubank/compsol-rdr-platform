@@ -4,6 +4,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
+import { env } from "../../config/env";
 import type { Locale } from "../../i18n/translations";
 import { ProfileDrawer } from "../Profile/ProfileDrawer";
 import { TeamDrawer } from "../team/TeamDrawer";
@@ -43,7 +44,7 @@ export function AppLayout() {
     signOut,
   } = useAuth();
   const { t, locale, setLocale } = useLanguage();
-  const clientConfigured = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
+  const clientConfigured = Boolean(env.googleClientId);
 
   const handleTriggerClick = () => {
     if (triggerRef.current) {

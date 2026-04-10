@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./components/Layout/AppLayout";
 import { Home } from "./pages/Home";
 import { RdrRequestForm } from "./components/StepForm/StepForm";
@@ -10,7 +10,7 @@ import ChatWidget from "./components/chat/ChatWidget";
 export default function App() {
   return (
     <>
-      <BrowserRouter basename={import.meta.env.BASE_URL}>
+      <HashRouter>
         <Routes>
           <Route element={<AppLayout />}>
             <Route path="/" element={<Home />} />
@@ -21,7 +21,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
-      </BrowserRouter>
+      </HashRouter>
       <ChatWidget />
     </>
   );

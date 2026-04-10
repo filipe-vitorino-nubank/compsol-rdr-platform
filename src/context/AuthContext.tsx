@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { useModal } from "./ModalContext";
+import { env } from "../config/env";
 
 export type GoogleUserProfile = {
   email: string;
@@ -72,17 +73,44 @@ async function fetchGoogleUserProfile(accessToken: string): Promise<GoogleUserPr
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [scriptReady, setScriptReady] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [googleUser, setGoogleUser] = useState<GoogleUserProfile | null>(null);
+  const isGAS = env.isAppsScript;
+
+  const [scriptReady, setScriptReady] = useState(isGAS);
+  const [isAuthenticated, setIsAuthenticated] = useState(isGAS && !!env.accessToken);
+  const [googleUser, setGoogleUser] = useState<GoogleUserProfile | null>(
+    isGAS && env.userEmail ? { email: env.userEmail, name: env.userEmail.split("@")[0] } : null,
+  );
   const modal = useModal();
 
-  const tokenRef = useRef<string | null>(null);
-  const tokenExpiresAtRef = useRef<number | null>(null);
+  const tokenRef = useRef<string | null>(isGAS ? env.accessToken : null);
+  const tokenExpiresAtRef = useRef<number | null>(
+    isGAS && env.tokenExp ? env.tokenExp : null,
+  );
   const isRefreshingRef = useRef(false);
   const refreshPromiseRef = useRef<Promise<string> | null>(null);
 
   useEffect(() => {
+    if (isGAS && env.userEmail && env.accessToken) {
+      fetch(
+        "https://people.googleapis.com/v1/people/me?personFields=photos,names",
+        { headers: { Authorization: `Bearer ${env.accessToken}` } },
+      )
+        .then((r) => r.json())
+        .then((data) => {
+          const photo = data.photos?.[0]?.url || "";
+          const name = data.names?.[0]?.displayName || env.userEmail.split("@")[0];
+          setGoogleUser({ email: env.userEmail, name, picture: photo });
+        })
+        .catch(() => {
+          setGoogleUser({
+            email: env.userEmail,
+            name: env.userEmail.split("@")[0],
+            picture: "",
+          });
+        });
+      return;
+    }
+
     if (document.querySelector('script[data-gis="1"]')) {
       setScriptReady(!!window.google?.accounts);
       return;
@@ -94,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     s.dataset.gis = "1";
     s.onload = () => setScriptReady(true);
     document.body.appendChild(s);
-  }, []);
+  }, [isGAS]);
 
   const clearAuth = useCallback(() => {
     tokenRef.current = null;
@@ -105,6 +133,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshProfile = useCallback(
     async (accessToken: string) => {
+      if (isGAS) return;
+
       const p = await fetchGoogleUserProfile(accessToken);
       if (!p) return;
 
@@ -120,7 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setGoogleUser(p);
     },
-    [clearAuth, modal],
+    [clearAuth, modal, isGAS],
   );
 
   const persistToken = useCallback(
@@ -141,9 +171,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = useCallback(
     (opts?: { promptConsent?: boolean }) => {
-      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      if (isGAS) return;
+      const clientId = env.googleClientId;
       if (!clientId) {
-        console.error("Missing VITE_GOOGLE_CLIENT_ID");
+        console.error("Missing GOOGLE_CLIENT_ID");
         return;
       }
       if (!window.google?.accounts?.oauth2) return;
@@ -165,7 +196,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         prompt: opts?.promptConsent ? "consent" : "",
       });
     },
-    [persistToken],
+    [persistToken, isGAS],
   );
 
   const requestAccessToken = useCallback(() => {
@@ -174,10 +205,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const getAccessTokenForSheets = useCallback(
     async (opts?: { interactive?: boolean }): Promise<string> => {
-      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      if (isGAS && tokenRef.current) {
+        return tokenRef.current;
+      }
+
+      const clientId = env.googleClientId;
       if (!clientId) {
         throw new Error(
-          "Configure VITE_GOOGLE_CLIENT_ID no arquivo .env (veja .env.example).",
+          "Configure GOOGLE_CLIENT_ID nas Script Properties (ou .env para dev local).",
         );
       }
       if (!window.google?.accounts?.oauth2) {
@@ -220,11 +255,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return refreshPromiseRef.current;
     },
-    [persistToken, isTokenExpired],
+    [persistToken, isTokenExpired, isGAS],
   );
 
   const refreshLogin = useCallback(() => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (isGAS) return;
+    const clientId = env.googleClientId;
     if (!clientId || !window.google?.accounts?.oauth2) return;
 
     const client = window.google.accounts.oauth2.initTokenClient({
@@ -239,9 +275,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     });
     client.requestAccessToken({ prompt: "select_account" });
-  }, [persistToken]);
+  }, [persistToken, isGAS]);
 
   const signOut = useCallback(() => {
+    if (isGAS) return;
     if (tokenRef.current && window.google?.accounts?.oauth2) {
       try {
         window.google.accounts.oauth2.revoke(tokenRef.current, () => undefined);
@@ -250,7 +287,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
     clearAuth();
-  }, [clearAuth]);
+  }, [clearAuth, isGAS]);
 
   const value = useMemo(
     () => ({

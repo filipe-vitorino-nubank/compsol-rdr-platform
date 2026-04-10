@@ -1,13 +1,9 @@
 import { getSpreadsheetId } from "../lib/spreadsheetConfig";
 import { fetchWithTimeout } from "../lib/fetchWithTimeout";
+import { env } from "../config/env";
 
 const MEMBERS_RANGE = "Equipe!A2:G100";
 const LAST_SYNC_RANGE = "Equipe!H1";
-
-const SYNC_URL = import.meta.env.VITE_SLACK_PROXY_URL as string | undefined;
-const SYNC_TOKEN = import.meta.env.VITE_SLACK_PROXY_TOKEN as string | undefined;
-const SLACK_TEAM_ID = import.meta.env.VITE_SLACK_TEAM_ID || '';
-const SLACK_DOMAIN = import.meta.env.VITE_SLACK_DOMAIN || 'nubank.slack.com';
 
 export interface SlackMember {
   id: string;
@@ -85,15 +81,18 @@ export async function fetchLastSync(accessToken: string): Promise<string> {
 }
 
 export async function syncTeamNow(): Promise<void> {
-  if (!SYNC_URL || !SYNC_TOKEN) {
+  if (!env.slackProxyUrl || !env.slackProxyToken) {
     throw new Error(
-      "VITE_SLACK_PROXY_URL ou VITE_SLACK_PROXY_TOKEN não configurados",
+      "SLACK_PROXY_URL ou SLACK_PROXY_TOKEN não configurados",
     );
   }
 
-  const scriptPath = SYNC_URL.replace("https://script.google.com", "");
-  const res = await fetchWithTimeout(`/slack-proxy${scriptPath}?action=sync`, {
-    headers: { "X-Proxy-Token": SYNC_TOKEN || "" },
+  const url = env.slackProxyUrl.startsWith("http")
+    ? `${env.slackProxyUrl}?action=sync`
+    : `/slack-proxy${env.slackProxyUrl}?action=sync`;
+
+  const res = await fetchWithTimeout(url, {
+    headers: { "X-Proxy-Token": env.slackProxyToken },
   }, 10_000);
   const data = await res.json();
 
@@ -103,7 +102,7 @@ export async function syncTeamNow(): Promise<void> {
 }
 
 export const buildSlackDMLink = (userId: string): string =>
-  `slack://user?team=${SLACK_TEAM_ID}&id=${userId}`;
+  `slack://user?team=${env.slackTeamId}&id=${userId}`;
 
 export const buildSlackWebLink = (userId: string): string =>
-  `https://${SLACK_DOMAIN}/team/${userId}`;
+  `https://${env.slackDomain}/team/${userId}`;

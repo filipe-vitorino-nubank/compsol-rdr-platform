@@ -1,9 +1,7 @@
 import { fetchWithTimeout } from "../lib/fetchWithTimeout";
+import { env } from "../config/env";
 
-const PROJECT_ID = import.meta.env.VITE_GCP_PROJECT_ID || '';
-const LOCATION   = import.meta.env.VITE_GCP_LOCATION   || 'us-central1';
-const MODEL      = import.meta.env.VITE_GEMINI_MODEL    || 'gemini-2.0-flash-001';
-const VERTEX_URL = `https://${LOCATION}-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/${LOCATION}/publishers/google/models/${MODEL}:generateContent`;
+const VERTEX_URL = `https://${env.gcpLocation}-aiplatform.googleapis.com/v1/projects/${env.gcpProjectId}/locations/${env.gcpLocation}/publishers/google/models/${env.geminiModel}:generateContent`;
 
 export interface ChatAttachment {
   name: string;
