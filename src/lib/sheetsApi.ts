@@ -8,6 +8,7 @@ import type { Solicitacao } from "../types/dossie";
 import { formatDateBR, formatDateInputBR, formatDateTimeSheet } from "../utils/formatDate";
 import { fetchWithRetry } from "./fetchWithTimeout";
 import { deriveTemplates } from "../utils/deriveRobotTemplates";
+import { gasRun, isAppsScriptEnv } from "./gasClient";
 
 const SHEET_TAB = "Sheet1";
 
@@ -62,6 +63,12 @@ export async function readHeaderRow(
   accessToken: string,
   spreadsheetId: string,
 ): Promise<string[] | null> {
+  if (isAppsScriptEnv()) {
+    const res = await gasRun<{ headers: string[]; error: string | null }>("getSheetHeaders");
+    if (res.error) throw new Error(res.error);
+    return res.headers.length ? res.headers : null;
+  }
+
   const range = encodeURIComponent(`${SHEET_TAB}!A1:${LAST_COL}1`);
   const data = await sheetsFetch<{ values?: string[][] }>(
     accessToken,
@@ -76,6 +83,15 @@ export async function writeHeaderRow(
   accessToken: string,
   spreadsheetId: string,
 ): Promise<void> {
+  if (isAppsScriptEnv()) {
+    const res = await gasRun<{ success: boolean; error: string | null }>(
+      "writeSheetHeaders",
+      Array.from(SHEET_HEADERS),
+    );
+    if (!res.success) throw new Error(res.error || "Erro ao gravar cabeçalhos");
+    return;
+  }
+
   const range = encodeURIComponent(`${SHEET_TAB}!A1:${LAST_COL}1`);
   await sheetsFetch(
     accessToken,
@@ -272,6 +288,15 @@ export async function appendRequestRow(
   spreadsheetId: string,
   row: string[],
 ): Promise<void> {
+  if (isAppsScriptEnv()) {
+    const res = await gasRun<{ success: boolean; error: string | null }>(
+      "appendSolicitacao",
+      row,
+    );
+    if (!res.success) throw new Error(res.error || "Erro ao gravar solicitação");
+    return;
+  }
+
   const range = encodeURIComponent(`${SHEET_TAB}!A:${LAST_COL}`);
   await sheetsFetch(
     accessToken,
@@ -290,6 +315,17 @@ export async function fetchAllRows(
   accessToken: string,
   spreadsheetId: string,
 ): Promise<{ rowIndex: number; cells: string[] }[]> {
+  if (isAppsScriptEnv()) {
+    const res = await gasRun<{ rows: unknown[][]; error: string | null }>("getSolicitacoes");
+    if (res.error) throw new Error(res.error);
+    const allRows = res.rows;
+    const dataRows = allRows.slice(1);
+    return dataRows.map((cells, i) => ({
+      rowIndex: i + 2,
+      cells: padRow(cells.map((c) => String(c ?? ""))),
+    }));
+  }
+
   const range = encodeURIComponent(`${SHEET_TAB}!A2:${LAST_COL}5000`);
   const data = await sheetsFetch<{ values?: string[][] }>(
     accessToken,
@@ -316,6 +352,25 @@ export async function updateCell(
   a1: string,
   value: string,
 ): Promise<void> {
+  if (isAppsScriptEnv()) {
+    const match = a1.match(/^([A-Z]+)(\d+)$/);
+    if (!match) throw new Error(`Endereço A1 inválido: ${a1}`);
+    const colLetters = match[1];
+    const rowNum = parseInt(match[2], 10);
+    let colNum = 0;
+    for (let i = 0; i < colLetters.length; i++) {
+      colNum = colNum * 26 + (colLetters.charCodeAt(i) - 64);
+    }
+    const res = await gasRun<{ success: boolean; error: string | null }>(
+      "updateSheetCell",
+      rowNum,
+      colNum,
+      value,
+    );
+    if (!res.success) throw new Error(res.error || "Erro ao atualizar célula");
+    return;
+  }
+
   const range = encodeURIComponent(`${SHEET_TAB}!${a1}`);
   await sheetsFetch(
     accessToken,

@@ -432,6 +432,7 @@ export function DashboardPage() {
   const [savingStatus, setSavingStatus] = useState(false);
   const warnedNoSheet = useRef(false);
   const prevRowsRef = useRef<RowView[]>([]);
+  const permissionErrorRef = useRef(false);
 
   const statusLabel = useCallback(
     (raw: string): string => {
@@ -475,6 +476,7 @@ export function DashboardPage() {
   }, [getAccessTokenForSheets, scriptReady, showToast, t]);
 
   const load = useCallback(async () => {
+    if (permissionErrorRef.current) return;
     setLoading(true);
     try {
       const data = await fetchRows();
@@ -485,7 +487,13 @@ export function DashboardPage() {
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
-      if (msg.includes("SHEETS_PERMISSION_DENIED")) {
+      if (
+        msg.includes("SHEETS_PERMISSION_DENIED") ||
+        msg.includes("403") ||
+        msg.includes("Forbidden") ||
+        msg.includes("PERMISSION_DENIED")
+      ) {
+        permissionErrorRef.current = true;
         modal.error(
           "Sem permissão",
           "Você não tem acesso à planilha de solicitações. " +
@@ -511,6 +519,7 @@ export function DashboardPage() {
 
   useEffect(() => {
     const interval = setInterval(async () => {
+      if (permissionErrorRef.current) return;
       try {
         const data = await fetchRows();
         if (data) setRows(data);

@@ -137,6 +137,66 @@ function getEquipeMembers() {
   }
 }
 
+function getSolicitacoes() {
+  try {
+    var sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+    var ss    = SpreadsheetApp.openById(sheetId);
+    var sheet = ss.getSheetByName('Sheet1') || ss.getSheets()[0];
+    var data  = sheet.getDataRange().getValues();
+    return { rows: data, error: null };
+  } catch(e) {
+    return { rows: [], error: e.message };
+  }
+}
+
+function appendSolicitacao(rowData) {
+  try {
+    var sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+    var ss    = SpreadsheetApp.openById(sheetId);
+    var sheet = ss.getSheetByName('Sheet1') || ss.getSheets()[0];
+    sheet.appendRow(rowData);
+    return { success: true, error: null };
+  } catch(e) {
+    return { success: false, error: e.message };
+  }
+}
+
+function updateSheetCell(sheetRow, sheetCol, value) {
+  try {
+    var sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+    var ss    = SpreadsheetApp.openById(sheetId);
+    var sheet = ss.getSheetByName('Sheet1') || ss.getSheets()[0];
+    sheet.getRange(sheetRow, sheetCol).setValue(value);
+    return { success: true, error: null };
+  } catch(e) {
+    return { success: false, error: e.message };
+  }
+}
+
+function getSheetHeaders() {
+  try {
+    var sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+    var ss    = SpreadsheetApp.openById(sheetId);
+    var sheet = ss.getSheetByName('Sheet1') || ss.getSheets()[0];
+    var row   = sheet.getRange(1, 1, 1, 57).getValues()[0];
+    return { headers: row, error: null };
+  } catch(e) {
+    return { headers: [], error: e.message };
+  }
+}
+
+function writeSheetHeaders(headers) {
+  try {
+    var sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
+    var ss    = SpreadsheetApp.openById(sheetId);
+    var sheet = ss.getSheetByName('Sheet1') || ss.getSheets()[0];
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    return { success: true, error: null };
+  } catch(e) {
+    return { success: false, error: e.message };
+  }
+}
+
 function checkIsAdmin(email) {
   try {
     var sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
