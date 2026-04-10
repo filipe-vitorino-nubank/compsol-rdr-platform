@@ -224,8 +224,8 @@ export function AppLayout() {
           {sidebarOpen ? (
             <>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-[var(--sidebar-text)]">COMPSOL</p>
-                <p className="truncate text-[11px] text-[var(--sidebar-text-muted)]">NuStage Hub</p>
+                <p className="truncate text-sm font-semibold text-[var(--sidebar-text)]">Equipe BOAS</p>
+                <p className="truncate text-[11px] text-[var(--sidebar-text-muted)]">BOAS Team · Nubank</p>
               </div>
               <button
                 type="button"
