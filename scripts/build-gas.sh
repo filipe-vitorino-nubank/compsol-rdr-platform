@@ -48,7 +48,7 @@ FIXED_DEPLOY_ID_PRE=$(clasp deployments 2>/dev/null | \
   grep -v "@HEAD" | \
   grep "AKfycb" | \
   head -1 | \
-  awk '{print $2}')
+  awk '{print $2}') || true
 
 if [ -n "$FIXED_DEPLOY_ID_PRE" ]; then
   DEPLOY_URL_VAL="https://script.google.com/a/macros/nubank.com.br/s/${FIXED_DEPLOY_ID_PRE}/exec"
@@ -75,7 +75,7 @@ FIXED_DEPLOY_ID=$(clasp deployments 2>/dev/null | \
   grep -v "@HEAD" | \
   grep "AKfycb" | \
   head -1 | \
-  awk '{print $2}')
+  awk '{print $2}') || true
 
 VERSION_TAG="v$(date +'%Y%m%d-%H%M')"
 
@@ -99,7 +99,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "📋 Versão: $VERSION_TAG"
 echo ""
 
-HEAD_ID=$(clasp deployments 2>/dev/null | grep '@HEAD' | grep -o 'AKfycb[^ ]*')
+HEAD_ID=$(clasp deployments 2>/dev/null | grep '@HEAD' | grep -o 'AKfycb[^ ]*') || true
 if [ -n "$HEAD_ID" ]; then
   echo "🔗 HEAD (dev/test):"
   echo "https://script.google.com/a/macros/nubank.com.br/s/${HEAD_ID}/dev"
