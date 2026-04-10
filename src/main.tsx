@@ -8,6 +8,7 @@ import { AuthProvider } from "./context/AuthContext.tsx";
 import { ToastProvider } from "./context/ToastContext.tsx";
 import { FormProvider } from "./context/FormContext.tsx";
 import { ModalProvider } from "./context/ModalContext.tsx";
+import { ChatProvider } from "./context/ChatContext.tsx";
 import { ErrorBoundary } from "./components/ErrorBoundary.tsx";
 import { validateEnv } from "./config/env.ts";
 
@@ -32,7 +33,9 @@ createRoot(document.getElementById("root")!).render(
             <AuthProvider>
               <ToastProvider>
                 <FormProvider>
-                  <App />
+                  <ChatProvider>
+                    <App />
+                  </ChatProvider>
                 </FormProvider>
               </ToastProvider>
             </AuthProvider>

@@ -1,12 +1,14 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useChat } from "../context/ChatContext";
 import { HeroCarousel } from "../components/Home/HeroCarousel";
 
 export function Home() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, scriptReady, signInWithGoogle } = useAuth();
+  const { openChat } = useChat();
 
   const requireLogin = (location.state as { requireLogin?: boolean } | null)?.requireLogin;
 
@@ -15,11 +17,6 @@ export function Home() {
       signInWithGoogle();
     }
   }, [requireLogin, isAuthenticated, scriptReady, signInWithGoogle]);
-
-  const openChat = () => {
-    const fab = document.querySelector(".chat-fab") as HTMLButtonElement | null;
-    fab?.click();
-  };
 
   return (
     <div className="home-page">

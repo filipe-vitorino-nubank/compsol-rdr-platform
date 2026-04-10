@@ -8,6 +8,7 @@ import { useFormContext } from "../../context/FormContext";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { useLanguage } from "../../context/LanguageContext";
+import { useChat } from "../../context/ChatContext";
 import { validateStep1, validateStep2 } from "../../lib/validation";
 import {
   appendRequestRow,
@@ -967,6 +968,7 @@ function AtalhosPanel() {
 }
 
 function AssistenteMiniPanel() {
+  const { openChat } = useChat();
   return (
     <div className="right-panel" style={{ padding: "10px 12px" }}>
       <div className="bot-mini">
@@ -979,7 +981,9 @@ function AssistenteMiniPanel() {
         </div>
         <div className="bot-mini-text">
           Dúvida sobre o processo?{" "}
-          <span className="bot-mini-link">Pergunte ao assistente IA</span>
+          <span className="bot-mini-link" onClick={openChat} style={{ cursor: "pointer" }}>
+            Pergunte ao assistente IA
+          </span>
         </div>
       </div>
     </div>

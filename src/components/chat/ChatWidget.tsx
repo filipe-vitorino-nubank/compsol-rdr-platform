@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { sendGeminiMessage, type ChatMessage, type ChatAttachment } from "../../services/geminiService";
 import { useAuth } from "../../context/AuthContext";
 import { useModal } from "../../context/ModalContext";
+import { useChat } from "../../context/ChatContext";
 import { env } from "../../config/env";
 
 type ChatMode = null | "gemini" | "glean";
@@ -43,7 +44,7 @@ function maxSizeMb(mimeType: string): number {
 }
 
 export default function ChatWidget() {
-  const [open, setOpen] = useState(false);
+  const { isOpen: open, openChat, closeChat } = useChat();
   const [mode, setMode] = useState<ChatMode>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -79,12 +80,12 @@ export default function ChatWidget() {
     setAttachments([]);
     setInput("");
     setMode(null);
-    setOpen(false);
+    closeChat();
   };
 
   const handleFabClick = () => {
     if (open) handleClose();
-    else setOpen(true);
+    else openChat();
   };
 
   const handleSelectGlean = () => {
@@ -98,7 +99,7 @@ export default function ChatWidget() {
       "GleanChat",
       `width=${w},height=${h},left=${left},top=${top},resizable=yes,toolbar=no,menubar=no,location=no`,
     );
-    setOpen(false);
+    closeChat();
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {

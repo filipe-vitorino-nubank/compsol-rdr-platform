@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { useModal } from "../context/ModalContext";
 import { useLanguage } from "../context/LanguageContext";
+import { useChat } from "../context/ChatContext";
 import { fetchAllRows, mapRowToSolicitacao, rowStatusA1, updateCell } from "../lib/sheetsApi";
 import { getSpreadsheetId } from "../lib/spreadsheetConfig";
 import { isAppsScriptEnv } from "../lib/gasClient";
@@ -418,6 +419,7 @@ function DonutChart({ data }: { data: Record<string, number> }) {
 /* ── Right-column panels ── */
 
 function AssistentePanel({ solicitacoes }: { solicitacoes: Solicitacao[] }) {
+  const { openChat } = useChat();
   const pendentes = solicitacoes
     .filter((s) => s.status === "Pendente")
     .sort((a, b) => {
@@ -457,7 +459,7 @@ function AssistentePanel({ solicitacoes }: { solicitacoes: Solicitacao[] }) {
           </div>
         </div>
       )}
-      <div className="bot-cta">Pergunte ao assistente sobre qualquer solicitação ou processo RDR...</div>
+      <div className="bot-cta" onClick={openChat} style={{ cursor: "pointer" }}>Pergunte ao assistente sobre qualquer solicitação ou processo RDR...</div>
     </div>
   );
 }
