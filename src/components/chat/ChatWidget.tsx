@@ -598,7 +598,7 @@ export default function ChatWidget() {
         className={`chat-fab ${open ? "open" : ""}`}
         onClick={handleFabClick}
         title={open ? "Fechar" : "Assistente"}
-        style={{ background: "#820AD1" }}
+        style={{ background: "var(--purple-600)" }}
       >
         {!open ? (
           <svg viewBox="64 64 896 896" width="22" height="22" fill="#ffffff">

@@ -69,9 +69,9 @@ const MODAL_THEME: Record<
   },
   info: {
     iconBg: "var(--purple-dim)",
-    iconColor: "var(--purple-700)",
+    iconColor: "var(--purple-600)",
     titleColor: "var(--color-ink)",
-    btnBg: "var(--purple-700)",
+    btnBg: "var(--purple-600)",
     icon: (
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <circle cx="12" cy="12" r="10" />
@@ -82,9 +82,9 @@ const MODAL_THEME: Record<
   },
   confirm: {
     iconBg: "var(--purple-dim)",
-    iconColor: "var(--purple-700)",
+    iconColor: "var(--purple-600)",
     titleColor: "var(--color-ink)",
-    btnBg: "var(--purple-700)",
+    btnBg: "var(--purple-600)",
     icon: (
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <circle cx="12" cy="12" r="10" />

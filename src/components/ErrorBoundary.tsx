@@ -32,14 +32,14 @@ export class ErrorBoundary extends React.Component<
             fontFamily: "DM Sans, sans-serif",
           }}
         >
-          <h2 style={{ color: "#820AD1" }}>Algo deu errado</h2>
-          <p style={{ color: "#666" }}>
+          <h2 style={{ color: "var(--purple-600)" }}>Algo deu errado</h2>
+          <p style={{ color: "var(--text-muted)" }}>
             Recarregue a página ou contate o suporte técnico.
           </p>
           <button
             onClick={() => window.location.reload()}
             style={{
-              background: "#820AD1",
+              background: "var(--purple-600)",
               color: "#fff",
               border: "none",
               borderRadius: "9999px",

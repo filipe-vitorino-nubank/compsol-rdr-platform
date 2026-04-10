@@ -131,7 +131,7 @@ function statusBadgeClass(status: string): string {
     case "Pendente":
       return "bg-[var(--warning-dim)] text-[var(--warning)] border-[var(--warning)]";
     case "Em Análise":
-      return "bg-[var(--purple-dim)] text-[var(--purple-700)] border-[var(--purple-700)]";
+      return "bg-[var(--purple-dim)] text-[var(--purple-600)] border-[var(--purple-600)]";
     case "Concluído":
       return "bg-[var(--success-dim)] text-[var(--success)] border-[var(--success)]";
     case "Cancelado":
@@ -372,10 +372,10 @@ function DonutChart({ data }: { data: Record<string, number> }) {
   }
 
   const colors: Record<string, string> = {
-    Pendente: "#d97706",
-    "Em Análise": "#820AD1",
-    Concluído: "#00A868",
-    Cancelado: "#9090a0",
+    Pendente: "var(--warning)",
+    "Em Análise": "var(--purple-600)",
+    Concluído: "var(--success)",
+    Cancelado: "var(--text-muted)",
   };
 
   const radius = 42;
@@ -433,7 +433,7 @@ function AssistentePanel({ solicitacoes }: { solicitacoes: Solicitacao[] }) {
       {maisAntiga ? (
         <div className="bot-alert">
           <div className="bot-alert-icon">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--purple-700)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--purple-600)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="8" x2="12" y2="12" />
               <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -474,7 +474,7 @@ function AtividadePanel({ solicitacoes }: { solicitacoes: Solicitacao[] }) {
   const dotColor = (status: string) => {
     if (status === "Concluído") return "var(--success)";
     if (status === "Pendente") return "var(--warning)";
-    if (status === "Em Análise") return "var(--purple-700)";
+    if (status === "Em Análise") return "var(--purple-600)";
     return "var(--color-ink-muted)";
   };
 
@@ -517,7 +517,7 @@ function StatusSistemasPanel() {
         <span className="status-badge badge-success">Operacional</span>
       </div>
       <div className="status-item">
-        <div className="status-dot" style={{ background: "var(--purple-700)" }} />
+        <div className="status-dot" style={{ background: "var(--purple-600)" }} />
         <span className="status-name">Google Drive</span>
         <span className="status-badge badge-purple">Automático</span>
       </div>
@@ -1020,7 +1020,7 @@ export function DashboardPage() {
         </div>
         <div className="kpi-card">
           <div className="kpi-label">Em análise</div>
-          <div className="kpi-value" style={{ color: "var(--purple-700)" }}>
+          <div className="kpi-value" style={{ color: "var(--purple-600)" }}>
             {kpis.emAnalise}
           </div>
           <div className="kpi-sub" style={{ color: "var(--color-ink-muted)" }}>
@@ -1033,7 +1033,7 @@ export function DashboardPage() {
                 width: kpis.total
                   ? `${(kpis.emAnalise / kpis.total) * 100}%`
                   : "0%",
-                background: "var(--purple-700)",
+                background: "var(--purple-600)",
               }}
             />
           </div>
@@ -1211,10 +1211,10 @@ export function DashboardPage() {
             <div className="donut-legend">
               {Object.entries(chartData.byStatus).map(([status, count]) => {
                 const colors: Record<string, string> = {
-                  Pendente: "#d97706",
-                  "Em Análise": "#820AD1",
-                  Concluído: "#00A868",
-                  Cancelado: "#9090a0",
+                  Pendente: "var(--warning)",
+                  "Em Análise": "var(--purple-600)",
+                  Concluído: "var(--success)",
+                  Cancelado: "var(--text-muted)",
                 };
                 return (
                   <div key={status} className="donut-legend-item">
@@ -1279,7 +1279,7 @@ export function DashboardPage() {
                 <h3 className="font-display text-lg font-semibold text-ink">
                   {t("dashboard.detailsTitle")}
                 </h3>
-                <p className="mt-1 font-mono text-sm text-[var(--purple-700)]">
+                <p className="mt-1 font-mono text-sm text-[var(--purple-600)]">
                   {detail.cells[COL.ID]}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">

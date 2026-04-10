@@ -12,17 +12,17 @@ export function Topbar() {
           <svg viewBox="0 0 32 32" fill="none" width="32" height="32">
             <polygon
               points="16,2 28,9 28,23 16,30 4,23 4,9"
-              stroke="var(--purple-700)"
+              stroke="var(--purple-600)"
               strokeWidth="1"
               fill="var(--purple-dim)"
             />
             <polygon
               points="16,7 23,11 23,21 16,25 9,21 9,11"
-              stroke="var(--purple-700)"
+              stroke="var(--purple-600)"
               strokeWidth="0.5"
               fill="rgba(130,10,209,0.05)"
             />
-            <circle cx="16" cy="16" r="3" fill="var(--purple-700)" />
+            <circle cx="16" cy="16" r="3" fill="var(--purple-600)" />
           </svg>
         </div>
         <div className="logo-text-wrap">

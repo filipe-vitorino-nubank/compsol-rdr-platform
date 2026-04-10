@@ -218,7 +218,7 @@ export function AppLayout() {
 
         {/* Header */}
         <div className="flex h-16 shrink-0 items-center gap-2 border-b border-[var(--sidebar-border)] px-4">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--purple-700)] text-xs font-bold text-white">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--purple-600)] text-xs font-bold text-white">
             C
           </div>
           {sidebarOpen ? (
@@ -262,9 +262,9 @@ export function AppLayout() {
               to={item.to}
               end={item.end}
               className={({ isActive }) =>
-                `relative rounded-[var(--radius-input)] px-3 py-2.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--purple-700)] ${
+                `relative rounded-[var(--radius-input)] px-3 py-2.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--purple-600)] ${
                   isActive
-                    ? "bg-[var(--sidebar-hover)] text-[var(--sidebar-text)] shadow-[inset_3px_0_0_var(--purple-700)]"
+                    ? "bg-[var(--sidebar-hover)] text-[var(--sidebar-text)] shadow-[inset_3px_0_0_var(--purple-600)]"
                     : "text-[var(--sidebar-text-muted)] hover:bg-[var(--sidebar-hover)] hover:text-[var(--sidebar-text)]"
                 } ${sidebarOpen ? "" : "nav-item-collapsed flex justify-center px-2"}`
               }

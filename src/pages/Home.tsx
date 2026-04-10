@@ -129,7 +129,7 @@ export function Home() {
                 height="18"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="var(--purple-700)"
+                stroke="var(--purple-600)"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -272,7 +272,7 @@ export function Home() {
           <div className="home-status-left">
             <div
               className="home-status-dot"
-              style={{ background: "var(--purple-700)" }}
+              style={{ background: "var(--purple-600)" }}
             />
             <div>
               <div className="home-status-name">Google Drive</div>

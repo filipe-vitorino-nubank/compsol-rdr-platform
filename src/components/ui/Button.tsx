@@ -2,9 +2,9 @@ import type { ButtonHTMLAttributes } from "react";
 
 const variants = {
   primary:
-    "bg-[var(--purple-700)] text-white hover:bg-[var(--purple-800)] border border-transparent shadow-sm hover:shadow-[var(--shadow-purple-sm)] active:scale-[0.98]",
+    "bg-[var(--purple-600)] text-white hover:bg-[var(--purple-800)] border border-transparent shadow-sm hover:shadow-[var(--shadow-purple-sm)] active:scale-[0.98]",
   secondary:
-    "bg-[var(--color-surface)] text-ink border border-[var(--color-border)] hover:border-[var(--purple-700)]/40 hover:bg-[var(--color-surface-raised)] active:scale-[0.98]",
+    "bg-[var(--color-surface)] text-ink border border-[var(--color-border)] hover:border-[var(--purple-600)]/40 hover:bg-[var(--color-surface-raised)] active:scale-[0.98]",
   ghost:
     "text-ink-muted hover:text-ink hover:bg-[var(--color-surface-raised)] active:scale-[0.98] border border-transparent",
   danger:
@@ -12,7 +12,7 @@ const variants = {
 };
 
 const focusRing =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--purple-700)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-bg)]";
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--purple-600)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-bg)]";
 
 export function Button({
   variant = "primary",

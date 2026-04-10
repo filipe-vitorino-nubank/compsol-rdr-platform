@@ -97,7 +97,7 @@ function RadioGroup<T extends string>({
           <input
             type="radio"
             name={name}
-            className="h-4 w-4 shrink-0 accent-[var(--purple-700)]"
+            className="h-4 w-4 shrink-0 accent-[var(--purple-600)]"
             checked={value === opt}
             onChange={() => onChange(opt)}
           />
@@ -837,7 +837,7 @@ function Step3Confirmacao({
           type="checkbox"
           checked={confirmed}
           onChange={(ev) => onConfirmChange(ev.target.checked)}
-          className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--purple-700)]"
+          className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--purple-600)]"
         />
         <span className="text-sm leading-relaxed text-ink">
           {t("step3.confirmText")}
@@ -853,7 +853,7 @@ function Step3Confirmacao({
 
 function SettingsIcon() {
   return (
-    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--purple-700)" }}>
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--purple-600)" }}>
       <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
       <circle cx="12" cy="12" r="3" />
     </svg>
@@ -930,7 +930,7 @@ function DicasPanel({ step }: { step: number }) {
       {dicas.map((d, i) => (
         <div key={i} className="dica-item">
           <div className="dica-icon">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--purple-700)" strokeWidth="2">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--purple-600)" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="16" x2="12" y2="12" />
               <line x1="12" y1="8" x2="12.01" y2="8" />
@@ -971,7 +971,7 @@ function AssistenteMiniPanel() {
     <div className="right-panel" style={{ padding: "10px 12px" }}>
       <div className="bot-mini">
         <div className="bot-mini-icon">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--purple-700)" strokeWidth="2">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--purple-600)" strokeWidth="2">
             <circle cx="12" cy="12" r="10" />
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />

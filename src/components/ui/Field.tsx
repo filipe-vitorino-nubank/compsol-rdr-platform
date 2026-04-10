@@ -19,7 +19,7 @@ export function Field({
   return (
     <div className="group/field flex flex-col gap-2">
       <div className="flex flex-col gap-1">
-        <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted transition-colors group-focus-within/field:text-[var(--purple-700)]">
+        <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted transition-colors group-focus-within/field:text-[var(--purple-600)]">
           {label}
           {required ? (
             <span className="ml-0.5 font-normal text-[var(--danger)]" aria-hidden>
