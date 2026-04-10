@@ -58,6 +58,7 @@ function doGet(e) {
     GLEAN_URL:         props.getProperty('GLEAN_URL')        || 'https://nubank-prod-be.glean.com/chat',
     GOOGLE_CLIENT_ID:  props.getProperty('GOOGLE_CLIENT_ID'),
     GOOGLE_API_KEY:    props.getProperty('GOOGLE_API_KEY'),
+    EXEC_URL:          ScriptApp.getService().getUrl(),
   };
 
   var userName  = userEmail.split('@')[0];

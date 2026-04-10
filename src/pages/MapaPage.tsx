@@ -4,8 +4,8 @@ import { useAdminCheck } from "../hooks/useAdminCheck";
 import { LoadingScreen } from "../components/ui/LoadingScreen";
 
 function getMapaUrl(): string {
-  const base = window.location.href.split("?")[0].split("#")[0];
-  return `${base}?page=mapa`;
+  const execUrl = (window as any).__APP_CONFIG__?.EXEC_URL || "";
+  return `${execUrl}?page=mapa`;
 }
 
 export function MapaPage() {
