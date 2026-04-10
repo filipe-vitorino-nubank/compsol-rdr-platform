@@ -2844,15 +2844,19 @@ code, kbd, pre, .mono { font-family: var(--font-mono); }
   gap: 16px;
   padding: 20px 24px;
   width: 100%;
+  max-width: none;
+  box-sizing: border-box;
   align-items: start;
 }
 .wizard-left {
   display: flex; flex-direction: column;
   min-width: 0; width: 100%;
 }
-.wizard-left .surface-card {
+.wizard-left .surface-card,
+.wizard-left .wizard-container {
   width: 100% !important;
   max-width: none !important;
+  box-sizing: border-box;
 }
 .wizard-right {
   display: flex; flex-direction: column; gap: 10px;

@@ -420,7 +420,12 @@ export function AppLayout() {
         animate={{ marginLeft: sidebarOpen ? 260 : 72 }}
         transition={{ type: "spring", stiffness: 380, damping: 38 }}
         className="min-h-screen overflow-auto bg-[var(--bg-primary)] outline-none"
-        style={{ transition: "background var(--transition-slow)" }}
+        style={{
+          transition: "background var(--transition-slow)",
+          width: `calc(100vw - ${sidebarOpen ? 260 : 72}px)`,
+          maxWidth: `calc(100vw - ${sidebarOpen ? 260 : 72}px)`,
+          boxSizing: "border-box",
+        }}
       >
         {isFullWidth ? (
           <Outlet />
