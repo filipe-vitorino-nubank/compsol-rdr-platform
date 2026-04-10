@@ -17,6 +17,9 @@
 8. [Layout & Sidebar](#8-layout--sidebar)
 9. [Padrões de Animação](#9-padrões-de-animação)
 10. [Boas Práticas](#10-boas-práticas)
+11. [Regras de Tema Dark](#11-regras-de-tema-dark--boas-práticas)
+12. [Apps Script — Considerações Especiais](#12-apps-script--considerações-especiais)
+13. [Componentes — Estado Atual](#13-componentes--estado-atual-do-projeto)
 
 ---
 
@@ -747,5 +750,175 @@ Use sufixo hexadecimal na cor para transparência sem rgba:
 
 ---
 
-*NuStage BA Design System — Referência gerada em 01/04/2026*
-*Stack: React 18 + TypeScript + esbuild — Google Apps Script deploy*
+## 11. Regras de Tema Dark — Boas Práticas
+
+### Problema comum: fundo transparente
+
+Em componentes que sobrepõem outros (modais, drawers, painéis
+laterais, tooltips, dropdowns), **NUNCA** usar `background: white`,
+`background: #fff` ou `background: transparent`.
+
+Esses valores funcionam no tema light mas causam transparência
+indesejada no tema dark, fazendo o conteúdo de fundo vazar.
+
+### Regra obrigatória para componentes sobrepostos
+
+Qualquer componente que renderiza sobre outro **DEVE** usar:
+
+```css
+/* ✅ CORRETO */
+background: var(--bg-secondary);   /* modais, drawers, painéis */
+background: var(--bg-card);        /* cards internos */
+background: var(--bg-input);       /* campos de formulário */
+color: var(--text-primary);        /* texto principal */
+border: 0.5px solid var(--border); /* bordas */
+
+/* ❌ ERRADO — nunca usar em componentes sobrepostos */
+background: white;
+background: #fff;
+background: #ffffff;
+background: transparent;
+background-color: white;
+```
+
+### Componentes que requerem atenção especial
+
+| Componente | Token correto |
+|---|---|
+| Modal / Dialog | `var(--bg-secondary)` |
+| Drawer / Side panel | `var(--bg-secondary)` |
+| Detalhes de solicitação | `var(--bg-secondary)` |
+| Dropdown / Select | `var(--bg-secondary)` |
+| Tooltip | `var(--bg-secondary)` |
+| Card interno | `var(--bg-card)` |
+| Input / Textarea / Select | `var(--bg-input)` |
+| Overlay de fundo | `var(--bg-overlay)` |
+
+### Exceções permitidas para transparent
+
+Apenas estes elementos podem usar `background: transparent`:
+- Botões ghost (`.btn-ghost`)
+- Overlays de fundo semitransparente (`.modal-overlay`)
+- Elementos decorativos sem conteúdo
+
+### CSS global de proteção (já aplicado no projeto)
+
+O arquivo `src/index.css` contém regras globais que
+previnem fundos brancos no tema dark:
+
+```css
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background: var(--bg-input, rgba(255,255,255,0.05));
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+```
+
+### Checklist ao criar novo componente
+
+Antes de fazer deploy de qualquer componente novo:
+
+- [ ] Testei no tema dark (`data-theme="dark"`)?
+- [ ] Todos os backgrounds usam tokens CSS (`var(--bg-*)`)?
+- [ ] Não há valores hardcoded (`#fff`, `white`, `transparent`)?
+- [ ] Inputs e selects têm `background: var(--bg-input)`?
+- [ ] Textos usam `var(--text-primary)` ou `var(--text-secondary)`?
+- [ ] Bordas usam `var(--border)` ou `var(--border-hover)`?
+
+### Tokens legados vs Design System
+
+O projeto migrou de tokens `--color-*` para o design system.
+Não usar tokens antigos em código novo:
+
+| Token antigo (legado) | Token correto (design system) |
+|---|---|
+| `--color-surface` | `var(--bg-secondary)` |
+| `--color-surface-raised` | `var(--bg-tertiary)` |
+| `--color-surface-hover` | `var(--bg-card-hover)` |
+| `--color-ink` | `var(--text-primary)` |
+| `--color-ink-muted` | `var(--text-secondary)` |
+| `--color-ink-subtle` | `var(--text-muted)` |
+| `--color-border` | `var(--border)` |
+| `--color-border-strong` | `var(--border-hover)` |
+| `--color-bg` | `var(--bg-primary)` |
+| `--color-focus-ring` | `var(--purple-dim2)` |
+
+---
+
+## 12. Apps Script — Considerações Especiais
+
+### OAuth e autenticação
+
+- O token `ScriptApp.getOAuthToken()` **NÃO** funciona para
+  chamadas `fetch()` diretas à Sheets API do lado do cliente
+- Usar sempre `google.script.run` para operações de planilha
+- `Session.getActiveUser().getEmail()` retorna apenas o email
+- Nome e foto devem ser buscados via People API no `doGet()`
+
+### Componentes que não funcionam no iframe do Apps Script
+
+- `createPortal` do React não funciona no iframe
+- Renderizar modais inline, sem portal
+- `window.location.reload()` pode causar tela branca
+- `localStorage` funciona normalmente
+
+### Deploy
+
+- `npm run save` faz git + build + clasp push + clasp deploy
+- A URL do deploy muda a cada `clasp deploy` — sempre usar
+  a URL retornada pelo terminal após o deploy
+- `Script is already up to date` no clasp push significa que
+  o código não mudou — verificar se as alterações foram salvas
+
+---
+
+## 13. Componentes — Estado Atual do Projeto
+
+### Estrutura de arquivos
+
+```
+src/
+  components/
+    Home/
+      HeroCarousel.tsx  — carousel 4 temas no hero
+    Layout/
+      AppLayout.tsx     — layout principal com sidebar
+      Topbar.tsx        — topbar com toggle dark/light
+      Sidebar.tsx       — sidebar colapsável 64px/220px
+    StepForm/           — formulário multi-etapas
+    team/
+      TeamDrawer.tsx    — drawer lateral de equipe
+    ui/
+      LoadingScreen.tsx — loading padronizado com logo
+  context/
+    ThemeContext.tsx    — dark/light mode com localStorage
+    AuthContext.tsx     — autenticação OAuth/Apps Script
+    ModalContext.tsx    — modais padronizados
+  hooks/
+    useAdminCheck.ts    — verifica admin via planilha
+  lib/
+    gasClient.ts        — helper para google.script.run
+    sheetsApi.ts        — operações na planilha
+  utils/
+    deriveRobotTemplates.ts — deriva templates do robô
+  pages/
+    Home.tsx            — página inicial com carousel
+    DashboardPage.tsx   — painel de acompanhamento
+    RdrRequestPage.tsx  — nova solicitação (wizard)
+    ConfigPage.tsx      — configurações (admin only)
+gas/
+  Code.js               — doGet, getSolicitacoes, etc.
+  appsscript.json       — scopes OAuth e config GAS
+```
+
+---
+
+*NuStage BA Design System — Referência atualizada em 10/04/2026*
+*Stack: React 18 + TypeScript + Vite (singlefile) — Google Apps Script deploy*

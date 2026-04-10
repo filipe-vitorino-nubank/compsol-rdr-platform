@@ -151,7 +151,7 @@ export function TeamDrawer({ open, onClose }: { open: boolean; onClose: () => vo
         <div className="profile-drawer-header">
           <div>
             <h3>Equipe</h3>
-            <span className="profile-last-sync" style={{ color: "var(--color-ink-muted)" }}>
+            <span className="profile-last-sync" style={{ color: "var(--text-secondary)" }}>
               COE de Ops · opsdef_boas_squad
             </span>
           </div>
@@ -185,19 +185,19 @@ export function TeamDrawer({ open, onClose }: { open: boolean; onClose: () => vo
             <LoadingScreen message={t("profile.loadingTeam")} />
           ) : error === "empty" ? (
             <div className="profile-loading" style={{ flexDirection: "column", gap: 6 }}>
-              <p style={{ fontSize: 13, color: "var(--color-ink-muted)" }}>
+              <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>
                 Nenhum membro encontrado.
               </p>
-              <p style={{ fontSize: 11, color: "var(--color-ink-subtle)" }}>
+              <p style={{ fontSize: 11, color: "var(--text-muted)" }}>
                 A sincronização pode estar pendente.
               </p>
             </div>
           ) : error === "failed" ? (
             <div className="profile-loading" style={{ flexDirection: "column", gap: 8 }}>
-              <p style={{ fontSize: 13, color: "var(--color-ink-muted)" }}>
+              <p style={{ fontSize: 13, color: "var(--text-secondary)" }}>
                 Não foi possível carregar a equipe.
               </p>
-              <p style={{ fontSize: 11, color: "var(--color-ink-subtle)" }}>
+              <p style={{ fontSize: 11, color: "var(--text-muted)" }}>
                 Verifique sua conexão e tente novamente.
               </p>
               <button

@@ -4,15 +4,15 @@ const variants = {
   primary:
     "bg-[var(--purple-600)] text-white hover:bg-[var(--purple-800)] border border-transparent shadow-sm hover:shadow-[var(--shadow-purple-sm)] active:scale-[0.98]",
   secondary:
-    "bg-[var(--color-surface)] text-ink border border-[var(--color-border)] hover:border-[var(--purple-600)]/40 hover:bg-[var(--color-surface-raised)] active:scale-[0.98]",
+    "bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border)] hover:border-[var(--purple-600)]/40 hover:bg-[var(--bg-card-hover)] active:scale-[0.98]",
   ghost:
-    "text-ink-muted hover:text-ink hover:bg-[var(--color-surface-raised)] active:scale-[0.98] border border-transparent",
+    "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] active:scale-[0.98] border border-transparent",
   danger:
     "bg-[var(--danger)] text-white hover:bg-red-700 border border-transparent active:scale-[0.98]",
 };
 
 const focusRing =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--purple-600)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-bg)]";
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--purple-600)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-primary)]";
 
 export function Button({
   variant = "primary",

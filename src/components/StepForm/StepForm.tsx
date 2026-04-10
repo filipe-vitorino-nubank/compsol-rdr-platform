@@ -832,7 +832,7 @@ function Step3Confirmacao({
         </div>
       )}
 
-      <label className="flex cursor-pointer items-start gap-3 rounded-[var(--radius-input)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-4 transition-colors hover:bg-[var(--color-surface-hover)]">
+      <label className="flex cursor-pointer items-start gap-3 rounded-[var(--radius-input)] border border-[var(--border)] bg-[var(--bg-surface)] p-4 transition-colors hover:bg-[var(--bg-card-hover)]">
         <input
           type="checkbox"
           checked={confirmed}
@@ -1146,7 +1146,7 @@ export function RdrRequestForm() {
       <div className="wizard-left">
       <article className="surface-card overflow-hidden">
         {/* Header */}
-        <div className="border-b border-[var(--color-border)] bg-[var(--color-surface-raised)] px-5 py-5 sm:px-8 sm:py-6">
+        <div className="border-b border-[var(--border)] bg-[var(--bg-surface)] px-5 py-5 sm:px-8 sm:py-6">
           <h1 className="text-balance text-xl font-bold tracking-tight text-ink sm:text-2xl">
             {t("form.title")}
           </h1>
@@ -1174,7 +1174,7 @@ export function RdrRequestForm() {
         </div>
 
         {/* Footer / navigation */}
-        <div className="border-t border-[var(--color-border)] px-5 py-4 sm:px-8 sm:pb-8 sm:pt-4">
+        <div className="border-t border-[var(--border)] px-5 py-4 sm:px-8 sm:pb-8 sm:pt-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               {step > 1 && (

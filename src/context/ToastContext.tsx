@@ -31,7 +31,7 @@ const styles: Record<
     "border-emerald-500/45 bg-emerald-950/92 text-emerald-50 shadow-[0_0_32px_-12px_rgba(34,197,94,0.35)]",
   error:
     "border-red-500/45 bg-red-950/92 text-red-50 shadow-[0_0_32px_-12px_rgba(248,113,113,0.35)]",
-  info: "border-nu-purple/40 bg-[var(--color-surface-raised)]/95 text-ink shadow-glow",
+  info: "border-nu-purple/40 bg-[var(--bg-surface)]/95 text-ink shadow-glow",
 };
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {

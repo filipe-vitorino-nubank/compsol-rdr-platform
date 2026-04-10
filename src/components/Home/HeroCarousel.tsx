@@ -82,12 +82,12 @@ const ThemeBot = () => (
 const ThemeGear = () => (
   <div className="hc-theme-center">
     <svg
-      width="180"
-      height="180"
-      viewBox="0 0 180 180"
+      width="220"
+      height="220"
+      viewBox="0 0 220 220"
       style={{ animation: "spin 12s linear infinite" }}
     >
-      <g transform="translate(90,90)">
+      <g transform="translate(110,110)">
         <circle r="40" fill="rgba(130,10,209,0.1)" stroke="#820AD1" strokeWidth="0.5" />
         <circle r="22" fill="rgba(130,10,209,0.06)" stroke="#820AD1" strokeWidth="0.5" />
         <circle r="8" fill="#820AD1" />
@@ -118,7 +118,7 @@ const ThemeGear = () => (
 
 const ThemeNeural = () => (
   <div className="hc-theme-center">
-    <svg width="280" height="180" viewBox="0 0 280 180">
+    <svg width="320" height="200" viewBox="0 0 280 180">
       <line x1="30" y1="90" x2="90" y2="30" stroke="rgba(130,10,209,0.3)" strokeWidth="0.5" />
       <line x1="30" y1="90" x2="90" y2="90" stroke="rgba(130,10,209,0.3)" strokeWidth="0.5" />
       <line x1="30" y1="90" x2="90" y2="150" stroke="rgba(130,10,209,0.3)" strokeWidth="0.5" />

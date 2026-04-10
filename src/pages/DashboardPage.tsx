@@ -122,7 +122,7 @@ function prioBadgeClass(prio: string): string {
     case "alta":
       return "bg-[var(--danger-dim)] text-[var(--danger)] border-[var(--danger)]";
     default:
-      return "bg-[var(--color-surface-raised)] text-[var(--color-ink-muted)] border-[var(--color-border)]";
+      return "bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--border)]";
   }
 }
 
@@ -135,9 +135,9 @@ function statusBadgeClass(status: string): string {
     case "Concluído":
       return "bg-[var(--success-dim)] text-[var(--success)] border-[var(--success)]";
     case "Cancelado":
-      return "bg-[var(--color-surface-raised)] text-[var(--color-ink-subtle)] border-[var(--color-border)]";
+      return "bg-[var(--bg-surface)] text-[var(--text-muted)] border-[var(--border)]";
     default:
-      return "bg-[var(--color-surface-raised)] text-[var(--color-ink-muted)] border-[var(--color-border)]";
+      return "bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--border)]";
   }
 }
 
@@ -365,8 +365,8 @@ function DonutChart({ data }: { data: Record<string, number> }) {
   if (total === 0) {
     return (
       <svg width="120" height="120" viewBox="0 0 120 120">
-        <circle cx="60" cy="60" r="42" fill="none" stroke="var(--color-border)" strokeWidth="14" />
-        <text x="60" y="64" textAnchor="middle" fontSize="14" fill="var(--color-ink-muted)">0</text>
+        <circle cx="60" cy="60" r="42" fill="none" stroke="var(--border)" strokeWidth="14" />
+        <text x="60" y="64" textAnchor="middle" fontSize="14" fill="var(--text-secondary)">0</text>
       </svg>
     );
   }
@@ -405,10 +405,10 @@ function DonutChart({ data }: { data: Record<string, number> }) {
           />
         );
       })}
-      <text x="60" y="56" textAnchor="middle" fontSize="20" fontWeight="700" fill="var(--color-ink)">
+      <text x="60" y="56" textAnchor="middle" fontSize="20" fontWeight="700" fill="var(--text-primary)">
         {total}
       </text>
-      <text x="60" y="72" textAnchor="middle" fontSize="10" fill="var(--color-ink-muted)">
+      <text x="60" y="72" textAnchor="middle" fontSize="10" fill="var(--text-secondary)">
         total
       </text>
     </svg>
@@ -475,7 +475,7 @@ function AtividadePanel({ solicitacoes }: { solicitacoes: Solicitacao[] }) {
     if (status === "Concluído") return "var(--success)";
     if (status === "Pendente") return "var(--warning)";
     if (status === "Em Análise") return "var(--purple-600)";
-    return "var(--color-ink-muted)";
+    return "var(--text-secondary)";
   };
 
   const activityLabel = (s: Solicitacao) => {
@@ -857,7 +857,7 @@ export function DashboardPage() {
               height="14"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="var(--color-ink-subtle)"
+              stroke="var(--text-muted)"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -945,7 +945,7 @@ export function DashboardPage() {
           </div>
           {searchFiltered.length === 0 ? (
             <div className="result-card" style={{ justifyContent: "center", cursor: "default" }}>
-              <span style={{ fontSize: 13, color: "var(--color-ink-muted)", padding: "8px 0" }}>
+              <span style={{ fontSize: 13, color: "var(--text-secondary)", padding: "8px 0" }}>
                 Nenhum resultado encontrado
               </span>
             </div>
@@ -1003,7 +1003,7 @@ export function DashboardPage() {
           <div className="kpi-value" style={{ color: "var(--warning)" }}>
             {kpis.pendentes}
           </div>
-          <div className="kpi-sub" style={{ color: "var(--color-ink-muted)" }}>
+          <div className="kpi-sub" style={{ color: "var(--text-secondary)" }}>
             aguardando processamento
           </div>
           <div className="kpi-progress">
@@ -1023,7 +1023,7 @@ export function DashboardPage() {
           <div className="kpi-value" style={{ color: "var(--purple-600)" }}>
             {kpis.emAnalise}
           </div>
-          <div className="kpi-sub" style={{ color: "var(--color-ink-muted)" }}>
+          <div className="kpi-sub" style={{ color: "var(--text-secondary)" }}>
             UiPath processando
           </div>
           <div className="kpi-progress">
@@ -1043,7 +1043,7 @@ export function DashboardPage() {
           <div className="kpi-value" style={{ color: "var(--success)" }}>
             {kpis.concluidos}
           </div>
-          <div className="kpi-sub" style={{ color: "var(--color-ink-muted)" }}>
+          <div className="kpi-sub" style={{ color: "var(--text-secondary)" }}>
             dossiês finalizados
           </div>
           <div className="kpi-progress">
@@ -1063,7 +1063,7 @@ export function DashboardPage() {
           <div className="kpi-value" style={{ color: "var(--danger)" }}>
             {kpis.altaPrioridade}
           </div>
-          <div className="kpi-sub" style={{ color: "var(--color-ink-muted)" }}>
+          <div className="kpi-sub" style={{ color: "var(--text-secondary)" }}>
             pendentes urgentes
           </div>
           <div className="kpi-progress">
@@ -1106,7 +1106,7 @@ export function DashboardPage() {
             <span
               style={{
                 fontSize: 13,
-                color: "var(--color-ink-muted)",
+                color: "var(--text-secondary)",
                 padding: "8px 0",
               }}
             >
@@ -1274,12 +1274,12 @@ export function DashboardPage() {
             onClick={() => !savingStatus && setDetail(null)}
           />
           <aside className="drawer" role="dialog" aria-modal="true">
-            <div className="flex items-start justify-between gap-4 border-b border-[var(--color-border)] p-6">
+            <div className="drawer-header">
               <div>
-                <h3 className="font-display text-lg font-semibold text-ink">
+                <h3 className="drawer-header-title">
                   {t("dashboard.detailsTitle")}
                 </h3>
-                <p className="mt-1 font-mono text-sm text-[var(--purple-600)]">
+                <p className="drawer-header-id">
                   {detail.cells[COL.ID]}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -1297,7 +1297,7 @@ export function DashboardPage() {
               </div>
               <button
                 type="button"
-                className="shrink-0 rounded-lg p-2 text-ink-muted transition-colors hover:bg-[var(--color-surface-raised)] hover:text-ink"
+                className="drawer-close-btn"
                 onClick={() => setDetail(null)}
                 disabled={savingStatus}
                 aria-label={t("common.close")}

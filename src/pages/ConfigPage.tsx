@@ -79,13 +79,13 @@ export function ConfigPage() {
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
           </svg>
         </div>
-        <h2 style={{ fontSize: 20, fontWeight: 700, color: "var(--color-ink)", margin: 0 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
           Configurações
         </h2>
-        <p style={{ fontSize: 14, color: "var(--color-ink-muted)", maxWidth: 320, lineHeight: 1.6, margin: 0 }}>
+        <p style={{ fontSize: 14, color: "var(--text-secondary)", maxWidth: 320, lineHeight: 1.6, margin: 0 }}>
           Esta área é restrita aos administradores da plataforma.
         </p>
-        <p style={{ fontSize: 12, color: "var(--color-ink-subtle)", margin: 0 }}>
+        <p style={{ fontSize: 12, color: "var(--text-muted)", margin: 0 }}>
           Para solicitar acesso, entre em contato com o time BOAS.
         </p>
       </div>
