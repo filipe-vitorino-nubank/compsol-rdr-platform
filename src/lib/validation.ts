@@ -41,8 +41,6 @@ export function validateStep2(s: RdrFormState, t?: TFn): Record<string, string> 
   }
 
   if (s.reasonInvOps === "Fraudster") {
-    if (!s.dataNotificacaoCliente)
-      e.dataNotificacaoCliente = req;
     if (!s.subreasonFraudster)
       e.subreasonFraudster = req;
 

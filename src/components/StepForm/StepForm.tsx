@@ -455,11 +455,6 @@ function Step2Trilha() {
                 </Field>
               </div>
             </ConditionalBlock>
-            <div data-field="dataNotificacaoCliente">
-              <Field label={<>{t("step2.dataNotificacao")}<FieldTooltip text={t("tooltip.dataNotificacao")} /></>} error={e.dataNotificacaoCliente} required>
-                <input type="date" className={`input-field ${e.dataNotificacaoCliente ? "input-field--error" : ""}`} value={state.dataNotificacaoCliente} onChange={(ev) => setField("dataNotificacaoCliente", ev.target.value)} />
-              </Field>
-            </div>
             <div data-field="subreasonFraudster">
               <Field label={<>{t("step2.subreasonFraudster")}<FieldTooltip text={t("tooltip.subreasonFraudster")} /></>} error={e.subreasonFraudster} required>
                 <select className={`input-field ${e.subreasonFraudster ? "input-field--error" : ""}`} value={state.subreasonFraudster} onChange={(ev) => handleSubreasonFraudsterChange(ev.target.value as SubreasonFraudster | "")}>
