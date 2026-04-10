@@ -13,6 +13,16 @@ import { validateEnv } from "./config/env.ts";
 
 validateEnv();
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+console.log("[COMPSOL] APP_CONFIG:", {
+  hasConfig: !!(window as any).__APP_CONFIG__,
+  isGAS: !!(window as any).google?.script?.run,
+  userEmail: (window as any).__APP_CONFIG__?.USER_EMAIL || "VAZIO",
+  hasToken: !!((window as any).__APP_CONFIG__?.ACCESS_TOKEN),
+  sheetId: (window as any).__APP_CONFIG__?.SHEET_ID || "VAZIO",
+});
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ErrorBoundary>
