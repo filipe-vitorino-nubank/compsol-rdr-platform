@@ -2298,17 +2298,83 @@ code, kbd, pre, .mono { font-family: var(--font-mono); }
   }
   .home-btn-ghost:hover { border-color: var(--purple-700); color: var(--purple-400); }
 
+  /* ── Hero right column (bot + carousel) ── */
+  .hero-right-col {
+    position: absolute;
+    right: 32px;
+    top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    width: 160px;
+    z-index: 2;
+  }
+
+  /* ── Bot Alpha ── */
+  .bot-wrap {
+    width: 140px; height: 140px;
+    position: relative; flex-shrink: 0;
+  }
+  .bot-ring { position: absolute; border-radius: 50%; }
+  .bot-ring-1 {
+    inset: 0;
+    border: 1px solid rgba(130,10,209,0.25);
+    animation: spin 20s linear infinite;
+  }
+  .bot-ring-2 {
+    inset: 12px;
+    border: 1px dashed rgba(130,10,209,0.15);
+    animation: spin 14s linear infinite reverse;
+  }
+  .bot-body {
+    position: absolute; inset: 22px;
+    border-radius: 50%;
+    background: var(--purple-dim);
+    border: 0.5px solid rgba(130,10,209,0.3);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 6px;
+  }
+  .bot-face { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+  .bot-eyes { display: flex; gap: 8px; }
+  .bot-eye {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--purple-700);
+    animation: eyeBlink 3s infinite;
+  }
+  .bot-eye-2 { animation-delay: .12s; }
+  @keyframes eyeBlink {
+    0%,88%,100% { transform: scaleY(1); }
+    94%          { transform: scaleY(.1); }
+  }
+  .bot-mouth {
+    width: 16px; height: 1.5px;
+    background: rgba(130,10,209,0.5);
+    border-radius: 1px;
+  }
+  .bot-dots { display: flex; gap: 4px; }
+  .bot-dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: rgba(130,10,209,0.4);
+    animation: dotPulse 1.4s infinite;
+  }
+  .bot-dot:nth-child(2) { animation-delay: .2s; }
+  .bot-dot:nth-child(3) { animation-delay: .4s; }
+  @keyframes dotPulse {
+    0%,100% { opacity:.3; transform:scale(1); }
+    50%     { opacity:1;  transform:scale(1.4); }
+  }
+
   /* ── Hero Carousel ── */
   @keyframes gearSpin { to { transform: rotate(360deg); } }
 
   .hero-carousel {
-    position: absolute;
-    right: 32px;
-    top: 50%;
-    transform: translateY(-50%);
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
+    align-items: center;
     gap: 12px;
     max-width: 340px;
     z-index: 1;
@@ -2428,13 +2494,11 @@ code, kbd, pre, .mono { font-family: var(--font-mono); }
   .carousel-dot:hover { background: rgba(130,10,209,0.5); }
 
   @media (max-width: 768px) {
-    .hero-carousel {
+    .hero-right-col {
       position: relative;
       right: auto;
       top: auto;
-      transform: none;
-      align-items: center;
-      max-width: 100%;
+      width: 100%;
       margin-top: 24px;
     }
   }
