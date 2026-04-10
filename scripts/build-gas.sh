@@ -41,21 +41,38 @@ echo "==> Build complete. Pushing to Apps Script..."
 clasp push --force
 
 echo "==> Deploying..."
-DEPLOY_OUTPUT=$(clasp deploy --description "deploy $(date +'%Y-%m-%d %H:%M')" 2>&1)
-echo "$DEPLOY_OUTPUT"
 
-DEPLOY_ID=$(echo "$DEPLOY_OUTPUT" | grep -o 'AKfycb[^ ]*' | head -1)
+FIXED_DEPLOY_ID=$(clasp deployments 2>/dev/null | \
+  grep -v "@HEAD" | \
+  grep "AKfycb" | \
+  head -1 | \
+  awk '{print $2}')
 
-if [ -n "$DEPLOY_ID" ]; then
-  echo ""
-  echo "🌐 App URL (este deploy):"
-  echo "https://script.google.com/a/macros/nubank.com.br/s/${DEPLOY_ID}/exec"
-  echo ""
+VERSION_TAG="v$(date +'%Y%m%d-%H%M')"
+
+if [ -n "$FIXED_DEPLOY_ID" ]; then
+  echo "    Reusing deployment: $FIXED_DEPLOY_ID"
+  clasp deploy \
+    --deploymentId "$FIXED_DEPLOY_ID" \
+    --description "$VERSION_TAG"
+else
+  echo "    Creating first deployment..."
+  DEPLOY_OUTPUT=$(clasp deploy --description "$VERSION_TAG" 2>&1)
+  echo "$DEPLOY_OUTPUT"
+  FIXED_DEPLOY_ID=$(echo "$DEPLOY_OUTPUT" | grep -o 'AKfycb[^ ]*' | head -1)
 fi
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "🌐 URL fixa (compartilhe esta — NUNCA muda):"
+echo "https://script.google.com/a/macros/nubank.com.br/s/${FIXED_DEPLOY_ID}/exec"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "📋 Versão: $VERSION_TAG"
+echo ""
 
 HEAD_ID=$(clasp deployments 2>/dev/null | grep '@HEAD' | grep -o 'AKfycb[^ ]*')
 if [ -n "$HEAD_ID" ]; then
-  echo "🔗 HEAD URL (sempre a versão mais recente):"
+  echo "🔗 HEAD (dev/test):"
   echo "https://script.google.com/a/macros/nubank.com.br/s/${HEAD_ID}/dev"
   echo ""
 fi
