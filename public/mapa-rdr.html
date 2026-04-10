@@ -251,7 +251,10 @@ const COLORS = {
 /* ─────────────────────────────────────────────
    INIT — defer until layout is ready
 ───────────────────────────────────────────── */
-window.addEventListener('load', () => {
+let _mapInited = false;
+function initMap() {
+  if (_mapInited) return;
+  _mapInited = true;
   // Build legend
   const legendEl = document.getElementById('legend');
   legendEl.innerHTML = '<div class="leg-title">Categorias</div>' +
@@ -573,7 +576,14 @@ window.addEventListener('load', () => {
     svg.attr('viewBox',`0 0 ${nw} ${nh}`).attr('width',nw).attr('height',nh);
     sim.force('center',d3.forceCenter(nw/2,nh/2)).alpha(.2).restart();
   });
-});
+}
+
+if (document.readyState === 'complete') {
+  setTimeout(initMap, 0);
+} else {
+  window.addEventListener('load', initMap);
+  document.addEventListener('DOMContentLoaded', () => setTimeout(initMap, 50));
+}
 </script>
 </body>
 </html>
