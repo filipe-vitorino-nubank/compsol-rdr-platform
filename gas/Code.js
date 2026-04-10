@@ -20,6 +20,12 @@ function ensureAdminsSheet() {
 }
 
 function doGet(e) {
+  if (e.parameter && e.parameter.page === 'mapa') {
+    return HtmlService.createHtmlOutputFromFile('mapa-rdr')
+      .setTitle('Mapa Neural — COMPSOL RDR')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+
   ensureAdminsSheet();
 
   var userEmail = Session.getActiveUser().getEmail();
