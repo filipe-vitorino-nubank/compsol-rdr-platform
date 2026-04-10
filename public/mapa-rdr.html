@@ -34,8 +34,8 @@ body{background:#06000f;color:#c8b8e8;font-family:'DM Sans',system-ui,sans-serif
 /* ── Graph SVG ── */
 #graph{position:fixed;top:48px;left:0;right:0;bottom:0}
 .node-g{cursor:pointer}
-.node-g text{pointer-events:none;font-size:11px;fill:#c8b8e8;font-weight:600;text-shadow:0 1px 4px #06000f,0 0 8px #06000f,0 0 16px #06000f}
-.link-line{stroke-opacity:.4;stroke-width:1}
+.node-g text{pointer-events:none;font-size:11px;fill:#c8b8e8;font-weight:600;text-shadow:0 0 8px #06000f,0 0 4px #06000f,0 1px 3px #06000f,-1px 0 3px #06000f}
+.link-line{stroke-opacity:.45;stroke-width:1}
 .link-line.highlight{stroke-opacity:.85;stroke-width:2.5}
 .link-line.dimmed{stroke-opacity:.04}
 .node-g.dimmed circle,.node-g.dimmed text{opacity:.1}
@@ -319,8 +319,8 @@ const nodeById = new Map(nodes.map(n => [n.id, n]));
    SIZING
    ============================================================ */
 function nodeRadius(n) {
-  const base = {pagina:28,componente:22,contexto:20,hook:18,lib:18,util:16,gas:26,google:24,uipath:22,sistema:20,slack:18,ia:20,fluxo:16};
-  return base[n.category] || 18;
+  const base = {pagina:26,componente:22,contexto:20,hook:17,lib:17,util:15,gas:24,google:22,uipath:21,sistema:19,slack:17,ia:19,fluxo:15};
+  return base[n.category] || 17;
 }
 
 /* ============================================================
@@ -431,7 +431,8 @@ const linkEls = g.append('g').selectAll('line').data(links).join('line')
     const n = nodeById.get(d.source.id || d.source);
     return (CATEGORY_COLORS[n?.category]||{stroke:'#555'}).stroke;
   })
-  .attr('stroke-width', d => Math.max(.8, (d.strength||1) * .8));
+  .attr('stroke-width', d => Math.max(.8, (d.strength||1) * .9))
+  .attr('stroke-opacity', .45);
 
 // Nodes
 const nodeEls = g.append('g').selectAll('g').data(nodes).join('g')
@@ -476,7 +477,7 @@ nodeEls.filter(d => d.external).append('circle')
 // Labels — always visible, bold, with strong text shadow
 nodeEls.append('text')
   .attr('text-anchor','middle')
-  .attr('dy', d => nodeRadius(d) + 16)
+  .attr('dy', d => nodeRadius(d) + 14)
   .text(d => d.label);
 
 // Tick
@@ -638,6 +639,7 @@ function closeDetail() {
   detailPanel.classList.remove('open');
 }
 window.closeDetail = closeDetail;
+window.closePanel = closeDetail;
 
 /* ============================================================
    FILTERS & SEARCH
