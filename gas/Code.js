@@ -292,7 +292,7 @@ function syncEquipeAgora() {
       var ss = SpreadsheetApp.openById(sheetId);
       var sheet = ss.getSheetByName('Equipe');
       if (sheet) {
-        var now = Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'dd/MM/yyyy HH:mm');
+        var now = 'Última sync: ' + Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'dd/MM/yyyy HH:mm');
         sheet.getRange('H1').setValue(now);
       }
     }
