@@ -95,10 +95,15 @@ export async function fetchLastSync(accessToken: string): Promise<string> {
 }
 
 export async function syncTeamNow(): Promise<void> {
+  if (isAppsScriptEnv()) {
+    const data = await gasRun<{ ok: boolean; error?: string }>("syncEquipeAgora");
+    if (!data.ok) throw new Error(data.error || "Falha na sincronização");
+    _cachedMembers = null;
+    return;
+  }
+
   if (!env.slackProxyUrl || !env.slackProxyToken) {
-    throw new Error(
-      "SLACK_PROXY_URL ou SLACK_PROXY_TOKEN não configurados",
-    );
+    throw new Error("SLACK_PROXY_URL ou SLACK_PROXY_TOKEN não configurados");
   }
 
   const url = env.slackProxyUrl.startsWith("http")
@@ -109,9 +114,7 @@ export async function syncTeamNow(): Promise<void> {
     headers: { "X-Proxy-Token": env.slackProxyToken },
   }, 10_000);
   const data = await res.json();
-
   if (!data.ok) throw new Error(data.error || "Falha na sincronização");
-
   _cachedMembers = null;
 }
 

@@ -272,6 +272,27 @@ function checkIsAdmin(email) {
   }
 }
 
+function syncEquipeAgora() {
+  var props = PropertiesService.getScriptProperties();
+  var proxyUrl  = props.getProperty('SLACK_PROXY_URL');
+  var proxyToken = props.getProperty('SLACK_PROXY_TOKEN');
+
+  if (!proxyUrl || !proxyToken) {
+    return { ok: false, error: 'SLACK_PROXY_URL ou SLACK_PROXY_TOKEN não configurados' };
+  }
+
+  try {
+    var res = UrlFetchApp.fetch(proxyUrl + '?action=sync', {
+      headers: { 'X-Proxy-Token': proxyToken },
+      muteHttpExceptions: true
+    });
+    var data = JSON.parse(res.getContentText());
+    return data;
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
 function getUserProfile_(email) {
   try {
     var sheetId = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
