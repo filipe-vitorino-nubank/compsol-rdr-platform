@@ -287,6 +287,15 @@ function syncEquipeAgora() {
       muteHttpExceptions: true
     });
     var data = JSON.parse(res.getContentText());
+    if (data.ok) {
+      var sheetId = props.getProperty('SHEET_ID');
+      var ss = SpreadsheetApp.openById(sheetId);
+      var sheet = ss.getSheetByName('Equipe');
+      if (sheet) {
+        var now = Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'dd/MM/yyyy HH:mm');
+        sheet.getRange('H1').setValue(now);
+      }
+    }
     return data;
   } catch (err) {
     return { ok: false, error: err.message };
