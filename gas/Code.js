@@ -282,8 +282,8 @@ function syncEquipeAgora() {
   }
 
   try {
-    var res = UrlFetchApp.fetch(proxyUrl + '?action=sync', {
-      headers: { 'X-Proxy-Token': proxyToken },
+    var res = UrlFetchApp.fetch(proxyUrl + '?action=sync&token=' + encodeURIComponent(proxyToken), {
+      headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
       muteHttpExceptions: true
     });
     var data = JSON.parse(res.getContentText());
