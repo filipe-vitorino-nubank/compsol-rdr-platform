@@ -156,22 +156,41 @@ function Stepper({ current }: { current: 1 | 2 | 3 }) {
 
 function Step1DadosGerais() {
   const { state, setField, handleSquadChange } = useFormContext();
+  const { googleUser } = useAuth();
   const { t } = useLanguage();
   const e = state.fieldErrors;
+
+  useEffect(() => {
+    if (googleUser?.email && !state.emailSolicitante) {
+      setField("emailSolicitante", googleUser.email);
+    }
+  }, [googleUser?.email]);
 
   return (
     <div className="grid gap-6 sm:grid-cols-2">
       <div className="sm:col-span-2" data-field="emailSolicitante">
         <Field label={t("step1.email")} error={e.emailSolicitante} required>
-          <input
-            type="email"
-            className={`input-field ${e.emailSolicitante ? "input-field--error" : ""}`}
-            value={state.emailSolicitante}
-            autoComplete="email"
-            placeholder="exemplo de e-mail corporativo"
-            onChange={(ev) => setField("emailSolicitante", ev.target.value)}
-          />
+          <div className="input-field" style={{ opacity: 0.7, cursor: "default" }}>
+            {state.emailSolicitante || "—"}
+          </div>
         </Field>
+      </div>
+
+      <div className="sm:col-span-2" data-field="emailConfirmado">
+        <label className="flex cursor-pointer items-start gap-3 rounded-[var(--radius-input)] border border-[var(--border)] bg-[var(--bg-surface)] p-4 transition-colors hover:bg-[var(--bg-card-hover)]">
+          <input
+            type="checkbox"
+            checked={state.emailConfirmado}
+            onChange={(ev) => setField("emailConfirmado", ev.target.checked)}
+            className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--purple-600)]"
+          />
+          <span className="text-sm leading-relaxed text-[var(--ink)]">
+            Registrar <strong>{state.emailSolicitante}</strong> como o e-mail vinculado a esta solicitação
+          </span>
+        </label>
+        {e.emailConfirmado && (
+          <p className="mt-1 text-xs text-red-500">{e.emailConfirmado}</p>
+        )}
       </div>
 
       <div data-field="cpfDemandante">

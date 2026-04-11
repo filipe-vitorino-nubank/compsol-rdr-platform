@@ -155,6 +155,7 @@ export interface RdrFormState {
   dtPixRecebidoFim: string;
   listaPixRecebido: string;
 
+  emailConfirmado: boolean;
   fieldErrors: Partial<Record<string, string>>;
 }
 
@@ -213,6 +214,7 @@ export const initialFormState: RdrFormState = {
   dtPixRecebidoInicio: "",
   dtPixRecebidoFim: "",
   listaPixRecebido: "",
+  emailConfirmado: false,
   fieldErrors: {},
 };
 

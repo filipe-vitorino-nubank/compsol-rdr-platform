@@ -13,6 +13,9 @@ export function validateStep1(s: RdrFormState, t?: TFn): Record<string, string> 
   if (!s.emailSolicitante || !EMAIL_RE.test(s.emailSolicitante))
     e.emailSolicitante = badEmail;
 
+  if (!s.emailConfirmado)
+    e.emailConfirmado = "Confirme seu e-mail para continuar";
+
   if (!s.cpfDemandante || s.cpfDemandante.length !== 11)
     e.cpfDemandante = badCpf;
 
