@@ -11,6 +11,7 @@ import {
   type SlackMember,
 } from "../../services/slackService";
 import { isAppsScriptEnv } from "../../lib/gasClient";
+import { useAdminCheck } from "../../hooks/useAdminCheck";
 import { LoadingScreen } from "../ui/LoadingScreen";
 
 function MemberCard({ member, t }: { member: SlackMember; t: (k: string) => string }) {
@@ -96,6 +97,7 @@ function MemberCard({ member, t }: { member: SlackMember; t: (k: string) => stri
 
 export function ProfileDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { googleUser, getAccessTokenForSheets } = useAuth();
+  const { isAdmin } = useAdminCheck();
   const { t } = useLanguage();
   const { showToast } = useToast();
   const [members, setMembers] = useState<SlackMember[]>([]);
@@ -173,7 +175,7 @@ export function ProfileDrawer({ open, onClose }: { open: boolean; onClose: () =>
               type="button"
               className="btn-sync"
               onClick={handleSync}
-              disabled={syncing}
+              disabled={syncing || !isAdmin}
               title={t("profile.syncTitle")}
             >
               <svg
